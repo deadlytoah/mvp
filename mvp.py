@@ -3,10 +3,13 @@
 
 import sys
 from PyQt5 import QtWidgets
+from screen import init_screens
 from dataentry import DataEntryForm
+from flashcard import FlashCardForm
+
+FORM_TYPES = [DataEntryForm, FlashCardForm]
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
-    window = DataEntryForm()
-    window.gui.show()
+    init_screens(FORM_TYPES)
     sys.exit(app.exec())

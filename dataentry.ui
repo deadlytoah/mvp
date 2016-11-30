@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Enter Bible Verses</string>
+   <string>mvp – Enter Bible Verses</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -76,11 +76,41 @@
     </property>
     <addaction name="action_scrub"/>
    </widget>
+   <widget class="QMenu" name="menuData_Entry">
+    <property name="title">
+     <string>Task</string>
+    </property>
+    <addaction name="actionVerse_Entry"/>
+    <addaction name="action_view_flash_cards"/>
+   </widget>
+   <addaction name="menuData_Entry"/>
    <addaction name="menuVerses"/>
   </widget>
   <action name="action_scrub">
    <property name="text">
     <string>Scrub</string>
+   </property>
+  </action>
+  <action name="actionVerse_Entry">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Enter Verses</string>
+   </property>
+  </action>
+  <action name="action_view_flash_cards">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>View Flash Cards</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Return</string>
    </property>
   </action>
  </widget>

@@ -4,6 +4,7 @@
 import re
 from PyQt5 import QtWidgets
 from PyQt5 import uic
+from screen import toggle_screen
 
 window = None
 
@@ -14,6 +15,7 @@ class DataEntryForm(QtWidgets.QDialog):
         self.gui = uic.loadUi("dataentry.ui")
         self.gui.button_enter.clicked.connect(enter_verses)
         self.gui.action_scrub.triggered.connect(menu_scrub)
+        self.gui.action_view_flash_cards.triggered.connect(view_flash_cards)
 
         global window
         window = self
@@ -60,3 +62,7 @@ def _scrub_verses(info, text):
         verse_index += 1
 
     return '\n'.join(array)
+
+def view_flash_cards():
+    """switch to the flash cards screen"""
+    toggle_screen()
