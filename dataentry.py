@@ -52,7 +52,7 @@ def _scrub_book_and_chapter(info, text):
     return text.strip()
 
 def _scrub_verses(info, text):
-    start, _ = info["verses"].split('-', 1)
+    start = info["verses"].split('-', 1)[0]
     array = re.split('[0-9]', text.strip())
     array = [x for x in array if len(x.strip()) > 0]
     verse_index = int(start)
