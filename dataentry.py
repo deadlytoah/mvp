@@ -4,7 +4,11 @@
 import re
 from PyQt5 import QtWidgets
 from PyQt5 import uic
+from sdb import sdb
 from screen import toggle_screen
+
+TRANSLATION = 'nkjv'
+DB_EXT = '.db'
 
 window = None
 
@@ -24,7 +28,20 @@ def enter_verses():
     """action for the enter push button. enters verses into the database
 
     """
-    pass
+    database = sdb.init(TRANSLATION + DB_EXT)
+    key = window.gui.lineedit_book.text().strip() + ' ' + \
+          window.gui.lineedit_chapter.text().strip() + ':'
+    input_text = window.gui.textedit_verses.toPlainText()
+
+    for line in input_text.splitlines():
+        line = line.strip()
+        if len(line) > 0:
+            verse, text = line.split(' ', 1)
+            record = {
+                'key': key + verse,
+                'text': text
+            }
+            sdb.append(database, record)
 
 def menu_scrub():
     """action for the scrub menu item"""
