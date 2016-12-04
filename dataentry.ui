@@ -83,8 +83,15 @@
     <addaction name="actionVerse_Entry"/>
     <addaction name="action_view_flash_cards"/>
    </widget>
+   <widget class="QMenu" name="menuDebug">
+    <property name="title">
+     <string>Debug</string>
+    </property>
+    <addaction name="action_debug_inspect_database"/>
+   </widget>
    <addaction name="menuData_Entry"/>
    <addaction name="menuVerses"/>
+   <addaction name="menuDebug"/>
   </widget>
   <action name="action_scrub">
    <property name="text">
@@ -111,6 +118,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Return</string>
+   </property>
+  </action>
+  <action name="action_debug_inspect_database">
+   <property name="text">
+    <string>Inspect Database</string>
    </property>
   </action>
  </widget>

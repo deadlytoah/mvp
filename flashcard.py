@@ -13,6 +13,7 @@ class FlashCardForm(QtWidgets.QDialog):
         QtWidgets.QDialog.__init__(self, parent)
         self.gui = uic.loadUi("flashcard.ui")
         self.gui.action_enter_verses.triggered.connect(enter_verses)
+        self.gui.action_debug_inspect_database.triggered.connect(debug_view_db)
 
         self.canvas = FlashCardCanvas()
         self.gui.setCentralWidget(self.canvas)
@@ -46,3 +47,7 @@ class FlashCardCanvas(QtWidgets.QWidget):
 def enter_verses():
     """switch to the verse entry screen"""
     toggle_screen()
+
+def debug_view_db():
+    from dbgviewdb import DbgViewDb
+    DbgViewDb().gui.show()

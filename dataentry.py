@@ -20,6 +20,7 @@ class DataEntryForm(QtWidgets.QDialog):
         self.gui.button_enter.clicked.connect(enter_verses)
         self.gui.action_scrub.triggered.connect(menu_scrub)
         self.gui.action_view_flash_cards.triggered.connect(view_flash_cards)
+        self.gui.action_debug_inspect_database.triggered.connect(debug_view_db)
 
         global window
         window = self
@@ -83,3 +84,7 @@ def _scrub_verses(info, text):
 def view_flash_cards():
     """switch to the flash cards screen"""
     toggle_screen()
+
+def debug_view_db():
+    from dbgviewdb import DbgViewDb
+    DbgViewDb().gui.show()

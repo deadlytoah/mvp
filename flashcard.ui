@@ -30,7 +30,14 @@
     <addaction name="action_enter_verses"/>
     <addaction name="actionView_Flash_Cards"/>
    </widget>
+   <widget class="QMenu" name="menuDebug">
+    <property name="title">
+     <string>Debug</string>
+    </property>
+    <addaction name="action_debug_inspect_database"/>
+   </widget>
    <addaction name="menuTask"/>
+   <addaction name="menuDebug"/>
   </widget>
   <action name="action_enter_verses">
    <property name="checkable">
@@ -52,6 +59,11 @@
    </property>
    <property name="text">
     <string>View Flash Cards</string>
+   </property>
+  </action>
+  <action name="action_debug_inspect_database">
+   <property name="text">
+    <string>Inspect Database</string>
    </property>
   </action>
  </widget>
