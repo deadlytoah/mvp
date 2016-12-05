@@ -21,6 +21,7 @@ class DataEntryForm(QtWidgets.QDialog):
         self.gui.action_scrub.triggered.connect(menu_scrub)
         self.gui.action_view_flash_cards.triggered.connect(view_flash_cards)
         self.gui.action_debug_inspect_database.triggered.connect(debug_view_db)
+        self.gui.action_debug_layout_engine.triggered.connect(debug_layout_engine)
 
         global window
         window = self
@@ -88,3 +89,7 @@ def view_flash_cards():
 def debug_view_db():
     from dbgviewdb import DbgViewDb
     DbgViewDb().gui.show()
+
+def debug_layout_engine():
+    from dbglayout import DbgLayout
+    DbgLayout(window).show()

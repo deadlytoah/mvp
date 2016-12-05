@@ -14,6 +14,7 @@ class FlashCardForm(QtWidgets.QDialog):
         self.gui = uic.loadUi("flashcard.ui")
         self.gui.action_enter_verses.triggered.connect(enter_verses)
         self.gui.action_debug_inspect_database.triggered.connect(debug_view_db)
+        self.gui.action_debug_layout_engine.triggered.connect(debug_layout_engine)
 
         self.canvas = FlashCardCanvas()
         self.gui.setCentralWidget(self.canvas)
@@ -51,3 +52,7 @@ def enter_verses():
 def debug_view_db():
     from dbgviewdb import DbgViewDb
     DbgViewDb().gui.show()
+
+def debug_layout_engine():
+    from dbglayout import DbgLayout
+    DbgLayout(window).show()

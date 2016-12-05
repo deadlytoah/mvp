@@ -35,6 +35,7 @@
      <string>Debug</string>
     </property>
     <addaction name="action_debug_inspect_database"/>
+    <addaction name="action_debug_layout_engine"/>
    </widget>
    <addaction name="menuTask"/>
    <addaction name="menuDebug"/>
@@ -64,6 +65,11 @@
   <action name="action_debug_inspect_database">
    <property name="text">
     <string>Inspect Database</string>
+   </property>
+  </action>
+  <action name="action_debug_layout_engine">
+   <property name="text">
+    <string>Layout Engine</string>
    </property>
   </action>
  </widget>
