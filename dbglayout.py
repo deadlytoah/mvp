@@ -77,6 +77,7 @@ class DbgLayoutBox(QtWidgets.QWidget):
 
 if __name__ == '__main__':
     import sys
+    from simplelayout import SimpleLayout
 
     class TestEngine():
         def layout(self, verse):
@@ -94,5 +95,6 @@ if __name__ == '__main__':
     dbglayout = DbgLayout(window)
     dbglayout.set_text('Paul and Timothy, bondservants of Jesus Christ, To all the saints in Christ Jesus who are in Philippi, with the bishops and deacons:')
     assert(dbglayout.add_layout_engine(TestEngine()))
+    assert(dbglayout.add_layout_engine(SimpleLayout()))
     dbglayout.show()
     sys.exit(app.exec())

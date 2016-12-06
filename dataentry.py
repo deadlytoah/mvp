@@ -92,4 +92,8 @@ def debug_view_db():
 
 def debug_layout_engine():
     from dbglayout import DbgLayout
-    DbgLayout(window).show()
+    from simplelayout import SimpleLayout
+    dbglayout = DbgLayout(window)
+    dbglayout.set_text('Paul and Timothy, bondservants of Jesus Christ, To all the saints in Christ Jesus who are in Philippi, with the bishops and deacons:')
+    dbglayout.add_layout_engine(SimpleLayout())
+    dbglayout.show()
