@@ -4,6 +4,11 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from screen import toggle_screen
+from sdb import sdb
+from simplelayout import SimpleLayout
+
+TRANSLATION = 'nkjv'
+DB_EXT = '.db'
 
 window = None
 
@@ -19,31 +24,102 @@ class FlashCardForm(QtWidgets.QDialog):
         self.canvas = FlashCardCanvas()
         self.gui.setCentralWidget(self.canvas)
 
+        database = sdb.init(TRANSLATION + DB_EXT)
+        records = sdb.read(database)
+
+        if len([r for r in records if r['deleted'] == '0']) == 0:
+            self.canvas.set_empty_database()
+        else:
+            self.canvas.set_title(records[0]['key'] + ' (' + TRANSLATION.upper() + ')')
+            self.canvas.set_text(records[0]['text'])
+
         global window
         window = self
 
 class FlashCardCanvas(QtWidgets.QWidget):
     def __init__(self):
         super(FlashCardCanvas, self).__init__()
+        self.render = {
+            'lines': [],
+            'line_spacing': 20,
+            'view_rect': None
+        }
+
+        self.EMPTY_LINE = {
+            'font': QtGui.QFont('SansSerif', 12),
+            'colour': QtGui.QColor('black'),
+            'text': ''
+        }
+
+    def set_empty_database(self):
+        self.set_title('Nothing in the database yet.')
+        self.set_text('Please enter some verses first.')
+
+    def set_title(self, title):
+        title = {
+            'font': QtGui.QFont('SansSerif', 20, QtGui.QFont.Black),
+            'colour': QtGui.QColor('gray'),
+            'text': title
+        }
+
+        lines = self.render['lines']
+        if len(lines) == 0:
+            lines.append(title)
+        else:
+            lines[0] = title
+
+        if len(lines) == 1:
+            lines.append(self.EMPTY_LINE)
+        else:
+            lines[1] = self.EMPTY_LINE
+
+    def set_text(self, text):
+        lines = self.render['lines']
+        layout = SimpleLayout().layout(text)
+
+        lines = lines[0:2]
+        self.render['lines'] = lines
+        while len(lines) < 2:
+            lines.append(self.EMPTY_LINE)
+
+        font = QtGui.QFont('SansSerif', 12)
+        colour = QtGui.QColor('black')
+
+        for text in layout:
+            lines.append({
+                'font': font,
+                'colour': colour,
+                'text': text
+             })
 
     def paintEvent(self, event):
         qp = QtGui.QPainter()
         qp.begin(self)
-        self._warn_empty_database(qp, event)
-        qp.end()
 
-    def _warn_empty_database(self, qp, event):
-        title = 'Nothing in the database yet.'
-        message = 'Please enter some verses first.'
+        self.render['view_rect'] = event.rect()
 
         qp.setPen(QtGui.QColor('black'))
-        qp.setFont(QtGui.QFont('Serif', 20, QtGui.QFont.Black))
-        rect = event.rect()
-        rect.moveTop(-30)
-        qp.drawText(rect, QtCore.Qt.AlignCenter, title)
-        qp.setPen(QtGui.QColor('gray'))
-        qp.setFont(QtGui.QFont('Serif', 12))
-        qp.drawText(event.rect(), QtCore.Qt.AlignCenter, message)
+        qp.setFont(QtGui.QFont('SansSerif', 12))
+
+        lines = self.render['lines']
+        middle = len(lines) / 2
+
+        for i, line in enumerate(lines):
+            self._render_line(qp, self.render, i - middle, line)
+
+        qp.end()
+
+    def _render_line(self, qp, render, offset, line):
+        rect = render['view_rect']
+        line_spacing = render['line_spacing']
+        font = line['font']
+        colour = line['colour']
+        text = line['text']
+
+        rect.moveTop(offset * line_spacing)
+        qp.setPen(colour)
+        qp.setFont(font)
+        qp.drawText(rect, QtCore.Qt.AlignCenter, text)
 
 def enter_verses():
     """switch to the verse entry screen"""
