@@ -20,12 +20,13 @@ class FlashCardForm(QtWidgets.QDialog):
         self.gui.action_enter_verses.triggered.connect(enter_verses)
         self.gui.action_debug_inspect_database.triggered.connect(debug_view_db)
         self.gui.action_debug_layout_engine.triggered.connect(debug_layout_engine)
+        self.gui.lineedit_navigate_to.textEdited.connect(_navigate_to)
 
         self.canvas = FlashCardCanvas()
-        self.gui.setCentralWidget(self.canvas)
+        self.gui.centralWidget().layout().addWidget(self.canvas)
 
-        database = sdb.init(TRANSLATION + DB_EXT)
-        records = sdb.read(database)
+        self.database = sdb.init(TRANSLATION + DB_EXT)
+        records = sdb.read(self.database)
 
         if len([r for r in records if r['deleted'] == '0']) == 0:
             self.canvas.set_empty_database()
@@ -136,3 +137,30 @@ def debug_layout_engine():
     dbglayout.set_text('Paul and Timothy, bondservants of Jesus Christ, To all the saints in Christ Jesus who are in Philippi, with the bishops and deacons:')
     dbglayout.add_layout_engine(SimpleLayout())
     dbglayout.show()
+
+def _navigate_to():
+    dest = window.gui.lineedit_navigate_to.text()
+    split = dest.split(' ', 1)
+    book = split[0]
+    if len(split) > 1:
+        split = split[1].split(':', 1)
+        chapter = split[0].strip()
+        if len(split) > 1:
+            verse = split[1].strip()
+        else:
+            verse = ''
+    else:
+        chapter = ''
+        verse = ''
+
+    records = sdb.read(window.database)
+    matches = [r for r in records if r['key'].lower().startswith(book.lower()) if chapter == '' or r['key'].split(' ', 1)[1].split(':')[0] == chapter if verse == '' or r['key'].split(':', 1)[1] == verse]
+
+    if len(matches) > 0:
+        window.canvas.set_title(matches[0]['key'])
+        window.canvas.set_text(matches[0]['text'])
+    else:
+        window.canvas.set_title('No Matches')
+        window.canvas.set_text('Please enter a valid book abbreviation followed by chapter number.')
+
+    window.canvas.update()
