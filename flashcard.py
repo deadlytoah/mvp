@@ -155,7 +155,7 @@ def _peek():
     split = dest.split(' ', 1)
     book = split[0]
     if len(split) > 1 and len(split[1]) > 0:
-        split = split[1].split(':', 1)
+        split = split[1].replace('v', ':').split(':', 1)
         chapter = split[0]
         if len(split) > 1 and len(split[1]) > 0:
             verse = split[1]
