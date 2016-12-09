@@ -16,26 +16,38 @@ class FlashCardForm(QtWidgets.QDialog):
     """form for entering new verses"""
     def __init__(self, parent=None):
         QtWidgets.QDialog.__init__(self, parent)
+
+        global window
+        window = self
+
+        self.jump_to_dialog = uic.loadUi('jump-to.ui')
+        self.jump_to_dialog.lineedit_jump_to.textEdited.connect(_peek)
+        self.jump_to_dialog.accepted.connect(_accept_jump)
+        self.jump_to_dialog.rejected.connect(_reject_jump)
+        self.jump_to_dialog.move(0, 0)
+
         self.gui = uic.loadUi("flashcard.ui")
         self.gui.action_enter_verses.triggered.connect(enter_verses)
         self.gui.action_debug_inspect_database.triggered.connect(debug_view_db)
         self.gui.action_debug_layout_engine.triggered.connect(debug_layout_engine)
-        self.gui.lineedit_navigate_to.textEdited.connect(_navigate_to)
+        self.gui.action_jump_to.triggered.connect(_prepare_jump)
 
         self.canvas = FlashCardCanvas()
-        self.gui.centralWidget().layout().addWidget(self.canvas)
+        self.gui.setCentralWidget(self.canvas)
 
         self.database = sdb.init(TRANSLATION + DB_EXT)
         records = sdb.read(self.database)
 
         if len([r for r in records if r['deleted'] == '0']) == 0:
+            self.dispkey = None
             self.canvas.set_empty_database()
         else:
-            self.canvas.set_title(records[0]['key'] + ' (' + TRANSLATION.upper() + ')')
-            self.canvas.set_text(records[0]['text'])
+            self.dispkey = records[0]['key']
+            _display_with_key(self.dispkey)
 
-        global window
-        window = self
+        # Jump Stack is used for quickly bookmarking and switching to
+        # previous locations between input sessions
+        self.jump_stack = []
 
 class FlashCardCanvas(QtWidgets.QWidget):
     def __init__(self):
@@ -138,29 +150,60 @@ def debug_layout_engine():
     dbglayout.add_layout_engine(SimpleLayout())
     dbglayout.show()
 
-def _navigate_to():
-    dest = window.gui.lineedit_navigate_to.text()
+def _peek():
+    dest = window.jump_to_dialog.lineedit_jump_to.text()
     split = dest.split(' ', 1)
     book = split[0]
-    if len(split) > 1:
+    if len(split) > 1 and len(split[1]) > 0:
         split = split[1].split(':', 1)
-        chapter = split[0].strip()
-        if len(split) > 1:
-            verse = split[1].strip()
+        chapter = split[0]
+        if len(split) > 1 and len(split[1]) > 0:
+            verse = split[1]
         else:
-            verse = ''
+            verse = '1'
     else:
-        chapter = ''
-        verse = ''
+        chapter = '1'
+        verse = '1'
 
     records = sdb.read(window.database)
-    matches = [r for r in records if r['key'].lower().startswith(book.lower()) if chapter == '' or r['key'].split(' ', 1)[1].split(':')[0] == chapter if verse == '' or r['key'].split(':', 1)[1] == verse]
+    matches = [rec for rec in records if rec['key'].lower().startswith(book.lower()) if rec['key'].split(' ', 1)[1] == '{0}:{1}'.format(chapter, verse)]
 
     if len(matches) > 0:
-        window.canvas.set_title(matches[0]['key'])
+        window.jump_to_dialog.button_box.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(True)
+        window.dispkey = matches[0]['key']
+        window.canvas.set_title('Peeking at: ' + window.dispkey + ' (' + TRANSLATION.upper() + ') (enter – jump, esc – cancel)')
         window.canvas.set_text(matches[0]['text'])
     else:
+        window.jump_to_dialog.button_box.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(False)
+        window.dispkey = None
         window.canvas.set_title('No Matches')
         window.canvas.set_text('Please enter a valid book abbreviation followed by chapter number.')
 
     window.canvas.update()
+
+def _display_with_key(key):
+    records = sdb.read(window.database)
+    matches = [rec for rec in records if rec['key'] == key]
+    assert(len(matches) == 1)
+    match = matches[0]
+    window.canvas.set_title(match['key'] + ' (' + TRANSLATION.upper() + ')')
+    window.canvas.set_text(match['text'])
+
+def _accept_jump():
+    _ = window.jump_stack.pop()
+    assert(window.dispkey != None)
+    _display_with_key(window.dispkey)
+    window.jump_to_dialog.lineedit_jump_to.clear()
+
+def _reject_jump():
+    window.dispkey = window.jump_stack.pop()
+    assert(window.dispkey != None)
+    _display_with_key(window.dispkey)
+    window.jump_to_dialog.lineedit_jump_to.clear()
+
+def _prepare_jump():
+    if window.dispkey != None:
+        window.jump_stack.append(window.dispkey)
+        window.jump_to_dialog.show()
+    else:
+        QtWidgets.QMessageBox.warning(window, 'mvp – Jump to', 'Unable to jump right now.')
