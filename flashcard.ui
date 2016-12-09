@@ -37,7 +37,14 @@
     <addaction name="action_debug_inspect_database"/>
     <addaction name="action_debug_layout_engine"/>
    </widget>
+   <widget class="QMenu" name="menuJump">
+    <property name="title">
+     <string>Navigate</string>
+    </property>
+    <addaction name="action_jump_to"/>
+   </widget>
    <addaction name="menuTask"/>
+   <addaction name="menuJump"/>
    <addaction name="menuDebug"/>
   </widget>
   <action name="action_enter_verses">
@@ -70,6 +77,14 @@
   <action name="action_debug_layout_engine">
    <property name="text">
     <string>Layout Engine</string>
+   </property>
+  </action>
+  <action name="action_jump_to">
+   <property name="text">
+    <string>Jump to...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+G</string>
    </property>
   </action>
  </widget>
