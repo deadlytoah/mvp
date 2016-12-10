@@ -9,6 +9,7 @@ from simplelayout import SimpleLayout
 
 TRANSLATION = 'nkjv'
 DB_EXT = '.db'
+FONT_FAMILY = 'Helvetica Neue'
 
 window = None
 
@@ -52,12 +53,12 @@ class FlashCardCanvas(QtWidgets.QWidget):
         super(FlashCardCanvas, self).__init__()
         self.render = {
             'lines': [],
-            'line_spacing': 20,
+            'line_spacing': 30,
             'view_rect': None
         }
 
         self.EMPTY_LINE = {
-            'font': QtGui.QFont('SansSerif', 12),
+            'font': QtGui.QFont(FONT_FAMILY, 12),
             'colour': QtGui.QColor('black'),
             'text': ''
         }
@@ -68,7 +69,7 @@ class FlashCardCanvas(QtWidgets.QWidget):
 
     def set_title(self, title):
         title = {
-            'font': QtGui.QFont('SansSerif', 20, QtGui.QFont.Black),
+            'font': QtGui.QFont(FONT_FAMILY, 20, QtGui.QFont.Black),
             'colour': QtGui.QColor('gray'),
             'text': title
         }
@@ -93,7 +94,7 @@ class FlashCardCanvas(QtWidgets.QWidget):
         while len(lines) < 2:
             lines.append(self.EMPTY_LINE)
 
-        font = QtGui.QFont('SansSerif', 12)
+        font = QtGui.QFont(FONT_FAMILY, 18)
         colour = QtGui.QColor('black')
 
         for text in layout:
@@ -108,9 +109,6 @@ class FlashCardCanvas(QtWidgets.QWidget):
         qp.begin(self)
 
         self.render['view_rect'] = event.rect()
-
-        qp.setPen(QtGui.QColor('black'))
-        qp.setFont(QtGui.QFont('SansSerif', 12))
 
         lines = self.render['lines']
         middle = len(lines) / 2
