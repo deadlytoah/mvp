@@ -22,8 +22,7 @@ class FlashCardForm(QtWidgets.QDialog):
 
         self.jump_to_dialog = uic.loadUi('jump-to.ui')
         self.jump_to_dialog.lineedit_jump_to.textEdited.connect(_peek)
-        self.jump_to_dialog.accepted.connect(_accept_jump)
-        self.jump_to_dialog.rejected.connect(_reject_jump)
+        self.jump_to_dialog.finished.connect(_conclude_jump)
         self.jump_to_dialog.move(0, 0)
 
         self.gui = uic.loadUi("flashcard.ui")
@@ -38,16 +37,17 @@ class FlashCardForm(QtWidgets.QDialog):
         self.database = sdb.init(TRANSLATION + DB_EXT)
         records = sdb.read(self.database)
 
+        # Stack is used to help implementing input session.  The top
+        # of the stack contains the currently display flash card, and
+        # the very bottom is what we will revert to if the input
+        # session fails.
+        self.stack = []
+
         if len([r for r in records if r['deleted'] == '0']) == 0:
-            self.dispkey = None
             self.canvas.set_empty_database()
         else:
-            self.dispkey = records[0]['key']
-            _display_with_key(self.dispkey)
-
-        # Jump Stack is used for quickly bookmarking and switching to
-        # previous locations between input sessions
-        self.jump_stack = []
+            self.stack.append(records[0]['key'])
+            _display_with_key(self.stack[-1])
 
 class FlashCardCanvas(QtWidgets.QWidget):
     def __init__(self):
@@ -170,12 +170,11 @@ def _peek():
 
     if len(matches) > 0:
         window.jump_to_dialog.button_box.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(True)
-        window.dispkey = matches[0]['key']
-        window.canvas.set_title('Peeking at: ' + window.dispkey + ' (' + TRANSLATION.upper() + ') (enter – jump, esc – cancel)')
+        window.stack.append(matches[0]['key'])
+        window.canvas.set_title('Peeking at: ' + window.stack[-1] + ' (' + TRANSLATION.upper() + ') (enter – jump, esc – cancel)')
         window.canvas.set_text(matches[0]['text'])
     else:
         window.jump_to_dialog.button_box.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(False)
-        window.dispkey = None
         window.canvas.set_title('No Matches')
         window.canvas.set_text('Please enter a valid book abbreviation followed by chapter number.')
 
@@ -189,21 +188,19 @@ def _display_with_key(key):
     window.canvas.set_title(match['key'] + ' (' + TRANSLATION.upper() + ')')
     window.canvas.set_text(match['text'])
 
-def _accept_jump():
-    _ = window.jump_stack.pop()
-    assert(window.dispkey != None)
-    _display_with_key(window.dispkey)
+def _conclude_jump(result):
+    if result == QtWidgets.QDialog.Accepted:
+        key = window.stack[-1]
+    else:
+        key = window.stack[0]
+
+    window.stack = [key]
     window.jump_to_dialog.lineedit_jump_to.clear()
 
-def _reject_jump():
-    window.dispkey = window.jump_stack.pop()
-    assert(window.dispkey != None)
-    _display_with_key(window.dispkey)
-    window.jump_to_dialog.lineedit_jump_to.clear()
+    _display_with_key(key)
 
 def _prepare_jump():
-    if window.dispkey != None:
-        window.jump_stack.append(window.dispkey)
+    if len(window.stack) > 0:
         window.jump_to_dialog.show()
     else:
         QtWidgets.QMessageBox.warning(window, 'mvp – Jump to', 'Unable to jump right now.')
