@@ -78,10 +78,10 @@
    </widget>
    <widget class="QMenu" name="menuData_Entry">
     <property name="title">
-     <string>Task</string>
+     <string>Screen</string>
     </property>
-    <addaction name="actionVerse_Entry"/>
     <addaction name="action_view_flash_cards"/>
+    <addaction name="actionVerse_Entry"/>
    </widget>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
@@ -107,7 +107,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Enter Verses</string>
+    <string>Enter Bible Verses</string>
    </property>
   </action>
   <action name="action_view_flash_cards">
@@ -115,7 +115,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>View Flash Cards</string>
+    <string>Flash Card</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Return</string>
