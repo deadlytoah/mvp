@@ -20,8 +20,6 @@ def _switch_to_screen(form_index):
     form.gui.hide()
     form.gui.close()
     form.gui.deleteLater()
-    form.close()
-    form.deleteLater()
 
     form = form_types[current_form_index]()
     form.gui.show()

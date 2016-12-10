@@ -12,10 +12,9 @@ DB_EXT = '.db'
 
 window = None
 
-class DataEntryForm(QtWidgets.QDialog):
+class DataEntryForm:
     """form for entering new verses"""
-    def __init__(self, parent=None):
-        QtWidgets.QDialog.__init__(self, parent)
+    def __init__(self):
         self.gui = uic.loadUi("dataentry.ui")
         self.gui.button_enter.clicked.connect(enter_verses)
         self.gui.action_scrub.triggered.connect(menu_scrub)
@@ -93,7 +92,7 @@ def debug_view_db():
 def debug_layout_engine():
     from dbglayout import DbgLayout
     from simplelayout import SimpleLayout
-    dbglayout = DbgLayout(window)
+    dbglayout = DbgLayout(window.gui)
     dbglayout.set_text('Paul and Timothy, bondservants of Jesus Christ, To all the saints in Christ Jesus who are in Philippi, with the bishops and deacons:')
     dbglayout.add_layout_engine(SimpleLayout())
     dbglayout.show()
