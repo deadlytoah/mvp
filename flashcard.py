@@ -183,6 +183,7 @@ def _display_with_key(key):
     match = matches[0]
     window.canvas.set_title(match['key'] + ' (' + TRANSLATION.upper() + ')')
     window.canvas.set_text(match['text'])
+    window.canvas.update()
 
 def _conclude_jump(result):
     if result == QtWidgets.QDialog.Accepted:
