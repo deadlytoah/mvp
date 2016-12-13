@@ -10,6 +10,7 @@ from simplelayout import SimpleLayout
 TRANSLATION = 'nkjv'
 DB_EXT = '.db'
 FONT_FAMILY = 'Helvetica Neue'
+SENTENCE_DELIMITERS = '.:;?!'
 
 window = None
 
@@ -28,6 +29,7 @@ class FlashCardForm:
         self.gui.action_enter_verses.triggered.connect(enter_verses)
         self.gui.action_debug_inspect_database.triggered.connect(debug_view_db)
         self.gui.action_debug_layout_engine.triggered.connect(debug_layout_engine)
+        self.gui.action_debug_sentences.triggered.connect(debug_sentences)
         self.gui.action_jump_to.triggered.connect(_prepare_jump)
 
         self.canvas = FlashCardCanvas()
@@ -190,6 +192,49 @@ def _prepare_jump():
     else:
         QtWidgets.QMessageBox.warning(window, 'mvp – Jump to', 'Unable to jump right now.')
 
+def sentences_cons(records, book, chapter):
+    keyprefix = '{0} {1}:'.format(book, chapter)
+    sentences = []
+    unfinished = ''
+    verses = [rec for rec in records if rec['key'].startswith(keyprefix) if rec['deleted'] == '0']
+
+    for rec in sorted(verses, key = lambda rec: int(rec['key'].split(':', 1)[1])):
+        text = rec['text']
+        start = 0
+        indices = sorted(_find_all_delimiters(text, SENTENCE_DELIMITERS))
+
+        for j, index in enumerate(indices):
+            part = text[start:index + 1]
+            if j == 0:
+                sentences.append(unfinished + ' ' + part)
+            else:
+                sentences.append(part)
+
+            start = index + 1
+
+        if len(indices) > 0:
+            unfinished = text[indices[-1] + 1:]
+        else:
+            unfinished += ' ' + text
+
+    if len(unfinished) > 0:
+        sentences.append(unfinished)
+
+    return sentences
+
+def sentences_get_sentence(address):
+    pass
+
+def _find_all_delimiters(text, delimiters):
+    indicies = []
+    for delim in delimiters:
+        index = text.find(delim, 0)
+        while index >= 0:
+            indicies.append(index)
+            start = index
+            index = text.find(delim, start + 1)
+    return indicies
+
 def debug_view_db():
     from dbgviewdb import DbgViewDb
     DbgViewDb().gui.show()
@@ -201,3 +246,18 @@ def debug_layout_engine():
     dbglayout.set_text('Paul and Timothy, bondservants of Jesus Christ, To all the saints in Christ Jesus who are in Philippi, with the bishops and deacons:')
     dbglayout.add_layout_engine(SimpleLayout())
     dbglayout.show()
+
+def debug_sentences():
+    if len(window.stack) > 0:
+        from dbgsentences import DbgSentences
+        key = window.stack[0]
+        records = sdb.read(window.database)
+        book = key.split(' ', 1)[0]
+        chapter = key.split(' ', 1)[1].split(':', 1)[0]
+        sentences = sentences_cons(records, book, chapter)
+        info = DbgSentences()
+        info.gui.label_source.setText('Sentences constructed from: ' + ' '.join([book, chapter]))
+        info.gui.textedit_sentences.setPlainText(' - ' + '\n - '.join(sentences))
+        info.gui.show()
+    else:
+        QtWidgets.QMessageBox.warning(window.gui, 'Debug – Sentences', 'Unable to show sentences')

@@ -36,6 +36,7 @@
     </property>
     <addaction name="action_debug_inspect_database"/>
     <addaction name="action_debug_layout_engine"/>
+    <addaction name="action_debug_sentences"/>
    </widget>
    <widget class="QMenu" name="menuJump">
     <property name="title">
@@ -85,6 +86,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+G</string>
+   </property>
+  </action>
+  <action name="action_debug_sentences">
+   <property name="text">
+    <string>Sentences</string>
    </property>
   </action>
  </widget>
