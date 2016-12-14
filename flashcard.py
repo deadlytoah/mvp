@@ -222,8 +222,82 @@ def sentences_cons(records, book, chapter):
 
     return sentences
 
+def sentences_cons2(records, book, chapter):
+    sentences = []
+    lookup = []
+    keyprefix = ' '.join([book, chapter])
+    sorted_rec = sorted([rec for rec in records if rec['key'].startswith(keyprefix) if rec['deleted'] == '0'], key = lambda rec: int(rec['key'].split(':', 1)[1]))
+    verseseq = [rec['text'] for rec in sorted_rec]
+
+    # step 1 split verses into a queue of partial or whole verses.
+    indiciesseq = [sorted(_find_all_delimiters(text, SENTENCE_DELIMITERS)) for text in verseseq]
+    splitsseq = []
+    for i, text in enumerate(verseseq):
+        splitsseq.append(_split_verse(i + 1, text, indiciesseq[i]))
+
+    # flatten list of lists
+    queue = [split for splits in splitsseq for split in splits]
+
+    # step 2 process the queue to produce sentences and look up table.
+    sentence = {
+        'text': '',
+        'textseq': [],
+        'sources': []
+    }
+    for split in queue:
+        sentence['textseq'].append(split['text'])
+        sentence['sources'].append({
+            'verse': split['origin'],
+            'partid': split['partid'],
+            'iswhole': split['iswhole']
+        })
+
+        if len(lookup) < split['origin']:
+            lookup.append(len(sentences))
+
+        if split['isfinal']:
+            sentence['text'] = ' '.join(sentence['textseq'])
+            sentences.append(sentence)
+            sentence = {
+                'text': '',
+                'textseq': [],
+                'sources': []
+            }
+
+    return (sentences, lookup)
+
 def sentences_get_sentence(address):
     pass
+
+def _split_verse(verse, text, indices):
+    split = []
+    start = 0
+
+    # use of lstrip() is due to a whitespace that follows a
+    # punctuation.
+    for j, index in enumerate(indices):
+        split.append({
+            'text': text[start:index + 1].lstrip(),
+            'partid': j,
+            'origin': verse,
+            'isfinal': True,
+            'iswhole': False
+        })
+        start = index + 1
+
+    if len(text[start:]) > 0:
+        split.append({
+            'text': text[start:].lstrip(),
+            'partid': len(split),
+            'origin': verse,
+            'isfinal': False,
+            'iswhole': False
+        })
+
+    if len(split) == 1:
+        split[0]['iswhole'] = True
+
+    return split
 
 def _find_all_delimiters(text, delimiters):
     indicies = []
@@ -254,10 +328,31 @@ def debug_sentences():
         records = sdb.read(window.database)
         book = key.split(' ', 1)[0]
         chapter = key.split(' ', 1)[1].split(':', 1)[0]
-        sentences = sentences_cons(records, book, chapter)
+        (sentences, lookup) = sentences_cons2(records, book, chapter)
         info = DbgSentences()
         info.gui.label_source.setText('Sentences constructed from: ' + ' '.join([book, chapter]))
-        info.gui.textedit_sentences.setPlainText(' - ' + '\n - '.join(sentences))
+
+        sentencesstr = ''
+        for sentence in sentences:
+            sentencesstr += ' - '
+            sources = sentence['sources']
+
+            srclist = []
+            for source in sources:
+                if source['iswhole']:
+                    srclist.append(str(source['verse']))
+                else:
+                    srclist.append(str(source['verse']) + chr(ord('a') + source['partid']))
+            sentencesstr += ', '.join(srclist)
+
+            sentencesstr += ': ' + sentence['text'] + '\n'
+        info.gui.textedit_sentences.setPlainText(sentencesstr)
+
+        lookupstr = ''
+        for i, sentid in enumerate(lookup):
+            lookupstr += 'Verse {0}: {1}\n'.format(1 + i, sentences[sentid]['text'])
+        info.gui.textedit_lookup.setPlainText(lookupstr)
+
         info.gui.show()
     else:
         QtWidgets.QMessageBox.warning(window.gui, 'Debug – Sentences', 'Unable to show sentences')
