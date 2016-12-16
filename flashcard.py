@@ -70,6 +70,9 @@ class FlashCardCanvas(QtWidgets.QWidget):
         self.set_text('Please enter some verses first.')
 
     def set_title(self, title):
+        # accessor
+        self.title = title
+
         title = {
             'font': QtGui.QFont(FONT_FAMILY, 20, QtGui.QFont.Black),
             'colour': QtGui.QColor('gray'),
@@ -139,7 +142,7 @@ def enter_verses():
 def _peek():
     dest = window.jump_to_dialog.lineedit_jump_to.text()
     split = dest.split(' ', 1)
-    book = split[0]
+    book_partial_input = split[0]
     if len(split) > 1 and len(split[1]) > 0:
         split = split[1].replace('v', ':').split(':', 1)
         chapter = split[0]
@@ -152,13 +155,14 @@ def _peek():
         verse = '1'
 
     records = sdb.read(window.database)
-    matches = [rec for rec in records if rec['key'].lower().startswith(book.lower()) if rec['key'].split(' ', 1)[1] == '{0}:{1}'.format(chapter, verse)]
+    matches = [rec for rec in records if rec['key'].lower().startswith(book_partial_input.lower()) if rec['key'].split(' ', 1)[1] == '{0}:{1}'.format(chapter, verse)]
 
     if len(matches) > 0:
         window.jump_to_dialog.button_box.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(True)
         window.stack.append(matches[0]['key'])
-        window.canvas.set_title('Peeking at: ' + window.stack[-1] + ' (' + TRANSLATION.upper() + ') (enter – jump, esc – cancel)')
-        window.canvas.set_text(matches[0]['text'])
+
+        _display_with_key(window.stack[-1])
+        window.canvas.set_title('Peeking at: {0} (enter – jump, esc – cancel)'.format(window.canvas.title))
     else:
         window.jump_to_dialog.button_box.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(False)
         window.canvas.set_title('No Matches')
@@ -167,12 +171,17 @@ def _peek():
     window.canvas.update()
 
 def _display_with_key(key):
+    book = key.split(' ', 1)[0]
+    chapter = key.split(' ', 1)[1].split(':', 1)[0]
+    verseno = key.split(':', 1)[1]
+
     records = sdb.read(window.database)
-    matches = [rec for rec in records if rec['key'] == key]
-    assert(len(matches) == 1)
-    match = matches[0]
-    window.canvas.set_title(match['key'] + ' (' + TRANSLATION.upper() + ')')
-    window.canvas.set_text(match['text'])
+    sentences, lookup = sentences_cons2(records, book, chapter)
+    sentence = sentences_find_by_verseno(sentences, lookup, verseno)
+    label = sentence_make_label(sentence, book, chapter)
+
+    window.canvas.set_title(label + ' (' + TRANSLATION.upper() + ')')
+    window.canvas.set_text(sentence['text'])
     window.canvas.update()
 
 def _conclude_jump(result):
@@ -266,8 +275,20 @@ def sentences_cons2(records, book, chapter):
 
     return (sentences, lookup)
 
-def sentences_get_sentence(address):
-    pass
+def sentences_find_by_verseno(sentences, lookup, verseno):
+    i = int(verseno) - 1
+    sentid = lookup[i]
+    return sentences[sentid]
+
+def sentence_make_label(sentence, book, chapter):
+    srclist = []
+    sources = sentence['sources']
+    for source in sources:
+        if source['iswhole']:
+            srclist.append(str(source['verse']))
+        else:
+            srclist.append(str(source['verse']) + chr(ord('a') + source['partid']))
+    return book + ' ' + chapter + ':' + ', '.join(srclist)
 
 def _split_verse(verse, text, indices):
     split = []
@@ -334,18 +355,7 @@ def debug_sentences():
 
         sentencesstr = ''
         for sentence in sentences:
-            sentencesstr += ' - '
-            sources = sentence['sources']
-
-            srclist = []
-            for source in sources:
-                if source['iswhole']:
-                    srclist.append(str(source['verse']))
-                else:
-                    srclist.append(str(source['verse']) + chr(ord('a') + source['partid']))
-            sentencesstr += ', '.join(srclist)
-
-            sentencesstr += ': ' + sentence['text'] + '\n'
+            sentencesstr += ' - ' + sentence_make_label(sentence, book, chapter) + ': ' + sentence['text'] + '\n'
         info.gui.textedit_sentences.setPlainText(sentencesstr)
 
         lookupstr = ''
