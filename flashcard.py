@@ -134,18 +134,6 @@ def enter_verses():
     """switch to the verse entry screen"""
     toggle_screen()
 
-def debug_view_db():
-    from dbgviewdb import DbgViewDb
-    DbgViewDb().gui.show()
-
-def debug_layout_engine():
-    from dbglayout import DbgLayout
-    from simplelayout import SimpleLayout
-    dbglayout = DbgLayout(window.gui)
-    dbglayout.set_text('Paul and Timothy, bondservants of Jesus Christ, To all the saints in Christ Jesus who are in Philippi, with the bishops and deacons:')
-    dbglayout.add_layout_engine(SimpleLayout())
-    dbglayout.show()
-
 def _peek():
     dest = window.jump_to_dialog.lineedit_jump_to.text()
     split = dest.split(' ', 1)
@@ -201,3 +189,15 @@ def _prepare_jump():
         window.jump_to_dialog.show()
     else:
         QtWidgets.QMessageBox.warning(window, 'mvp – Jump to', 'Unable to jump right now.')
+
+def debug_view_db():
+    from dbgviewdb import DbgViewDb
+    DbgViewDb().gui.show()
+
+def debug_layout_engine():
+    from dbglayout import DbgLayout
+    from simplelayout import SimpleLayout
+    dbglayout = DbgLayout(window.gui)
+    dbglayout.set_text('Paul and Timothy, bondservants of Jesus Christ, To all the saints in Christ Jesus who are in Philippi, with the bishops and deacons:')
+    dbglayout.add_layout_engine(SimpleLayout())
+    dbglayout.show()
