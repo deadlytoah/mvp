@@ -337,9 +337,11 @@ def debug_view_db():
 def debug_layout_engine():
     from dbglayout import DbgLayout
     from simplelayout import SimpleLayout
+    from graphlayout import GraphLayout
     dbglayout = DbgLayout(window.gui)
     dbglayout.set_text('Paul and Timothy, bondservants of Jesus Christ, To all the saints in Christ Jesus who are in Philippi, with the bishops and deacons:')
     dbglayout.add_layout_engine(SimpleLayout())
+    dbglayout.add_layout_engine(GraphLayout())
     dbglayout.show()
 
 def debug_sentences():
