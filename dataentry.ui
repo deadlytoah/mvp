@@ -89,6 +89,7 @@
     </property>
     <addaction name="action_debug_inspect_database"/>
     <addaction name="action_debug_layout_engine"/>
+    <addaction name="action_display_graph"/>
    </widget>
    <addaction name="menuData_Entry"/>
    <addaction name="menuVerses"/>
@@ -129,6 +130,11 @@
   <action name="action_debug_layout_engine">
    <property name="text">
     <string>Layout Engine</string>
+   </property>
+  </action>
+  <action name="action_display_graph">
+   <property name="text">
+    <string>Display Graph</string>
    </property>
   </action>
  </widget>

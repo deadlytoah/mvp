@@ -37,6 +37,7 @@
     <addaction name="action_debug_inspect_database"/>
     <addaction name="action_debug_layout_engine"/>
     <addaction name="action_debug_sentences"/>
+    <addaction name="action_display_graph"/>
    </widget>
    <widget class="QMenu" name="menuJump">
     <property name="title">
@@ -91,6 +92,11 @@
   <action name="action_debug_sentences">
    <property name="text">
     <string>Sentences</string>
+   </property>
+  </action>
+  <action name="action_display_graph">
+   <property name="text">
+    <string>Display Graph</string>
    </property>
   </action>
  </widget>

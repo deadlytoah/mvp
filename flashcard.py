@@ -30,6 +30,7 @@ class FlashCardForm:
         self.gui.action_debug_inspect_database.triggered.connect(debug_view_db)
         self.gui.action_debug_layout_engine.triggered.connect(debug_layout_engine)
         self.gui.action_debug_sentences.triggered.connect(debug_sentences)
+        self.gui.action_display_graph.triggered.connect(debug_display_graph)
         self.gui.action_jump_to.triggered.connect(_prepare_jump)
 
         self.canvas = FlashCardCanvas()
@@ -368,3 +369,9 @@ def debug_sentences():
         info.gui.show()
     else:
         QtWidgets.QMessageBox.warning(window.gui, 'Debug – Sentences', 'Unable to show sentences')
+
+def debug_display_graph():
+    from dbggraph import DbgGraph
+    dbggraph = DbgGraph()
+    dbggraph.set_text('Paul and Timothy, bondservants of Jesus Christ, To all the saints in Christ Jesus who are in Philippi, with the bishops and deacons:')
+    dbggraph.gui.show()

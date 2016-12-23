@@ -48,6 +48,9 @@ class GraphLayout:
             if graph.node[node]['level'] == len(queue):
                 graph.add_edge(node, endnodeid)
 
+        self.graph = graph
+        self.maxlevel = len(queue) + 2
+
         for word in queue:
             line.append(word)
             if len(line) >= MAX_WORD_PER_LINE:

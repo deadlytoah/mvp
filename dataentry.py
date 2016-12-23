@@ -21,6 +21,7 @@ class DataEntryForm:
         self.gui.action_view_flash_cards.triggered.connect(view_flash_cards)
         self.gui.action_debug_inspect_database.triggered.connect(debug_view_db)
         self.gui.action_debug_layout_engine.triggered.connect(debug_layout_engine)
+        self.gui.action_display_graph.triggered.connect(debug_display_graph)
 
         global window
         window = self
@@ -98,3 +99,9 @@ def debug_layout_engine():
     dbglayout.add_layout_engine(SimpleLayout())
     dbglayout.add_layout_engine(GraphLayout())
     dbglayout.show()
+
+def debug_display_graph():
+    from dbggraph import DbgGraph
+    dbggraph = DbgGraph()
+    dbggraph.set_text('Paul and Timothy, bondservants of Jesus Christ, To all the saints in Christ Jesus who are in Philippi, with the bishops and deacons:')
+    dbggraph.gui.show()
