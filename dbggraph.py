@@ -47,6 +47,11 @@ class GraphCanvas(QtWidgets.QWidget):
         self.graph = self.engine.graph
         self.maxlevel = self.engine.maxlevel
 
+        highway = {
+            'y': 300,
+            'height': 50
+        }
+
         cumwidth = 0
         lanes = []
         for level in range(0, self.maxlevel):
@@ -76,8 +81,13 @@ class GraphCanvas(QtWidgets.QWidget):
                 node['rectsize'] = QtCore.QSize(textsize.width() + PADDING * 2 + 1, textsize.height() + PADDING * 2 + 1)
                 node['width'] = node['rectsize'].width()
                 node['height'] = node['rectsize'].height()
-                node['y'] = MARGIN['y'] * (i + 1) + cumheight
-                cumheight += node['height']
+                node['y'] = MARGIN['y'] + cumheight
+                cumheight += MARGIN['y'] + node['height']
+
+                if highway['y'] <= node['y'] <= highway['y'] + highway['height'] or \
+                   highway['y'] <= node['y'] + node['height'] <= highway['y'] + highway['height']:
+                    node['y'] = highway['y'] + highway['height']
+                    cumheight = node['y'] + node['height']
 
                 lane['nodes'].append(node)
 
