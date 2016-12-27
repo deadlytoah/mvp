@@ -37,7 +37,7 @@ class GraphCanvas(QtWidgets.QWidget):
         self.text = None
         self.engine = GraphLayout()
         self.graph = None
-        self.laneview = None
+        self.graphview = None
 
     def set_text(self, text):
         self.text = text
@@ -89,6 +89,20 @@ class GraphCanvas(QtWidgets.QWidget):
                     node['y'] = highway['y'] + highway['height']
                     cumheight = node['y'] + node['height']
 
+                node['sockets'] = {
+                    'west': QtCore.QPoint(lane['x'] - 1,
+                                          node['y'] + node['height'] / 2),
+                    'east': QtCore.QPoint(lane['x'] + node['width'] + 1,
+                                          node['y'] + node['height'] / 2)
+                }
+
+                node['successors'] = {
+                    'near': [s for s in self.graph.successors(node['id'])
+                             if self.graph.node[s]['level'] == level + 1],
+                    'far': [s for s in self.graph.successors(node['id'])
+                            if self.graph.node[s]['level'] > level + 1]
+                }
+
                 lane['nodes'].append(node)
 
             lane['width'] = max([node['width'] for node in lane['nodes']])
@@ -98,8 +112,23 @@ class GraphCanvas(QtWidgets.QWidget):
         lanes[0]['color'] = QtGui.QColor('red')
         lanes[-1]['color'] = QtGui.QColor('red')
 
-        self.laneview = {
-            'lanes': lanes
+        conns = []
+        for i, lane in enumerate(lanes):
+            for node in lane['nodes']:
+                for successor in node['successors']['near']:
+                    nextlane = lanes[i + 1]
+                    successor = [node for node in nextlane['nodes']
+                                 if node['id'] == successor][0]
+                    start = node['sockets']['east']
+                    end = successor['sockets']['west']
+                    c1 = QtCore.QPoint((end.x() + start.x()) / 2,
+                                       start.y())
+                    c2 = QtCore.QPoint(c1.x(), end.y())
+                    conns.append([start, c1, c2, end])
+
+        self.graphview = {
+            'lanes': lanes,
+            'conns': conns
         }
 
         self.update()
@@ -109,8 +138,8 @@ class GraphCanvas(QtWidgets.QWidget):
         qp.begin(self)
         qp.setRenderHint(QtGui.QPainter.Antialiasing)
 
-        if self.laneview != None:
-            for lane in self.laneview['lanes']:
+        if self.graphview != None:
+            for lane in self.graphview['lanes']:
                 x = lane['x']
                 color = lane['color']
                 fillcolor = lane['fillcolor']
@@ -125,6 +154,19 @@ class GraphCanvas(QtWidgets.QWidget):
                         self._expand_horizontally()
                     while rect.y() + rect.height() > self.minimumHeight():
                         self._expand_vertically()
+
+            pen = QtGui.QPen(QtGui.QColor('dark gray'), 1)
+            qp.setPen(pen)
+
+            for conn in self.graphview['conns']:
+                qpp = QtGui.QPainterPath(conn[0])
+                qpp.cubicTo(conn[1], conn[2], conn[3])
+                qp.drawPath(qpp)
+
+                qpp = QtGui.QPainterPath(conn[3])
+                qpp.lineTo(conn[3].x() - 6, conn[3].y() - 5)
+                qpp.lineTo(conn[3].x() - 6, conn[3].y() + 5)
+                qp.fillPath(qpp, QtGui.QColor('black'))
 
         qp.end()
 
