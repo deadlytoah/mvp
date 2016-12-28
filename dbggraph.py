@@ -121,9 +121,8 @@ class GraphCanvas(QtWidgets.QWidget):
                                  if node['id'] == successor][0]
                     start = node['sockets']['east']
                     end = successor['sockets']['west']
-                    c1 = QtCore.QPoint((end.x() + start.x()) / 2,
-                                       start.y())
-                    c2 = QtCore.QPoint(c1.x(), end.y())
+                    c1 = QtCore.QPoint(nextlane['x'], start.y())
+                    c2 = QtCore.QPoint(lane['x'] + lane['width'], end.y())
                     conns.append([start, c1, c2, end])
 
         self.graphview = {
