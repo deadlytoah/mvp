@@ -3,6 +3,7 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5 import uic
+from key import Key
 from screen import toggle_screen
 from sdb import sdb
 from simplelayout import SimpleLayout
@@ -47,7 +48,7 @@ class FlashCardForm:
         if len([r for r in records if r['deleted'] == '0']) == 0:
             self.canvas.set_empty_database()
         else:
-            self.stack.append(records[0]['key'])
+            self.stack.append(Key.from_str(records[0]['key']))
             _display_with_key(self.stack[-1])
 
 class FlashCardCanvas(QtWidgets.QWidget):
@@ -141,25 +142,24 @@ def enter_verses():
 
 def _peek():
     dest = window.jump_to_dialog.lineedit_jump_to.text()
-    split = dest.split(' ', 1)
-    book_partial_input = split[0]
-    if len(split) > 1 and len(split[1]) > 0:
-        split = split[1].replace('v', ':').split(':', 1)
-        chapter = split[0]
-        if len(split) > 1 and len(split[1]) > 0:
-            verse = split[1]
-        else:
-            verse = '1'
-    else:
-        chapter = '1'
-        verse = '1'
+    key = Key.from_str(dest)
+    if key.chapter == None:
+        key.chapter = '1'
+    if key.verse == None:
+        key.verse = '1'
 
     records = sdb.read(window.database)
-    matches = [rec for rec in records if rec['key'].lower().startswith(book_partial_input.lower()) if rec['key'].split(' ', 1)[1] == '{0}:{1}'.format(chapter, verse)]
+    matches = []
+    for rec in records:
+        reckey = Key.from_str(rec['key'])
+        if reckey.book.lower().startswith(key.book.lower()) and \
+           reckey.chapter == key.chapter and \
+           reckey.verse == key.verse:
+            matches.append(reckey)
 
     if len(matches) > 0:
         window.jump_to_dialog.button_box.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(True)
-        window.stack.append(matches[0]['key'])
+        window.stack.append(matches[0])
 
         _display_with_key(window.stack[-1])
         window.canvas.set_title('Peeking at: {0} (enter – jump, esc – cancel)'.format(window.canvas.title))
@@ -171,14 +171,10 @@ def _peek():
     window.canvas.update()
 
 def _display_with_key(key):
-    book = key.split(' ', 1)[0]
-    chapter = key.split(' ', 1)[1].split(':', 1)[0]
-    verseno = key.split(':', 1)[1]
-
     records = sdb.read(window.database)
-    sentences, lookup = sentences_cons2(records, book, chapter)
-    sentence = sentences_find_by_verseno(sentences, lookup, verseno)
-    label = sentence_make_label(sentence, book, chapter)
+    sentences, lookup = sentences_cons2(records, key.book, key.chapter)
+    sentence = sentences_find_by_verseno(sentences, lookup, key.verse)
+    label = sentence_make_label(sentence, key.book, key.chapter)
 
     window.canvas.set_title(label + ' (' + TRANSLATION.upper() + ')')
     window.canvas.set_text(sentence['text'])
@@ -235,8 +231,21 @@ def sentences_cons2(records, book, chapter):
     sentences = []
     lookup = []
     keyprefix = ' '.join([book, chapter])
-    sorted_rec = sorted([rec for rec in records if rec['key'].startswith(keyprefix) if rec['deleted'] == '0'], key = lambda rec: int(rec['key'].split(':', 1)[1]))
-    verseseq = [rec['text'] for rec in sorted_rec]
+
+    matches = []
+    for rec in records:
+        key = Key.from_str(rec['key'])
+        if key.book == book and \
+           key.chapter == chapter and \
+           rec['deleted'] == '0':
+            matches.append({
+                'key': key,
+                'record': rec
+            })
+
+    verseseq = [match['record']['text']
+                for match in sorted(matches,
+                                    key=lambda m: int(m['key'].verse))]
 
     # step 1 split verses into a queue of partial or whole verses.
     indiciesseq = [sorted(_find_all_delimiters(text, SENTENCE_DELIMITERS)) for text in verseseq]
@@ -347,15 +356,16 @@ def debug_sentences():
         from dbgsentences import DbgSentences
         key = window.stack[0]
         records = sdb.read(window.database)
-        book = key.split(' ', 1)[0]
-        chapter = key.split(' ', 1)[1].split(':', 1)[0]
-        (sentences, lookup) = sentences_cons2(records, book, chapter)
+        (sentences, lookup) = sentences_cons2(records, key.book, key.chapter)
         info = DbgSentences()
-        info.gui.label_source.setText('Sentences constructed from: ' + ' '.join([book, chapter]))
+        info.gui.label_source.setText('Sentences constructed from: '
+                                      + ' '.join([key.book, key.chapter]))
 
         sentencesstr = ''
         for sentence in sentences:
-            sentencesstr += ' - ' + sentence_make_label(sentence, book, chapter) + ': ' + sentence['text'] + '\n'
+            sentencesstr += ' - ' \
+                + sentence_make_label(sentence, key.book, key.chapter) \
+                + ': ' + sentence['text'] + '\n'
         info.gui.textedit_sentences.setPlainText(sentencesstr)
 
         lookupstr = ''
