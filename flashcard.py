@@ -372,6 +372,23 @@ def debug_sentences():
 
 def debug_display_graph():
     from dbggraph import DbgGraph
-    dbggraph = DbgGraph()
-    dbggraph.set_text('Paul and Timothy, bondservants of Jesus Christ, To all the saints in Christ Jesus who are in Philippi, with the bishops and deacons:')
-    dbggraph.gui.show()
+
+    if len(window.stack) > 0:
+        key = window.stack[0]
+        book = key.split(' ', 1)[0]
+        chapter = key.split(' ', 1)[1].split(':', 1)[0]
+        verseno = key.split(':', 1)[1]
+
+        records = sdb.read(window.database)
+        sentences, lookup = sentences_cons2(records, book, chapter)
+        sentence = sentences_find_by_verseno(sentences, lookup, verseno)
+
+        text = sentence['text']
+
+        dbggraph = DbgGraph()
+        dbggraph.set_text(text)
+        dbggraph.gui.show()
+    else:
+        QtWidgets.QMessageBox.warning(window.gui,
+                                      'Debug – Display Graph',
+                                      'Unable to display graph')
