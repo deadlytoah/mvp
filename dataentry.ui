@@ -129,7 +129,7 @@
   </action>
   <action name="action_debug_layout_engine">
    <property name="text">
-    <string>Layout Engine</string>
+    <string>Layout Engines</string>
    </property>
   </action>
   <action name="action_display_graph">

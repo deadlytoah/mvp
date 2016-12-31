@@ -59,8 +59,6 @@ class GraphCanvas(QtWidgets.QWidget):
         for level in range(0, self.maxlevel):
             lanes.append({
                 'nodes': [],
-                'color': QtGui.QColor('black'),
-                'fillcolor': QtGui.QColor('white'),
                 'width': 250,
                 'x': level * 250
             })
@@ -84,8 +82,21 @@ class GraphCanvas(QtWidgets.QWidget):
                 node['width'] = node['rectsize'].width()
                 node['height'] = node['rectsize'].height()
                 node['y'] = MARGIN['y'] + cumheight
+
+                # Nodes that are selected by the algorithm are
+                # highlighted.
+                if nodeid in self.engine.shortest_path:
+                    node['color'] = QtGui.QColor('red')
+                    node['fillcolor'] = QtGui.QColor('white')
+                    node['selected'] = True
+                else:
+                    node['color'] = QtGui.QColor('black')
+                    node['fillcolor'] = QtGui.QColor('white')
+                    node['selected'] = False
+
                 cumheight += MARGIN['y'] + node['height']
 
+                # Leave a room between some nodes for the highway.
                 if highway['y'] <= node['y'] <= highway['y'] + highway['height'] or \
                    highway['y'] <= node['y'] + node['height'] <= highway['y'] + highway['height']:
                     node['y'] = highway['y'] + highway['height']
@@ -110,10 +121,8 @@ class GraphCanvas(QtWidgets.QWidget):
             lane['width'] = max([node['width'] for node in lane['nodes']])
             cumwidth += lane['width']
 
-        # distinct colours for START and END nodes
-        lanes[0]['color'] = QtGui.QColor('red')
-        lanes[-1]['color'] = QtGui.QColor('red')
-
+        # Collect all necessary information for rendering the
+        # edges.
         conns = []
         for level, lane in enumerate(lanes):
             for node in lane['nodes']:
@@ -121,31 +130,40 @@ class GraphCanvas(QtWidgets.QWidget):
                     nextlane = lanes[level + 1]
                     successor = [node for node in nextlane['nodes']
                                  if node['id'] == successor][0]
+                    selected = node['selected'] and successor['selected']
                     conns.append({
                         'lanes': (lane, nextlane),
                         'sockets': (node['sockets']['east'],
                                     successor['sockets']['west']),
-                        'arrow': True
+                        'arrow': True,
+                        'selected': selected
                     })
 
                 for successorid in node['successors']['far']:
                     successor = self.graph.node[successorid]
-                    destsocket = [nodevm['sockets']['west']
+                    destnodevm = [nodevm
                         for nodevm in lanes[successor['level']]['nodes']
                         if nodevm['id'] == successorid][0]
-                    
+                    destsocket = destnodevm['sockets']['west']
+                    selected = node['selected'] and destnodevm['selected']
+
                     payload = {
                         'srcsocket': node['sockets']['east'],
                         'srclevel': level,
                         'destsocket': destsocket,
-                        'destlevel': successor['level']
+                        'destlevel': successor['level'],
+                        'selected': selected
                     }
                     highway['payloads'].append(payload)
 
         highway['begin'] = cumwidth
         highway['end'] = 0
+        highway['selected'] = []
 
         for payload in highway['payloads']:
+            # selected sections of the highway are highlighted.
+            selected = [0, 0]
+
             # onlamps
             lane = lanes[payload['srclevel']]
             nextlane = lanes[payload['srclevel'] + 1]
@@ -153,10 +171,13 @@ class GraphCanvas(QtWidgets.QWidget):
                 'lanes': (lane, nextlane),
                 'sockets': (payload['srcsocket'],
                             QtCore.QPoint(nextlane['x'], highway['middle'])),
-                'arrow': False
+                'arrow': False,
+                'selected': payload['selected']
             }
             conns.append(conn)
             highway['begin'] = min(highway['begin'], conn['sockets'][1].x())
+            if payload['selected']:
+                selected[0] = conn['sockets'][1].x()
 
             # offlamps
             lane = lanes[payload['destlevel']]
@@ -166,10 +187,21 @@ class GraphCanvas(QtWidgets.QWidget):
                 'sockets': (QtCore.QPoint(prevlane['x'] + prevlane['width'],
                                           highway['middle']),
                             payload['destsocket']),
-                'arrow': True
+                'arrow': True,
+                'selected': payload['selected']
             }
             conns.append(conn)
             highway['end'] = max(highway['end'], conn['sockets'][0].x())
+            if payload['selected']:
+                selected[1] = conn['sockets'][0].x()
+
+            highway['selected'].append(selected)
+
+        # Priority connections are painted over the normal ones.
+        # These are the connections that are highlighted because they
+        # are selected by the algorithm.
+        priority = []
+        normal = []
 
         # produce Bezier control points from the connection parameters
         for conn in conns:
@@ -181,9 +213,17 @@ class GraphCanvas(QtWidgets.QWidget):
                                end.y())
             conn['points'] = [start, c1, c2, end]
 
+            if conn['selected']:
+                conn['color'] = QtGui.QColor('red')
+                priority.append(conn)
+            else:
+                conn['color'] = QtGui.QColor('lightgray')
+                normal.append(conn)
+
+        # The graph view, ready to be painted...
         self.graphview = {
             'lanes': lanes,
-            'conns': conns,
+            'conns': normal + priority,
             'highway': highway
         }
 
@@ -197,12 +237,12 @@ class GraphCanvas(QtWidgets.QWidget):
         if self.graphview != None:
             for lane in self.graphview['lanes']:
                 x = lane['x']
-                color = lane['color']
-                fillcolor = lane['fillcolor']
                 for node in lane['nodes']:
                     y = node['y']
                     size = node['rectsize']
                     rect = QtCore.QRectF(x, y, size.width(), size.height())
+                    color = node['color']
+                    fillcolor = node['fillcolor']
 
                     _draw_node(qp, rect, color, fillcolor, node['lines'])
 
@@ -211,10 +251,16 @@ class GraphCanvas(QtWidgets.QWidget):
                     while rect.y() + rect.height() > self.minimumHeight():
                         self._expand_vertically()
 
-            pen = QtGui.QPen(QtGui.QColor('dark gray'), 1)
-            qp.setPen(pen)
+            highway = self.graphview['highway']
+            qp.setPen(QtGui.QPen(QtGui.QColor('lightgray'), 1.5))
+            qp.drawLine(highway['begin'],
+                        highway['middle'],
+                        highway['end'],
+                        highway['middle'])
 
             for conn in self.graphview['conns']:
+                qp.setPen(QtGui.QPen(conn['color'], 1))
+
                 points = conn['points']
 
                 qpp = QtGui.QPainterPath(points[0])
@@ -225,14 +271,14 @@ class GraphCanvas(QtWidgets.QWidget):
                     qpp = QtGui.QPainterPath(points[3])
                     qpp.lineTo(points[3].x() - 6, points[3].y() - 5)
                     qpp.lineTo(points[3].x() - 6, points[3].y() + 5)
-                    qp.fillPath(qpp, QtGui.QColor('black'))
+                    qp.fillPath(qpp, conn['color'])
 
-            highway = self.graphview['highway']
-            qp.setPen(QtGui.QPen(QtGui.QColor('dark gray'), 1.5))
-            qp.drawLine(highway['begin'],
-                        highway['middle'],
-                        highway['end'],
-                        highway['middle'])
+            qp.setPen(QtGui.QPen(QtGui.QColor('red'), 1))
+            for selected in highway['selected']:
+                qp.drawLine(selected[0],
+                            highway['middle'],
+                            selected[1],
+                            highway['middle'])
 
         qp.end()
 

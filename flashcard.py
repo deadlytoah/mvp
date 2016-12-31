@@ -6,7 +6,7 @@ from PyQt5 import uic
 from key import Key
 from screen import toggle_screen
 from sdb import sdb
-from simplelayout import SimpleLayout
+from graphlayout import GraphLayout
 
 TRANSLATION = 'nkjv'
 DB_EXT = '.db'
@@ -34,7 +34,7 @@ class FlashCardForm:
         self.gui.action_display_graph.triggered.connect(debug_display_graph)
         self.gui.action_jump_to.triggered.connect(_prepare_jump)
 
-        self.canvas = FlashCardCanvas()
+        self.canvas = FlashCardCanvas(GraphLayout())
         self.gui.setCentralWidget(self.canvas)
 
         self.database = sdb.init(TRANSLATION + DB_EXT)
@@ -53,13 +53,15 @@ class FlashCardForm:
             _display_with_key(self.stack[-1])
 
 class FlashCardCanvas(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self, layout_engine):
         super(FlashCardCanvas, self).__init__()
         self.render = {
             'lines': [],
             'line_spacing': 30,
             'view_rect': None
         }
+
+        self.engine = layout_engine
 
         self.EMPTY_LINE = {
             'font': QtGui.QFont(FONT_FAMILY, 12),
@@ -93,16 +95,17 @@ class FlashCardCanvas(QtWidgets.QWidget):
             lines[1] = self.EMPTY_LINE
 
     def set_text(self, text):
-        lines = self.render['lines']
-        layout = SimpleLayout().layout(text)
-
-        lines = lines[0:2]
+        # remove everything except for the title
+        lines = self.render['lines'][0:2]
         self.render['lines'] = lines
+
         while len(lines) < 2:
             lines.append(self.EMPTY_LINE)
 
         font = QtGui.QFont(FONT_FAMILY, 18)
         colour = QtGui.QColor('black')
+
+        layout = self.engine.layout(text)
 
         for text in layout:
             lines.append({
@@ -345,14 +348,28 @@ def debug_view_db():
     DbgViewDb().gui.show()
 
 def debug_layout_engine():
-    from dbglayout import DbgLayout
-    from simplelayout import SimpleLayout
-    from graphlayout import GraphLayout
-    dbglayout = DbgLayout(window.gui)
-    dbglayout.set_text('Paul and Timothy, bondservants of Jesus Christ, To all the saints in Christ Jesus who are in Philippi, with the bishops and deacons:')
-    dbglayout.add_layout_engine(SimpleLayout())
-    dbglayout.add_layout_engine(GraphLayout())
-    dbglayout.show()
+    if len(window.stack) > 0:
+        from dbglayout import DbgLayout
+        from simplelayout import SimpleLayout
+        from graphlayout import GraphLayout
+
+        key = window.stack[0]
+
+        records = sdb.read(window.database)
+        sentences, lookup = sentences_cons2(records, key.book, key.chapter)
+        sentence = sentences_find_by_verseno(sentences, lookup, key.verse)
+
+        text = sentence['text']
+
+        dbglayout = DbgLayout(window.gui)
+        dbglayout.set_text(text)
+        dbglayout.add_layout_engine(SimpleLayout())
+        dbglayout.add_layout_engine(GraphLayout())
+        dbglayout.show()
+    else:
+        QtWidgets.QMessageBox.warning(window.gui,
+                                      'Debug – Layout Engines',
+                                      'Unable to draw layouts')
 
 def debug_sentences():
     if len(window.stack) > 0:
