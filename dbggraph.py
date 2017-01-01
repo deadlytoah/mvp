@@ -70,6 +70,7 @@ class GraphCanvas(QtWidgets.QWidget):
             for i, nodeid in enumerate([nodeid for nodeid in self.graph.nodes() if self.graph.node[nodeid]['level'] == level]):
                 node = {
                     'id': nodeid,
+                    'font': self.font(),
                     'text': self.graph.node[nodeid]['text']
                 }
                 node['lines'] = self._layout_text(node['text'])
@@ -108,6 +109,15 @@ class GraphCanvas(QtWidgets.QWidget):
                     'east': QtCore.QPoint(lane['x'] + node['width'] + 1,
                                           node['y'] + node['height'] / 2)
                 }
+
+                costfont = QtGui.QFont(self.font())
+                costfont.setPointSize(9)
+                socketeast = node['sockets']['east']
+                node['cost'] = self.graph.node[nodeid]['cost']
+                node['costcolor'] = QtGui.QColor('gray')
+                node['costfont'] = costfont
+                node['costpoint'] = QtCore.QPoint(socketeast.x() + 1,
+                                                  socketeast.y() - 1)
 
                 node['successors'] = {
                     'near': [s for s in self.graph.successors(node['id'])
@@ -241,10 +251,16 @@ class GraphCanvas(QtWidgets.QWidget):
                     y = node['y']
                     size = node['rectsize']
                     rect = QtCore.QRectF(x, y, size.width(), size.height())
+                    font = node['font']
                     color = node['color']
                     fillcolor = node['fillcolor']
 
-                    _draw_node(qp, rect, color, fillcolor, node['lines'])
+                    _draw_node(qp, rect, font, color, fillcolor, node['lines'])
+                    _draw_cost(qp,
+                               node['costpoint'],
+                               node['costfont'],
+                               node['costcolor'],
+                               node['cost'])
 
                     while rect.x() + rect.width() > self.minimumWidth():
                         self._expand_horizontally()
@@ -310,7 +326,7 @@ class GraphCanvas(QtWidgets.QWidget):
         else:
             self.setMinimumHeight(2 * self.minimumHeight())
 
-def _draw_node(qp, rectf, color, fillcolor, lines):
+def _draw_node(qp, rectf, font, color, fillcolor, lines):
     path = QtGui.QPainterPath()
     path.addRoundedRect(rectf, 4, 4)
     pen = QtGui.QPen(color, 1)
@@ -321,6 +337,12 @@ def _draw_node(qp, rectf, color, fillcolor, lines):
     # use clipping so the text doesn't escape the rectangle.
     qp.setClipPath(path)
 
+    qp.setFont(font)
     rectf.adjust(PADDING, PADDING, -PADDING, -PADDING)
     qp.drawText(rectf, '\n'.join(lines))
     qp.setClipPath(path, QtCore.Qt.NoClip)
+
+def _draw_cost(qp, point, font, color, cost):
+    qp.setFont(font)
+    qp.setPen(QtGui.QPen(color, 1))
+    qp.drawText(point, format(cost, '.2f'))

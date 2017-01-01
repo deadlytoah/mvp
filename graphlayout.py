@@ -52,7 +52,7 @@ class GraphLayout:
 
         endnodeid = nodeid
         nodeid += 1
-        graph.add_node(endnodeid, text=END_NODE, level=len(queue) + 1)
+        graph.add_node(endnodeid, text=END_NODE, level=len(queue) + 1, cost=0)
         for node in graph.nodes():
             if graph.node[node]['level'] == len(queue):
                 graph.add_edge(node,
@@ -73,11 +73,18 @@ class GraphLayout:
     def _assign_cost(self, nodeid):
         node = self.graph.node[nodeid]
         node['cost'] += _line_length_cost(node['text'])
+        node['cost'] += _linebreak_after_comma_cost(node['text'])
 
 
 def _line_length_cost(text):
     length = len(text)
     return 0.01 * pow(length - OPTIMAL_LINE_WIDTH, 2)
+
+def _linebreak_after_comma_cost(text):
+    if text[-1] == ',':
+        return 0
+    else:
+        return 1
 
 def _create_word_queue(text):
     queue = []
