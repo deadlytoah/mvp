@@ -3,7 +3,7 @@ card"""
 
 import networkx as nx
 
-OPTIMAL_LINE_WIDTH = 35
+OPTIMAL_LINE_WIDTH = 30
 START_NODE = 'START'
 END_NODE = 'END'
 
