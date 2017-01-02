@@ -73,18 +73,46 @@ class GraphLayout:
     def _assign_cost(self, nodeid):
         node = self.graph.node[nodeid]
         node['cost'] += _line_length_cost(node['text'])
-        node['cost'] += _linebreak_after_comma_cost(node['text'])
+        node['cost'] += _post_comma_cost(node['text'])
+        node['cost'] += _post_definitive_cost(node['text'])
+        node['cost'] += _post_preposition_cost(node['text'])
+        node['cost'] += _post_possessive_cost(node['text'])
 
 
 def _line_length_cost(text):
     length = len(text)
     return 0.01 * pow(length - OPTIMAL_LINE_WIDTH, 2)
 
-def _linebreak_after_comma_cost(text):
+def _post_comma_cost(text):
     if text[-1] == ',':
         return 0
     else:
         return 1
+
+def _post_definitive_cost(text):
+    if text.endswith('the'):
+        return 1
+    else:
+        return 0
+
+def _post_preposition_cost(text):
+    preposition = ['after', 'before', 'to', 'by', 'in', 'on', 'unto',
+                   'without', 'till', 'from', 'of']
+    score = 0
+    for prep in preposition:
+        if text.endswith(prep):
+            score = 0.2
+            break
+    return score
+
+def _post_possessive_cost(text):
+    possessive = ['your', 'my', 'their', 'our', 'his', 'her']
+    score = 0
+    for poss in possessive:
+        if text.endswith(poss):
+            score = 0.2
+            break
+    return score
 
 def _create_word_queue(text):
     queue = []
