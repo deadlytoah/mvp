@@ -275,19 +275,10 @@ class GraphCanvas(QtWidgets.QWidget):
                         highway['middle'])
 
             for conn in self.graphview['conns']:
-                qp.setPen(QtGui.QPen(conn['color'], 1))
-
-                points = conn['points']
-
-                qpp = QtGui.QPainterPath(points[0])
-                qpp.cubicTo(points[1], points[2], points[3])
-                qp.drawPath(qpp)
-
-                if conn['arrow']:
-                    qpp = QtGui.QPainterPath(points[3])
-                    qpp.lineTo(points[3].x() - 6, points[3].y() - 5)
-                    qpp.lineTo(points[3].x() - 6, points[3].y() + 5)
-                    qp.fillPath(qpp, conn['color'])
+                _draw_connection(qp,
+                                 conn['points'],
+                                 conn['color'],
+                                 conn['arrow'])
 
             qp.setPen(QtGui.QPen(QtGui.QColor('red'), 1))
             for selected in highway['selected']:
@@ -346,3 +337,19 @@ def _draw_cost(qp, point, font, color, cost):
     qp.setFont(font)
     qp.setPen(QtGui.QPen(color, 1))
     qp.drawText(point, format(cost, '.2f'))
+
+def _draw_connection(qp, points, color, arrow):
+    qp.setPen(QtGui.QPen(color, 1))
+
+    qpp = QtGui.QPainterPath(points[0])
+    qpp.cubicTo(points[1], points[2], points[3])
+    qp.drawPath(qpp)
+
+    if arrow:
+        _draw_arrow(qp, points, color)
+
+def _draw_arrow(qp, points, color):
+    qpp = QtGui.QPainterPath(points[3])
+    qpp.lineTo(points[3].x() - 6, points[3].y() - 5)
+    qpp.lineTo(points[3].x() - 6, points[3].y() + 5)
+    qp.fillPath(qpp, color)
