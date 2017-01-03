@@ -230,6 +230,10 @@ class GraphCanvas(QtWidgets.QWidget):
                 conn['color'] = QtGui.QColor('lightgray')
                 normal.append(conn)
 
+            # drawrect causes the connection to be drawn if it
+            # intersects with the view's event rect
+            conn['drawrect']= QtCore.QRect(start, end)
+
         # The graph view, ready to be painted...
         self.graphview = {
             'lanes': lanes,
@@ -275,10 +279,11 @@ class GraphCanvas(QtWidgets.QWidget):
                         highway['middle'])
 
             for conn in self.graphview['conns']:
-                _draw_connection(qp,
-                                 conn['points'],
-                                 conn['color'],
-                                 conn['arrow'])
+                if event.rect().intersects(conn['drawrect']):
+                    _draw_connection(qp,
+                                     conn['points'],
+                                     conn['color'],
+                                     conn['arrow'])
 
             qp.setPen(QtGui.QPen(QtGui.QColor('red'), 1))
             for selected in highway['selected']:
