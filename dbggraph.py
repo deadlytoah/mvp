@@ -64,7 +64,7 @@ class GraphCanvas(QtWidgets.QWidget):
             })
 
             lane = lanes[-1]
-            lane['x'] = cumwidth + level * MARGIN['x'] + MARGIN['x']
+            lane['x'] = cumwidth + MARGIN['x']
             cumheight = 0
 
             for i, nodeid in enumerate([nodeid for nodeid in self.graph.nodes() if self.graph.node[nodeid]['level'] == level]):
@@ -119,6 +119,15 @@ class GraphCanvas(QtWidgets.QWidget):
                 node['costpoint'] = QtCore.QPoint(socketeast.x() + 1,
                                                   socketeast.y() - 1)
 
+                # drawrect causes the nodes to be drawn if it
+                # intersects with the view's event rect.
+                COST_WIDTH = 30
+                drawrect = QtCore.QRect(lane['x'],
+                                        node['y'],
+                                        node['width'] + COST_WIDTH,
+                                        node['height'])
+                node['drawrect'] = drawrect
+
                 node['successors'] = {
                     'near': [s for s in self.graph.successors(node['id'])
                              if self.graph.node[s]['level'] == level + 1],
@@ -129,7 +138,12 @@ class GraphCanvas(QtWidgets.QWidget):
                 lane['nodes'].append(node)
 
             lane['width'] = max([node['width'] for node in lane['nodes']])
-            cumwidth += lane['width']
+            lane['height'] = cumheight
+            cumwidth += lane['width'] + MARGIN['x']
+
+        self.setMinimumSize(cumwidth + MARGIN['x'],
+                            max([lane['height'] for lane in lanes])
+                            + MARGIN['y'])
 
         # Collect all necessary information for rendering the
         # edges.
@@ -249,27 +263,30 @@ class GraphCanvas(QtWidgets.QWidget):
         qp.setRenderHint(QtGui.QPainter.Antialiasing)
 
         if self.graphview != None:
+            draw_node = _draw_node
+            draw_cost = _draw_cost
+            eventrect = event.rect()
+            intersect = eventrect.intersects
             for lane in self.graphview['lanes']:
                 x = lane['x']
                 for node in lane['nodes']:
-                    y = node['y']
-                    size = node['rectsize']
-                    rect = QtCore.QRectF(x, y, size.width(), size.height())
-                    font = node['font']
-                    color = node['color']
-                    fillcolor = node['fillcolor']
-
-                    _draw_node(qp, rect, font, color, fillcolor, node['lines'])
-                    _draw_cost(qp,
-                               node['costpoint'],
-                               node['costfont'],
-                               node['costcolor'],
-                               node['cost'])
-
-                    while rect.x() + rect.width() > self.minimumWidth():
-                        self._expand_horizontally()
-                    while rect.y() + rect.height() > self.minimumHeight():
-                        self._expand_vertically()
+                    if intersect(node['drawrect']):
+                        y = node['y']
+                        size = node['rectsize']
+                        draw_node(qp,
+                                  QtCore.QRectF(x,
+                                                y,
+                                                size.width(),
+                                                size.height()),
+                                  node['font'],
+                                  node['color'],
+                                  node['fillcolor'],
+                                  node['lines'])
+                        draw_cost(qp,
+                                  node['costpoint'],
+                                  node['costfont'],
+                                  node['costcolor'],
+                                  node['cost'])
 
             highway = self.graphview['highway']
             qp.setPen(QtGui.QPen(QtGui.QColor('lightgray'), 1.5))
@@ -278,8 +295,6 @@ class GraphCanvas(QtWidgets.QWidget):
                         highway['end'],
                         highway['middle'])
 
-            rect = event.rect()
-            intersect = rect.intersects
             draw_conn = _draw_connection
             for conn in self.graphview['conns']:
                 if intersect(conn['drawrect']):
@@ -313,17 +328,6 @@ class GraphCanvas(QtWidgets.QWidget):
         height = fm.height() * len(lines)
         return QtCore.QSize(maxwidth, height)
 
-    def _expand_horizontally(self):
-        if self.minimumWidth() == 0:
-            self.setMinimumWidth(self.width())
-        else:
-            self.setMinimumWidth(2 * self.minimumWidth())
-
-    def _expand_vertically(self):
-        if self.minimumHeight() == 0:
-            self.setMinimumHeight(self.height())
-        else:
-            self.setMinimumHeight(2 * self.minimumHeight())
 
 def _draw_node(qp, rectf, font, color, fillcolor, lines):
     path = QtGui.QPainterPath()
