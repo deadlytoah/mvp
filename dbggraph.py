@@ -52,7 +52,7 @@ class GraphCanvas(QtWidgets.QWidget):
             'height': 50,
             'payloads': []
         }
-        highway['middle'] = highway['y'] + int(highway['height'] / 2)
+        highway['middle'] = highway['y'] + highway['height'] // 2
 
         cumwidth = 0
         lanes = []
@@ -105,9 +105,9 @@ class GraphCanvas(QtWidgets.QWidget):
 
                 node['sockets'] = {
                     'west': QtCore.QPoint(lane['x'] - 1,
-                                          node['y'] + node['height'] / 2),
+                                          node['y'] + node['height'] // 2),
                     'east': QtCore.QPoint(lane['x'] + node['width'] + 1,
-                                          node['y'] + node['height'] / 2)
+                                          node['y'] + node['height'] // 2)
                 }
 
                 costfont = QtGui.QFont(self.font())
