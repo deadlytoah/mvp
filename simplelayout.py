@@ -1,25 +1,31 @@
 """Maximum width of each line in number of characters"""
-MAX_LINE_WIDTH = 35
+DEFAULT_LINE_WIDTH = 35
 
 class SimpleLayout:
+    def __init__(self):
+        self.line_width = DEFAULT_LINE_WIDTH
+
+    def set_line_width(self, lw):
+        self.line_width = lw
+
     def layout(self, text):
         retval = []
         while len(text) > 0:
             s = text
-            while len(s) >= MAX_LINE_WIDTH:
-                s = self._remove_last_word(s)
+            while len(s) >= self.line_width:
+                s, last_removed = self._remove_last_word(s)
 
-            # assumption here is a word will never be longer than
-            # MAX_LINE_WIDTH characters
-            assert(len(s) > 0)
+            # a word is longer than self.line_width
+            if len(s) == 0:
+                s = last_removed
 
             retval.append(s)
-            text = text[len(s):]
+            text = text[len(s):].lstrip()
         return retval
 
     def _remove_last_word(self, text):
         rindex = text.rfind(' ')
         if rindex < 0:
-            return ''
+            return ('', text)
         else:
-            return text[:rindex]
+            return (text[:rindex], text[rindex + 1:])
