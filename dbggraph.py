@@ -278,12 +278,15 @@ class GraphCanvas(QtWidgets.QWidget):
                         highway['end'],
                         highway['middle'])
 
+            rect = event.rect()
+            intersect = rect.intersects
+            draw_conn = _draw_connection
             for conn in self.graphview['conns']:
-                if event.rect().intersects(conn['drawrect']):
-                    _draw_connection(qp,
-                                     conn['points'],
-                                     conn['color'],
-                                     conn['arrow'])
+                if intersect(conn['drawrect']):
+                    draw_conn(qp,
+                              conn['points'],
+                              conn['color'],
+                              conn['arrow'])
 
             qp.setPen(QtGui.QPen(QtGui.QColor('red'), 1))
             for selected in highway['selected']:
