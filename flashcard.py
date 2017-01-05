@@ -201,36 +201,6 @@ def _prepare_jump():
     else:
         QtWidgets.QMessageBox.warning(window, 'mvp – Jump to', 'Unable to jump right now.')
 
-def sentences_cons(records, book, chapter):
-    keyprefix = '{0} {1}:'.format(book, chapter)
-    sentences = []
-    unfinished = ''
-    verses = [rec for rec in records if rec['key'].startswith(keyprefix) if rec['deleted'] == '0']
-
-    for rec in sorted(verses, key = lambda rec: int(rec['key'].split(':', 1)[1])):
-        text = rec['text']
-        start = 0
-        indices = sorted(_find_all_delimiters(text, SENTENCE_DELIMITERS))
-
-        for j, index in enumerate(indices):
-            part = text[start:index + 1]
-            if j == 0:
-                sentences.append(unfinished + ' ' + part)
-            else:
-                sentences.append(part)
-
-            start = index + 1
-
-        if len(indices) > 0:
-            unfinished = text[indices[-1] + 1:]
-        else:
-            unfinished += ' ' + text
-
-    if len(unfinished) > 0:
-        sentences.append(unfinished)
-
-    return sentences
-
 def sentences_cons2(records, book, chapter):
     sentences = []
     lookup = []
