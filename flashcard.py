@@ -1,7 +1,7 @@
 # coding: utf-8
 """Displays the flash card of the Bible verses."""
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from key import Key
 from screen import toggle_screen
@@ -12,6 +12,11 @@ TRANSLATION = 'nkjv'
 DB_EXT = '.db'
 FONT_FAMILY = 'Helvetica Neue'
 SENTENCE_DELIMITERS = '.:;?!'
+COLOURS = {
+    'background': QtGui.QColor(Qt.Qt.white),
+    'foreground': QtGui.QColor(Qt.Qt.black),
+    'title': QtGui.QColor(Qt.Qt.lightGray)
+}
 
 window = None
 
@@ -58,14 +63,15 @@ class FlashCardCanvas(QtWidgets.QWidget):
         self.render = {
             'lines': [],
             'line_spacing': 30,
-            'view_rect': None
+            'view_rect': None,
+            'background': COLOURS['background']
         }
 
         self.engine = layout_engine
 
         self.EMPTY_LINE = {
             'font': QtGui.QFont(FONT_FAMILY, 12),
-            'colour': QtGui.QColor('black'),
+            'colour': COLOURS['foreground'],
             'text': ''
         }
 
@@ -79,7 +85,7 @@ class FlashCardCanvas(QtWidgets.QWidget):
 
         title = {
             'font': QtGui.QFont(FONT_FAMILY, 20, QtGui.QFont.Black),
-            'colour': QtGui.QColor('gray'),
+            'colour': COLOURS['title'],
             'text': title
         }
 
@@ -103,7 +109,7 @@ class FlashCardCanvas(QtWidgets.QWidget):
             lines.append(self.EMPTY_LINE)
 
         font = QtGui.QFont(FONT_FAMILY, 18)
-        colour = QtGui.QColor('black')
+        colour = COLOURS['foreground']
 
         layout = self.engine.layout(text)
 
@@ -119,6 +125,7 @@ class FlashCardCanvas(QtWidgets.QWidget):
         qp.begin(self)
 
         self.render['view_rect'] = event.rect()
+        qp.fillRect(event.rect(), COLOURS['background'])
 
         lines = self.render['lines']
         middle = len(lines) / 2
