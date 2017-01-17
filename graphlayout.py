@@ -87,7 +87,7 @@ def _post_comma_cost(text):
     if text[-1] == ',':
         return 0
     else:
-        return 1
+        return 1.5
 
 def _post_definitive_cost(text):
     if text.endswith('the'):
