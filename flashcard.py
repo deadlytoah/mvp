@@ -206,7 +206,7 @@ def _prepare_jump():
     if len(window.stack) > 0:
         window.jump_to_dialog.show()
     else:
-        QtWidgets.QMessageBox.warning(window, 'mvp – Jump to', 'Unable to jump right now.')
+        QtWidgets.QMessageBox.warning(window.gui, 'mvp – Jump to', 'Unable to jump right now.')
 
 def sentences_cons2(records, book, chapter):
     sentences = []
