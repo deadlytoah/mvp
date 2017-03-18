@@ -5,11 +5,11 @@ from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from key import Key
 from screen import toggle_screen
-from sdb import sdb
+from sdb.sdb import Sdb
 from graphlayout import GraphLayout
 
 TRANSLATION = 'nkjv'
-DB_EXT = '.db'
+DB_EXT = '.sdb'
 FONT_FAMILY = 'Helvetica Neue'
 SENTENCE_DELIMITERS = '.:;?!'
 COLOURS = {
@@ -42,8 +42,13 @@ class FlashCardForm:
         self.canvas = FlashCardCanvas(GraphLayout())
         self.gui.setCentralWidget(self.canvas)
 
-        self.database = sdb.init(TRANSLATION + DB_EXT)
-        records = sdb.read(self.database)
+        self.database = Sdb(TRANSLATION + DB_EXT).__enter__()
+        self.verse_table = [table for table in self.database.get_tables()
+                            if table.name() == 'verse'][0]
+        self.verse_table.create_manager()
+        self.verse_table.verify()
+        self.verse_table.service()
+        records = self.verse_table.select_all()
 
         # Stack is used to help implementing input session.  The top
         # of the stack contains the currently display flash card, and
@@ -159,7 +164,7 @@ def _peek():
     if key.verse == None:
         key.verse = '1'
 
-    records = sdb.read(window.database)
+    records = window.verse_table.select_all()
     matches = []
     for rec in records:
         reckey = Key.from_str(rec['key'])
@@ -182,7 +187,7 @@ def _peek():
     window.canvas.update()
 
 def _display_with_key(key):
-    records = sdb.read(window.database)
+    records = window.verse_table.select_all()
     sentences, lookup = sentences_cons2(records, key.book, key.chapter)
     sentence = sentences_find_by_verseno(sentences, lookup, key.verse)
     label = sentence_make_label(sentence, key.book, key.chapter)
@@ -332,7 +337,7 @@ def debug_layout_engine():
 
         key = window.stack[0]
 
-        records = sdb.read(window.database)
+        records = window.verse_table.select_all()
         sentences, lookup = sentences_cons2(records, key.book, key.chapter)
         sentence = sentences_find_by_verseno(sentences, lookup, key.verse)
 
@@ -352,7 +357,7 @@ def debug_sentences():
     if len(window.stack) > 0:
         from dbgsentences import DbgSentences
         key = window.stack[0]
-        records = sdb.read(window.database)
+        records = window.verse_table.select_all()
         (sentences, lookup) = sentences_cons2(records, key.book, key.chapter)
         info = DbgSentences()
         info.gui.label_source.setText('Sentences constructed from: '
@@ -380,7 +385,7 @@ def debug_display_graph():
     if len(window.stack) > 0:
         key = window.stack[0]
 
-        records = sdb.read(window.database)
+        records = window.verse_table.select_all()
         sentences, lookup = sentences_cons2(records, key.book, key.chapter)
         sentence = sentences_find_by_verseno(sentences, lookup, key.verse)
 
