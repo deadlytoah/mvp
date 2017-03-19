@@ -3,6 +3,7 @@
 
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 from PyQt5 import uic
+from address import Address
 from key import Key
 from screen import toggle_screen
 from sdb.sdb import Sdb
@@ -40,6 +41,7 @@ class FlashCardForm:
         self.gui.action_jump_to.triggered.connect(_prepare_jump)
 
         self.canvas = FlashCardCanvas(GraphLayout())
+        self.canvas.grabKeyboard()
         self.gui.setCentralWidget(self.canvas)
 
         self.database = Sdb(TRANSLATION + DB_EXT).__enter__()
@@ -59,8 +61,8 @@ class FlashCardForm:
         if len([r for r in records if r['deleted'] == '0']) == 0:
             self.canvas.set_empty_database()
         else:
-            self.stack.append(Key.from_str(records[0]['key']))
-            _display_with_key(self.stack[-1])
+            self.stack.append(_address_from_key(Key.from_str(records[0]['key'])))
+            _display_by_address(self.stack[-1])
 
 class FlashCardCanvas(QtWidgets.QWidget):
     def __init__(self, layout_engine):
@@ -125,6 +127,14 @@ class FlashCardCanvas(QtWidgets.QWidget):
                 'text': text
              })
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Qt.Key_Up:
+            window.stack[-1].move_up()
+            _display_by_address(window.stack[-1])
+        elif event.key() == Qt.Qt.Key_Down:
+            window.stack[-1].move_down()
+            _display_by_address(window.stack[-1])
+
     def paintEvent(self, event):
         qp = QtGui.QPainter()
         qp.begin(self)
@@ -175,9 +185,9 @@ def _peek():
 
     if len(matches) > 0:
         window.jump_to_dialog.button_box.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(True)
-        window.stack.append(matches[0])
+        window.stack.append(_address_from_key(matches[0]))
 
-        _display_with_key(window.stack[-1])
+        _display_by_address(window.stack[-1])
         window.canvas.set_title('Peeking at: {0} (enter – jump, esc – cancel)'.format(window.canvas.title))
     else:
         window.jump_to_dialog.button_box.button(QtWidgets.QDialogButtonBox.Ok).setEnabled(False)
@@ -186,11 +196,17 @@ def _peek():
 
     window.canvas.update()
 
-def _display_with_key(key):
+def _address_from_key(key):
     records = window.verse_table.select_all()
     sentences, lookup = sentences_cons2(records, key.book, key.chapter)
-    sentence = sentences_find_by_verseno(sentences, lookup, key.verse)
-    label = sentence_make_label(sentence, key.book, key.chapter)
+    sentence = sentences_index_by_verseno(sentences, lookup, key.verse)
+    return Address(sentences, lookup, (key.book, key.chapter, sentence))
+
+def _display_by_address(address):
+    records = window.verse_table.select_all()
+    sentences, lookup = sentences_cons2(records, address.book, address.chapter)
+    sentence = sentences[address.sentence]
+    label = sentence_make_label(sentence, address.book, address.chapter)
 
     window.canvas.set_title(label + ' (' + TRANSLATION.upper() + ')')
     window.canvas.set_text(sentence['text'])
@@ -198,14 +214,14 @@ def _display_with_key(key):
 
 def _conclude_jump(result):
     if result == QtWidgets.QDialog.Accepted:
-        key = window.stack[-1]
+        address = window.stack[-1]
     else:
-        key = window.stack[0]
+        address = window.stack[0]
 
-    window.stack = [key]
+    window.stack = [address]
     window.jump_to_dialog.lineedit_jump_to.clear()
 
-    _display_with_key(key)
+    _display_by_address(address)
 
 def _prepare_jump():
     if len(window.stack) > 0:
@@ -274,6 +290,10 @@ def sentences_find_by_verseno(sentences, lookup, verseno):
     i = int(verseno) - 1
     sentid = lookup[i]
     return sentences[sentid]
+
+def sentences_index_by_verseno(sentences, lookup, verseno):
+    i = int(verseno) - 1
+    return lookup[i]
 
 def sentence_make_label(sentence, book, chapter):
     srclist = []
