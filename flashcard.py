@@ -41,6 +41,7 @@ class FlashCardForm:
         self.gui.action_jump_to.triggered.connect(_prepare_jump)
 
         self.canvas = FlashCardCanvas(GraphLayout())
+        self.canvas.grabKeyboard()
         self.gui.setCentralWidget(self.canvas)
 
         self.database = Sdb(TRANSLATION + DB_EXT).__enter__()
@@ -126,6 +127,14 @@ class FlashCardCanvas(QtWidgets.QWidget):
                 'text': text
              })
 
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Qt.Key_Up:
+            window.stack[-1].move_up()
+            _display_by_address(window.stack[-1])
+        elif event.key() == Qt.Qt.Key_Down:
+            window.stack[-1].move_down()
+            _display_by_address(window.stack[-1])
+
     def paintEvent(self, event):
         qp = QtGui.QPainter()
         qp.begin(self)
@@ -191,7 +200,7 @@ def _address_from_key(key):
     records = window.verse_table.select_all()
     sentences, lookup = sentences_cons2(records, key.book, key.chapter)
     sentence = sentences_index_by_verseno(sentences, lookup, key.verse)
-    return Address(key.book, key.chapter, sentence)
+    return Address(sentences, lookup, (key.book, key.chapter, sentence))
 
 def _display_by_address(address):
     records = window.verse_table.select_all()
