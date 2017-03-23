@@ -6,7 +6,7 @@ from PyQt5 import uic
 from address import Address
 from key import Key
 from screen import toggle_screen
-from sdb.sdb import Sdb
+from sdb import Sdb
 from graphlayout import GraphLayout
 
 TRANSLATION = 'nkjv'

@@ -4,7 +4,7 @@
 import re
 from PyQt5 import QtWidgets
 from PyQt5 import uic
-from sdb.sdb import Sdb
+from sdb import Sdb
 from screen import toggle_screen
 
 TRANSLATION = 'nkjv'
