@@ -355,11 +355,11 @@ def debug_layout_engine():
         from simplelayout import SimpleLayout
         from graphlayout import GraphLayout
 
-        key = window.stack[0]
+        address = window.stack[0]
 
         records = window.verse_table.select_all()
-        sentences, lookup = sentences_cons2(records, key.book, key.chapter)
-        sentence = sentences_find_by_verseno(sentences, lookup, key.verse)
+        sentences, lookup = sentences_cons2(records, address.book, address.chapter)
+        sentence = sentences[address.sentence]
 
         text = sentence['text']
 
@@ -376,17 +376,17 @@ def debug_layout_engine():
 def debug_sentences():
     if len(window.stack) > 0:
         from dbgsentences import DbgSentences
-        key = window.stack[0]
+        address = window.stack[0]
         records = window.verse_table.select_all()
-        (sentences, lookup) = sentences_cons2(records, key.book, key.chapter)
+        (sentences, lookup) = sentences_cons2(records, address.book, address.chapter)
         info = DbgSentences()
         info.gui.label_source.setText('Sentences constructed from: '
-                                      + ' '.join([key.book, key.chapter]))
+                                      + ' '.join([address.book, address.chapter]))
 
         sentencesstr = ''
         for sentence in sentences:
             sentencesstr += ' - ' \
-                + sentence_make_label(sentence, key.book, key.chapter) \
+                + sentence_make_label(sentence, address.book, address.chapter) \
                 + ': ' + sentence['text'] + '\n'
         info.gui.textedit_sentences.setPlainText(sentencesstr)
 
@@ -403,11 +403,11 @@ def debug_display_graph():
     from dbggraph import DbgGraph
 
     if len(window.stack) > 0:
-        key = window.stack[0]
+        address = window.stack[0]
 
         records = window.verse_table.select_all()
-        sentences, lookup = sentences_cons2(records, key.book, key.chapter)
-        sentence = sentences_find_by_verseno(sentences, lookup, key.verse)
+        sentences, lookup = sentences_cons2(records, address.book, address.chapter)
+        sentence = sentences[address.sentence]
 
         text = sentence['text']
 
