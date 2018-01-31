@@ -41,8 +41,8 @@ class FlashCardForm:
         self.gui.action_jump_to.triggered.connect(_prepare_jump)
 
         self.canvas = FlashCardCanvas(GraphLayout())
-        self.canvas.grabKeyboard()
         self.gui.setCentralWidget(self.canvas)
+        self.canvas.setFocus(True)
 
         self.database = Sdb(TRANSLATION + DB_EXT).__enter__()
         self.verse_table = [table for table in self.database.get_tables()
