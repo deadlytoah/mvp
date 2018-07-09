@@ -1,3 +1,4 @@
 #!/bin/sh
 
-python3 mvp.py "$@"
+cd `dirname $0`
+python3 `dirname $0`/mvp.py "$@"
