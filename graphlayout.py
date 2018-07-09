@@ -30,25 +30,41 @@ class GraphLayout:
             graph.add_node(wordid, text=word, level=level, cost=0)
             self._assign_cost(wordid)
 
-            for node in graph.nodes():
+            # lists of new nodes and edges to be added after the
+            # iteration.
+            new_nodes = []
+            new_edges = []
+
+            for node in graph:
                 if graph.node[node]['level'] == level - 1:
                     if graph.node[node]['text'] != START_NODE:
                         newnodeid = nodeid
                         nodeid += 1
                         newnode = ' '.join([graph.node[node]['text'], word])
-                        graph.add_node(newnodeid,
-                                       text=newnode,
-                                       level=level,
-                                       cost=0)
-                        self._assign_cost(newnodeid)
-                        for pred in graph.predecessors(node):
-                            graph.add_edge(pred,
-                                           newnodeid,
-                                           cost=graph.node[pred]['cost'])
 
-                    graph.add_edge(node,
-                                   wordid,
-                                   cost=graph.node[node]['cost'])
+                        new_nodes.append({'id': newnodeid,
+                                          'text': newnode,
+                                          'level': level,
+                                          'cost': 0})
+
+                        for pred in graph.predecessors(node):
+                            new_edges.append({'from': pred,
+                                              'to': newnodeid,
+                                              'cost': graph.node[pred]['cost']})
+
+                    new_edges.append({'from': node,
+                                      'to': wordid,
+                                      'cost': graph.node[node]['cost']})
+
+            for node in new_nodes:
+                graph.add_node(node['id'],
+                               text=node['text'],
+                               level=node['level'],
+                               cost=node['cost'])
+                self._assign_cost(node['id'])
+
+            for edge in new_edges:
+                graph.add_edge(edge['from'], edge['to'], cost=edge['cost'])
 
         endnodeid = nodeid
         nodeid += 1
