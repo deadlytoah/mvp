@@ -112,12 +112,12 @@ def _post_definitive_cost(text):
         return 0
 
 def _post_preposition_cost(text):
-    preposition = ['after', 'before', 'to', 'by', 'in', 'on', 'unto',
-                   'without', 'till', 'from', 'of']
+    preposition = ['after', 'before', 'for', 'to', 'by', 'in', 'on', 'unto',
+                   'with', 'without', 'till', 'from', 'of']
     score = 0
     for prep in preposition:
         if text.endswith(prep):
-            score = 0.2
+            score = 0.4
             break
     return score
 
