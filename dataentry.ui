@@ -16,6 +16,16 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
+     <widget class="QLabel" name="label_4">
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Only the output of &amp;quot;Multiple Verse Retrieval&amp;quot; at blb.org is supported at the moment. Copy and paste the output in the area directly below and run Scrub under Verses from the menu.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="wordWrap">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QPlainTextEdit" name="textedit_verses"/>
     </item>
     <item>
