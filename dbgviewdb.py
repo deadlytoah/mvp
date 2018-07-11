@@ -1,11 +1,11 @@
 # coding: utf-8
 """Inspect the contents of the database."""
 
+import config
 import json
 from PyQt5 import uic
 from sdb import Sdb
 
-TRANSLATION = 'nkjv'
 DB_EXT = '.sdb'
 
 window = None
@@ -18,7 +18,7 @@ class DbgViewDb():
         global window
         window = self
 
-        with Sdb(TRANSLATION + DB_EXT) as database:
+        with Sdb(config.translation + DB_EXT) as database:
             self.verse_table = [table for table in database.get_tables()
                             if table.name() == 'verse'][0]
             self.verse_table.create_manager()

@@ -1,13 +1,13 @@
 # coding: utf-8
 """Provides GUI for the data entry screen."""
 
+import config
 import re
 from PyQt5 import QtWidgets
 from PyQt5 import uic
 from sdb import Sdb
 from screen import toggle_screen
 
-TRANSLATION = 'nkjv'
 DB_EXT = '.sdb'
 
 window = None
@@ -30,7 +30,7 @@ def enter_verses():
     """action for the enter push button. enters verses into the database
 
     """
-    with Sdb(TRANSLATION + DB_EXT) as database:
+    with Sdb(config.translation + DB_EXT) as database:
         verse_table = [table for table in database.get_tables()
                        if table.name() == 'verse'][0]
         verse_table.create_manager()

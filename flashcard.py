@@ -1,6 +1,7 @@
 # coding: utf-8
 """Displays the flash card of the Bible verses."""
 
+import config
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from address import Address
@@ -9,7 +10,6 @@ from screen import toggle_screen
 from sdb import Sdb
 from graphlayout import GraphLayout
 
-TRANSLATION = 'nkjv'
 DB_EXT = '.sdb'
 FONT_FAMILY = 'Helvetica Neue'
 SENTENCE_DELIMITERS = '.:;?!'
@@ -44,7 +44,7 @@ class FlashCardForm:
         self.gui.setCentralWidget(self.canvas)
         self.canvas.setFocus(True)
 
-        self.database = Sdb(TRANSLATION + DB_EXT).__enter__()
+        self.database = Sdb(config.translation + DB_EXT).__enter__()
         self.verse_table = [table for table in self.database.get_tables()
                             if table.name() == 'verse'][0]
         self.verse_table.create_manager()
@@ -208,7 +208,7 @@ def _display_by_address(address):
     sentence = sentences[address.sentence]
     label = sentence_make_label(sentence, address.book, address.chapter)
 
-    window.canvas.set_title(label + ' (' + TRANSLATION.upper() + ')')
+    window.canvas.set_title(label + ' (' + config.translation.upper() + ')')
     window.canvas.set_text(sentence['text'])
     window.canvas.update()
 
