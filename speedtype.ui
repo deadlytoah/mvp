@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>mvp – Flash Card</string>
+   <string>mvp – Speed Type</string>
   </property>
   <widget class="QWidget" name="centralwidget"/>
   <widget class="QMenuBar" name="menubar">
@@ -57,19 +57,19 @@
    <property name="text">
     <string>Enter Bible Verses</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+Return</string>
-   </property>
   </action>
   <action name="action_view_flash_cards">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="checked">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="text">
     <string>Flash Card</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Return</string>
    </property>
   </action>
   <action name="action_debug_inspect_database">
@@ -101,6 +101,12 @@
    </property>
   </action>
   <action name="action_speed_type">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Speed Type</string>
    </property>

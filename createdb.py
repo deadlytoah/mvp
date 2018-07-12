@@ -2,9 +2,8 @@
 """ Creates and initialises one or more databases """
 
 import argparse
+import config
 from sdb.sdb import Sdb
-
-DB_EXT='.sdb'
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -13,7 +12,7 @@ if __name__ == '__main__':
     opts = parser.parse_args()
 
     for name in opts.name:
-        Sdb.create(name + DB_EXT)
+        Sdb.create(name + config.DB_EXT)
 
-        with Sdb(name + DB_EXT) as sdb:
+        with Sdb(name + config.DB_EXT) as sdb:
             sdb.create_table('verse.mjson')

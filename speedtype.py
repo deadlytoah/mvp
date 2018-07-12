@@ -1,5 +1,9 @@
 # coding: utf-8
-"""Displays the flash card of the Bible verses."""
+"""Allows memorising verses by speed-typing.  At first all words are
+shown as guidance.  But as the proficiency level increases, more and
+more words are hidden.
+
+"""
 
 import config
 import screen
@@ -10,10 +14,33 @@ from key import Key
 from sdb import Sdb
 from graphlayout import GraphLayout
 
+Level1 = {
+    'hidden_words': 0.0,
+}
+
+Level2 = {
+    'hidden_words': 0.2,
+}
+
+Level3 = {
+    'hidden_words': 0.5,
+}
+
+Level4 = {
+    'hidden_words': 0.7,
+}
+
+Level5 = {
+    'hidden_words': 1.0,
+}
+
+Levels = [Level1, Level2, Level3, Level4, Level5]
+
 window = None
 
-class FlashCardForm:
-    """form for viewing verses in flash cards """
+class SpeedTypeForm:
+    """ main form for the speed type tutor style memorisation """
+
     def __init__(self):
         global window
         window = self
@@ -23,16 +50,16 @@ class FlashCardForm:
         self.jump_to_dialog.finished.connect(_conclude_jump)
         self.jump_to_dialog.move(0, 0)
 
-        self.gui = uic.loadUi("flashcard.ui")
+        self.gui = uic.loadUi("speedtype.ui")
         self.gui.action_enter_verses.triggered.connect(_view_enter_verses)
-        self.gui.action_speed_type.triggered.connect(_view_speed_type)
-        self.gui.action_debug_inspect_database.triggered.connect(debug_view_db)
-        self.gui.action_debug_layout_engine.triggered.connect(debug_layout_engine)
-        self.gui.action_debug_sentences.triggered.connect(debug_sentences)
-        self.gui.action_display_graph.triggered.connect(debug_display_graph)
+        self.gui.action_view_flash_cards.triggered.connect(_view_flash_cards)
+        self.gui.action_debug_inspect_database.triggered.connect(_debug_view_db)
+        self.gui.action_debug_layout_engine.triggered.connect(_debug_layout_engine)
+        self.gui.action_debug_sentences.triggered.connect(_debug_sentences)
+        self.gui.action_display_graph.triggered.connect(_debug_display_graph)
         self.gui.action_jump_to.triggered.connect(_prepare_jump)
 
-        self.canvas = FlashCardCanvas(GraphLayout())
+        self.canvas = SpeedTypeCanvas(GraphLayout())
         self.gui.setCentralWidget(self.canvas)
         self.canvas.setFocus(True)
 
@@ -56,9 +83,9 @@ class FlashCardForm:
             self.stack.append(_address_from_key(Key.from_str(records[0]['key'])))
             _display_by_address(self.stack[-1])
 
-class FlashCardCanvas(QtWidgets.QWidget):
+class SpeedTypeCanvas(QtWidgets.QWidget):
     def __init__(self, layout_engine):
-        super(FlashCardCanvas, self).__init__()
+        super(SpeedTypeCanvas, self).__init__()
         self.render = {
             'lines': [],
             'line_spacing': 30,
@@ -154,13 +181,13 @@ class FlashCardCanvas(QtWidgets.QWidget):
         qp.setFont(font)
         qp.drawText(rect, QtCore.Qt.AlignCenter, text)
 
+def _view_flash_cards():
+    """switch to the flash cards screen"""
+    screen.switch_to(screen.FLASH_CARD_INDEX)
+
 def _view_enter_verses():
     """switch to the verse entry screen"""
     screen.switch_to(screen.DATA_ENTRY_INDEX)
-
-def _view_speed_type():
-    """ switch to the speed type screen """
-    screen.switch_to(screen.SPEED_TYPE_INDEX)
 
 def _peek():
     dest = window.jump_to_dialog.lineedit_jump_to.text()
@@ -342,11 +369,11 @@ def _find_all_delimiters(text, delimiters):
             index = text.find(delim, start + 1)
     return indicies
 
-def debug_view_db():
+def _debug_view_db():
     from dbgviewdb import DbgViewDb
     DbgViewDb().gui.show()
 
-def debug_layout_engine():
+def _debug_layout_engine():
     if len(window.stack) > 0:
         from dbglayout import DbgLayout
         from simplelayout import SimpleLayout
@@ -370,7 +397,7 @@ def debug_layout_engine():
                                       'Debug – Layout Engines',
                                       'Unable to draw layouts')
 
-def debug_sentences():
+def _debug_sentences():
     if len(window.stack) > 0:
         from dbgsentences import DbgSentences
         address = window.stack[0]
@@ -396,7 +423,7 @@ def debug_sentences():
     else:
         QtWidgets.QMessageBox.warning(window.gui, 'Debug – Sentences', 'Unable to show sentences')
 
-def debug_display_graph():
+def _debug_display_graph():
     from dbggraph import DbgGraph
 
     if len(window.stack) > 0:

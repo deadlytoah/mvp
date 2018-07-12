@@ -6,10 +6,6 @@ import config
 import sys
 from PyQt5 import QtWidgets
 from screen import init_screens
-from dataentry import DataEntryForm
-from flashcard import FlashCardForm
-
-FORM_TYPES = [FlashCardForm, DataEntryForm]
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Help memorising Bible verses.')
@@ -20,5 +16,5 @@ if __name__ == '__main__':
     config.translation = opts.translation[0]
 
     app = QtWidgets.QApplication(sys.argv)
-    init_screens(FORM_TYPES)
+    init_screens()
     sys.exit(app.exec())
