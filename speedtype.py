@@ -60,8 +60,10 @@ class SpeedTypeForm:
         self.gui.action_jump_to.triggered.connect(_prepare_jump)
 
         self.canvas = SpeedTypeCanvas(GraphLayout())
-        self.gui.setCentralWidget(self.canvas)
-        self.canvas.setFocus(True)
+        layout = QtWidgets.QVBoxLayout(self.gui.show_verses)
+        layout.addWidget(self.canvas)
+
+        self.gui.title.setFont(QtGui.QFont(config.FONT_FAMILY, 20))
 
         self.database = Sdb(config.translation + config.DB_EXT).__enter__()
         self.verse_table = [table for table in self.database.get_tables()
@@ -108,39 +110,17 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
     def set_title(self, title):
         # accessor
         self.title = title
-
-        title = {
-            'font': QtGui.QFont(config.FONT_FAMILY, 20, QtGui.QFont.Black),
-            'colour': config.COLOURS['title'],
-            'text': title
-        }
-
-        lines = self.render['lines']
-        if len(lines) == 0:
-            lines.append(title)
-        else:
-            lines[0] = title
-
-        if len(lines) == 1:
-            lines.append(self.EMPTY_LINE)
-        else:
-            lines[1] = self.EMPTY_LINE
+        window.gui.title.setText(self.title)
 
     def set_text(self, text):
-        # remove everything except for the title
-        lines = self.render['lines'][0:2]
-        self.render['lines'] = lines
-
-        while len(lines) < 2:
-            lines.append(self.EMPTY_LINE)
-
         font = QtGui.QFont(config.FONT_FAMILY, 18)
         colour = config.COLOURS['foreground']
 
         layout = self.engine.layout(text)
+        self.render['lines'] = []
 
         for text in layout:
-            lines.append({
+            self.render['lines'].append({
                 'font': font,
                 'colour': colour,
                 'text': text
@@ -162,10 +142,9 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         qp.fillRect(event.rect(), config.COLOURS['background'])
 
         lines = self.render['lines']
-        middle = len(lines) / 2
 
         for i, line in enumerate(lines):
-            self._render_line(qp, self.render, i - middle, line)
+            self._render_line(qp, self.render, i - len(lines) + 1, line)
 
         qp.end()
 
@@ -179,7 +158,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         rect.moveTop(offset * line_spacing)
         qp.setPen(colour)
         qp.setFont(font)
-        qp.drawText(rect, QtCore.Qt.AlignCenter, text)
+        qp.drawText(rect, QtCore.Qt.AlignBottom, text)
 
 def _view_flash_cards():
     """switch to the flash cards screen"""
