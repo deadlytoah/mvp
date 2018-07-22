@@ -97,12 +97,6 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
         self.engine = layout_engine
 
-        self.EMPTY_LINE = {
-            'font': QtGui.QFont(config.FONT_FAMILY, 12),
-            'colour': config.COLOURS['foreground'],
-            'text': ''
-        }
-
     def set_empty_database(self):
         self.set_title('Nothing in the database yet.')
         self.set_text('Please enter some verses first.')
