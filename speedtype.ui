@@ -32,19 +32,29 @@
         </widget>
        </item>
        <item>
-        <widget class="QWidget" name="show_verses" native="true"/>
-       </item>
-       <item>
-        <widget class="QLineEdit" name="speedtype_input"/>
+        <widget class="QScrollArea" name="scrollArea">
+         <property name="verticalScrollBarPolicy">
+          <enum>Qt::ScrollBarAsNeeded</enum>
+         </property>
+         <property name="horizontalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOff</enum>
+         </property>
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <widget class="QWidget" name="show_verses">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>750</width>
+            <height>502</height>
+           </rect>
+          </property>
+         </widget>
+        </widget>
        </item>
       </layout>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLabel" name="statistics">
-      <property name="text">
-       <string/>
-      </property>
      </widget>
     </item>
    </layout>

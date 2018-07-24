@@ -62,6 +62,7 @@ class SpeedTypeForm:
         self.canvas = SpeedTypeCanvas(GraphLayout())
         layout = QtWidgets.QVBoxLayout(self.gui.show_verses)
         layout.addWidget(self.canvas)
+        self.canvas.setFocus(True)
 
         self.gui.title.setFont(QtGui.QFont(config.FONT_FAMILY, 20))
 
@@ -86,16 +87,35 @@ class SpeedTypeForm:
             _display_by_address(self.stack[-1])
 
 class SpeedTypeCanvas(QtWidgets.QWidget):
+    """Widget that fascilitates typing
+
+    Displays text and lets user type it.  Hides a percentage of words
+    according to the difficulty level.
+
+    The text is left-aligned.  It is up to the parent widget to
+    provide scrolling and layout.
+
+    """
     def __init__(self, layout_engine):
         super(SpeedTypeCanvas, self).__init__()
         self.render = {
-            'lines': [],
+            # 2D arrays of tuples of letters and their colours.  Each
+            # inner array corresponds to a line.
+            'letters': [],
+
             'line_spacing': 30,
             'view_rect': None,
             'background': config.COLOURS['background']
         }
 
+        self.font = QtGui.QFont(config.FONT_FAMILY, 18)
+        self.fm = QtGui.QFontMetrics(self.font)
+
         self.engine = layout_engine
+
+        # Set caret to the first letter of the first sentence.  This
+        # is line followed by column.
+        self.caret = (0, 0)
 
     def set_empty_database(self):
         self.set_title('Nothing in the database yet.')
@@ -107,18 +127,21 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         window.gui.title.setText(self.title)
 
     def set_text(self, text):
-        font = QtGui.QFont(config.FONT_FAMILY, 18)
-        colour = config.COLOURS['foreground']
-
+        colour = config.COLOURS['guide']
         layout = self.engine.layout(text)
-        self.render['lines'] = []
+        letters = []
+        y = 0
 
         for text in layout:
-            self.render['lines'].append({
-                'font': font,
-                'colour': colour,
-                'text': text
-             })
+            x = 0
+            line = []
+            for ch in text:
+                line.append((ch, colour, (x, y)))
+                x = x + self.fm.width(ch)
+            letters.append(line)
+            y = y + self.render['line_spacing']
+
+        self.render['letters'] = letters
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Qt.Key_Up:
@@ -132,27 +155,33 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         qp = QtGui.QPainter()
         qp.begin(self)
 
-        self.render['view_rect'] = event.rect()
+        self.render['view_rect'] = self.rect()
         qp.fillRect(event.rect(), config.COLOURS['background'])
 
-        lines = self.render['lines']
+        letters = self.render['letters']
+        flat = [x for sublist in letters for x in sublist]
 
-        for i, line in enumerate(lines):
-            self._render_line(qp, self.render, i - len(lines) + 1, line)
+        qp.setFont(self.font)
 
+        for letter in flat:
+            self._render_letter(qp, self.render, letter)
+
+        self._render_caret(qp, self.render, letters)
         qp.end()
 
-    def _render_line(self, qp, render, offset, line):
-        rect = render['view_rect']
-        line_spacing = render['line_spacing']
-        font = line['font']
-        colour = line['colour']
-        text = line['text']
+    def _render_letter(self, qp, render, letter):
+        ch = letter[0]
+        colour = QtGui.QColor(letter[1])
+        coord = letter[2]
 
-        rect.moveTop(offset * line_spacing)
         qp.setPen(colour)
-        qp.setFont(font)
-        qp.drawText(rect, QtCore.Qt.AlignBottom, text)
+        qp.drawText(coord[0], coord[1] + self.fm.ascent(), ch)
+
+    def _render_caret(self, qp, render, letters):
+        letter = letters[self.caret[0]][self.caret[1]]
+        (x, y) = letter[2]
+        qp.setPen(QtGui.QColor(config.COLOURS['caret']))
+        qp.drawLine(x, y, x, y + self.fm.height())
 
 def _view_flash_cards():
     """switch to the flash cards screen"""

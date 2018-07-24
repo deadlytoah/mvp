@@ -10,7 +10,11 @@ DB_EXT = '.sdb'
 COLOURS = {
     'background': QtGui.QColor(Qt.Qt.white),
     'foreground': QtGui.QColor(Qt.Qt.black),
-    'title': QtGui.QColor(Qt.Qt.lightGray)
+    'title': QtGui.QColor(Qt.Qt.lightGray),
+    'guide': 'gray',
+    'correct': 'black',
+    'incorrect': 'red',
+    'caret': 'black',
 }
 DEFAULT_TRANSLATION='esv'
 FONT_FAMILY = 'Helvetica Neue'
