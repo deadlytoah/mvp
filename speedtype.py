@@ -105,7 +105,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
             'line_spacing': 30,
             'view_rect': None,
-            'background': config.COLOURS['background']
+            'background': QtGui.QColor(config.COLOURS['background']),
         }
 
         self.font = QtGui.QFont(config.FONT_FAMILY, 18)
@@ -156,7 +156,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         qp.begin(self)
 
         self.render['view_rect'] = self.rect()
-        qp.fillRect(event.rect(), config.COLOURS['background'])
+        qp.fillRect(event.rect(), self.render['background'])
 
         letters = self.render['letters']
         flat = [x for sublist in letters for x in sublist]

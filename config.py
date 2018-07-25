@@ -4,13 +4,11 @@ modules in the application.
 
 """
 
-from PyQt5 import Qt, QtGui
-
 DB_EXT = '.sdb'
 COLOURS = {
-    'background': QtGui.QColor(Qt.Qt.white),
-    'foreground': QtGui.QColor(Qt.Qt.black),
-    'title': QtGui.QColor(Qt.Qt.lightGray),
+    'background': 'white',
+    'foreground': 'black',
+    'title': 'lightgray',
     'guide': 'gray',
     'correct': 'black',
     'incorrect': 'red',

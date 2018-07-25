@@ -63,14 +63,14 @@ class FlashCardCanvas(QtWidgets.QWidget):
             'lines': [],
             'line_spacing': 30,
             'view_rect': None,
-            'background': config.COLOURS['background']
+            'background': QtGui.QColor(config.COLOURS['background']),
         }
 
         self.engine = layout_engine
 
         self.EMPTY_LINE = {
             'font': QtGui.QFont(config.FONT_FAMILY, 12),
-            'colour': config.COLOURS['foreground'],
+            'colour': QtGui.QColor(config.COLOURS['foreground']),
             'text': ''
         }
 
@@ -84,7 +84,7 @@ class FlashCardCanvas(QtWidgets.QWidget):
 
         title = {
             'font': QtGui.QFont(config.FONT_FAMILY, 20, QtGui.QFont.Black),
-            'colour': config.COLOURS['title'],
+            'colour': QtGui.QColor(config.COLOURS['title']),
             'text': title
         }
 
@@ -108,7 +108,7 @@ class FlashCardCanvas(QtWidgets.QWidget):
             lines.append(self.EMPTY_LINE)
 
         font = QtGui.QFont(config.FONT_FAMILY, 18)
-        colour = config.COLOURS['foreground']
+        colour = QtGui.QColor(config.COLOURS['foreground'])
 
         layout = self.engine.layout(text)
 
@@ -132,7 +132,7 @@ class FlashCardCanvas(QtWidgets.QWidget):
         qp.begin(self)
 
         self.render['view_rect'] = event.rect()
-        qp.fillRect(event.rect(), config.COLOURS['background'])
+        qp.fillRect(event.rect(), self.render['background'])
 
         lines = self.render['lines']
         middle = len(lines) / 2
