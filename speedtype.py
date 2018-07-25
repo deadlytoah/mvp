@@ -11,6 +11,7 @@ from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from address import Address
 from key import Key
+from random import randrange
 from sdb import Sdb
 from graphlayout import GraphLayout
 
@@ -59,6 +60,9 @@ class SpeedTypeForm:
         self.gui.action_display_graph.triggered.connect(_debug_display_graph)
         self.gui.action_jump_to.triggered.connect(_prepare_jump)
 
+        self.gui.difficulty_level.valueChanged.connect(
+            self._change_difficulty_level)
+
         self.canvas = SpeedTypeCanvas(GraphLayout())
         layout = QtWidgets.QVBoxLayout(self.gui.show_verses)
         layout.addWidget(self.canvas)
@@ -86,6 +90,11 @@ class SpeedTypeForm:
             self.stack.append(_address_from_key(Key.from_str(records[0]['key'])))
             _display_by_address(self.stack[-1])
 
+    def _change_difficulty_level(self):
+        """user changed the difficulty level by manipulating the slider"""
+        self.canvas.set_level(self.gui.difficulty_level.value())
+        self.canvas.update()
+
 class SpeedTypeCanvas(QtWidgets.QWidget):
     """Widget that fascilitates typing
 
@@ -98,24 +107,36 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
     """
     def __init__(self, layout_engine):
         super(SpeedTypeCanvas, self).__init__()
+
+        font = QtGui.QFont(config.FONT_FAMILY, 18)
+
+        # describes how to render the canvas.
         self.render = {
-            # 2D arrays of tuples of letters and their colours.  Each
-            # inner array corresponds to a line.
+            # 2D lists of letters, their colours and Cartesian
+            # coordinates.  Each inner array corresponds to a line.
             'letters': [],
 
+            # Set caret to the first letter of the first sentence.
+            # This is line followed by column.
+            'caret': (0, 0),
+            'caret_colour': QtGui.QColor(config.COLOURS['caret']),
+
             'line_spacing': 30,
-            'view_rect': None,
             'background': QtGui.QColor(config.COLOURS['background']),
+            'font': font,
+            'fm': QtGui.QFontMetrics(font),
         }
 
-        self.font = QtGui.QFont(config.FONT_FAMILY, 18)
-        self.fm = QtGui.QFontMetrics(self.font)
+        # list of words and references to the corresponding letters.
+        self.words = []
+
+        # Difficulty level
+        self.level = Level1
+
+        # Number of untyped, untouched hidden words
+        self.hidden = 0
 
         self.engine = layout_engine
-
-        # Set caret to the first letter of the first sentence.  This
-        # is line followed by column.
-        self.caret = (0, 0)
 
     def set_empty_database(self):
         self.set_title('Nothing in the database yet.')
@@ -130,18 +151,125 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         colour = config.COLOURS['guide']
         layout = self.engine.layout(text)
         letters = []
+        words = []
         y = 0
 
-        for text in layout:
+        for (row, text) in enumerate(layout):
             x = 0
             line = []
+
+            # Construct a tuple of the word, its visibility state, the
+            # reference to its corresponding letters and whether it
+            # has been touched.
+            INIT_WORD = lambda: {
+                'word': '',
+                'visibility': 'shown',
+                'letters': [],
+                'touched': False,
+                'behind': False,
+            }
+            make_word = INIT_WORD()
+
             for ch in text:
-                line.append((ch, colour, (x, y)))
-                x = x + self.fm.width(ch)
+                line.append({ 'letter': ch, 'colour': colour, 'coord': (x, y) })
+                x = x + self.render['fm'].width(ch)
+
+                if len(make_word) > 0 and config.WORD_DELIMITERS.find(ch) >= 0:
+                    words.append(make_word)
+                    make_word = INIT_WORD()
+                else:
+                    make_word['word'] = make_word['word'] + ch
+                    make_word['letters'].append((row, len(line) - 1))
+
+            # the last word in the line
+            if len(make_word) > 0:
+                words.append(make_word)
+
             letters.append(line)
             y = y + self.render['line_spacing']
 
         self.render['letters'] = letters
+        self.words = words
+        self.hidden = 0
+
+        self.set_level(window.gui.difficulty_level.value())
+
+    def set_level(self, level):
+        """Sets the difficulty level.
+
+        Sets the difficulty level and shows or hides some words as
+        appropriate.
+
+        """
+        self.level = Levels[level]
+        word_count = len(self.words)
+
+        rate = self.hidden / word_count
+        target = self.level['hidden_words']
+
+        if rate < target:
+            # maybe hide more words
+            count = 0
+            while (self.hidden + count) / word_count <= target:
+                count = count + 1
+            # don't exceed the target
+            count = count - 1
+
+            if count > 0:
+                self._hide_random_words(count)
+        elif rate > target:
+            # reveal some words
+            count = 0
+            while (self.hidden - count) / word_count > target:
+                count = count + 1
+            if count > 0:
+                self._reveal_random_words(count)
+            pass
+        else:
+            # do nothing
+            pass
+
+    def _hide_random_words(self, count):
+        """hides a random list of count words"""
+        # all shown words that are untouched
+        words = [w for w in self.words
+                 if w['visibility'] == 'shown' and w['touched'] == False and
+                 w['behind'] == False]
+        for _ in range(0, count):
+            pick = randrange(len(words))
+            self._hide_word(words[pick])
+            del words[pick]
+        self.hidden = self.hidden + count
+
+    def _reveal_random_words(self, count):
+        """reveals a random list of count words"""
+        # all hidden words that are untouched
+        words = [w for w in self.words
+                 if w['visibility'] == 'hidden' and
+                 w['behind'] == False]
+        for _ in range(0, count):
+            pick = randrange(len(words))
+            self._show_word(words[pick])
+            del words[pick]
+        self.hidden = self.hidden - count
+
+    def _hide_word(self, word):
+        """hides a specific word"""
+        letters = self.render['letters']
+        letter_refs = word['letters']
+        bgcolour = 'white'
+        word['visibility'] = 'hidden'
+        for ref in letter_refs:
+            letters[ref[0]][ref[1]]['colour'] = bgcolour
+
+    def _show_word(self, word):
+        """shows a specific word"""
+        letters = self.render['letters']
+        letter_refs = word['letters']
+        colour = config.COLOURS['guide']
+        word['visibility'] = 'shown'
+        for ref in letter_refs:
+            letters[ref[0]][ref[1]]['colour'] = colour
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Qt.Key_Up:
@@ -154,14 +282,12 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
     def paintEvent(self, event):
         qp = QtGui.QPainter()
         qp.begin(self)
-
-        self.render['view_rect'] = self.rect()
         qp.fillRect(event.rect(), self.render['background'])
 
         letters = self.render['letters']
         flat = [x for sublist in letters for x in sublist]
 
-        qp.setFont(self.font)
+        qp.setFont(self.render['font'])
 
         for letter in flat:
             self._render_letter(qp, self.render, letter)
@@ -170,18 +296,19 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         qp.end()
 
     def _render_letter(self, qp, render, letter):
-        ch = letter[0]
-        colour = QtGui.QColor(letter[1])
-        coord = letter[2]
+        ch = letter['letter']
+        colour = QtGui.QColor(letter['colour'])
+        coord = letter['coord']
 
         qp.setPen(colour)
-        qp.drawText(coord[0], coord[1] + self.fm.ascent(), ch)
+        qp.drawText(coord[0], coord[1] + render['fm'].ascent(), ch)
 
     def _render_caret(self, qp, render, letters):
-        letter = letters[self.caret[0]][self.caret[1]]
-        (x, y) = letter[2]
-        qp.setPen(QtGui.QColor(config.COLOURS['caret']))
-        qp.drawLine(x, y, x, y + self.fm.height())
+        caret = render['caret']
+        letter = letters[caret[0]][caret[1]]
+        (x, y) = letter['coord']
+        qp.setPen(render['caret_colour'])
+        qp.drawLine(x, y, x, y + render['fm'].height())
 
 def _view_flash_cards():
     """switch to the flash cards screen"""
