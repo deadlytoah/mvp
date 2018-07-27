@@ -130,12 +130,6 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         # list of words and references to the corresponding letters.
         self.words = []
 
-        # Difficulty level
-        self.level = Level1
-
-        # Number of untyped, untouched hidden words
-        self.hidden = 0
-
         self.engine = layout_engine
 
     def set_empty_database(self):
@@ -190,9 +184,9 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
         self.render['letters'] = letters
         self.words = words
-        self.hidden = 0
 
         self.set_level(window.gui.difficulty_level.value())
+        self.render['caret'] = (0, 0)
 
     def set_level(self, level):
         """Sets the difficulty level.
@@ -201,16 +195,19 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         appropriate.
 
         """
-        self.level = Levels[level]
-        word_count = len(self.words)
+        remaining = [w for w in self.words if w['behind'] == False]
+        word_count = len(remaining)
+        if word_count == 0:
+            return
+        hidden = len([w for w in remaining if w['visibility'] == 'hidden'])
 
-        rate = self.hidden / word_count
-        target = self.level['hidden_words']
+        rate = hidden / word_count
+        target = Levels[level]['hidden_words']
 
         if rate < target:
             # maybe hide more words
             count = 0
-            while (self.hidden + count) / word_count <= target:
+            while (hidden + count) / word_count <= target:
                 count = count + 1
             # don't exceed the target
             count = count - 1
@@ -220,7 +217,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         elif rate > target:
             # reveal some words
             count = 0
-            while (self.hidden - count) / word_count > target:
+            while (hidden - count) / word_count > target:
                 count = count + 1
             if count > 0:
                 self._reveal_random_words(count)
@@ -233,25 +230,27 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         """hides a random list of count words"""
         # all shown words that are untouched
         words = [w for w in self.words
-                 if w['visibility'] == 'shown' and w['touched'] == False and
-                 w['behind'] == False]
+                 if w['visibility'] == 'shown' and w['behind'] == False]
         for _ in range(0, count):
             pick = randrange(len(words))
-            self._hide_word(words[pick])
+
+            # Not hiding words that have been touched.  This means the
+            # hidden word ratio may sometimes be a little wrong, but
+            # we don't care about accuracy here.
+            if words[pick]['touched'] == False:
+                self._hide_word(words[pick])
+
             del words[pick]
-        self.hidden = self.hidden + count
 
     def _reveal_random_words(self, count):
         """reveals a random list of count words"""
         # all hidden words that are untouched
         words = [w for w in self.words
-                 if w['visibility'] == 'hidden' and
-                 w['behind'] == False]
+                 if w['visibility'] == 'hidden' and w['behind'] == False]
         for _ in range(0, count):
             pick = randrange(len(words))
             self._show_word(words[pick])
             del words[pick]
-        self.hidden = self.hidden - count
 
     def _hide_word(self, word):
         """hides a specific word"""
@@ -278,6 +277,27 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         elif event.key() == Qt.Qt.Key_Down:
             window.stack[-1].move_down()
             _display_by_address(window.stack[-1])
+        elif event.key() == Qt.Qt.Key_Backspace:
+            pass
+        elif event.text() != '':
+            letter = self._letter_at_caret()
+            if event.text() == letter['letter']:
+                self._correct_letter(letter)
+            else:
+                self._incorrect_letter(letter, event.text())
+
+            maybe_word = self._word_at_caret()
+            if maybe_word is not None:
+                word = maybe_word
+                word['touched'] = True
+
+                # we are at the last letter, which means we are done
+                # with this word.
+                if word['letters'][-1] == self.render['caret']:
+                    word['behind'] = True
+
+            _ = self._forward_caret()
+            self.update()
 
     def paintEvent(self, event):
         qp = QtGui.QPainter()
@@ -309,6 +329,59 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         (x, y) = letter['coord']
         qp.setPen(render['caret_colour'])
         qp.drawLine(x, y, x, y + render['fm'].height())
+
+    def _letter_at_caret(self):
+        """Returns the letter at the caret"""
+        caret = self.render['caret']
+        letter = self.render['letters'][caret[0]][caret[1]]
+        return letter
+
+    def _word_at_caret(self):
+        """Returns the word at the caret
+
+        Returns the word at the caret, or None if there is none found.
+
+        """
+        caret = self.render['caret']
+        for word in self.words:
+            maybe_letter = [1 for l in word['letters']
+                            if l == (caret[0], caret[1])]
+            if len(maybe_letter) > 0:
+                return word
+        return None
+
+    def _correct_letter(self, letter):
+        """Handles the case where user typed the correct letter"""
+        letter['colour'] = config.COLOURS['correct']
+
+    def _incorrect_letter(self, letter, incorrect):
+        """Handles the case where user typed the incorrect letter"""
+        word = self._word_at_caret()
+        if word is None or word['visibility'] == 'shown':
+            letter['colour'] = config.COLOURS['incorrect']
+        else:
+            letter['letter'] = incorrect
+            letter['colour'] = config.COLOURS['incorrect']
+
+    def _forward_caret(self):
+        """Moves caret forward by one letter
+
+        If the caret is at the end of the line, move it to the first
+        letter in the next line.  If the caret is at the end of the
+        last line, returns False.  Otherwise returns True.
+
+        """
+        caret = self.render['caret']
+        maybe = (caret[0], caret[1] + 1)
+        letters = self.render['letters']
+        while True:
+            if maybe[0] >= len(letters):
+                return False
+            elif maybe[1] >= len(letters[maybe[0]]):
+                maybe = (maybe[0] + 1, 0)
+            else:
+                self.render['caret'] = maybe
+                break
 
 def _view_flash_cards():
     """switch to the flash cards screen"""
