@@ -313,7 +313,20 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             window.stack[-1].move_down()
             _display_by_address(window.stack[-1])
         elif event.key() == Qt.Qt.Key_Backspace:
-            pass
+            if self.caret > 0:
+                self.caret = self.caret - 1
+                ch = self.buf[self.caret]
+                ch['typed'] = None
+                ch['correct'] = False
+                word = ch['word']
+                if word is not None:
+                    word['behind'] = False
+
+                self._render()
+                self.update()
+            else:
+                # caret at the beginning of the text
+                pass
         elif event.text() != '':
             ch = self._char_at_caret()
             ch['typed'] = event.text()
