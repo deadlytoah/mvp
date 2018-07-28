@@ -127,7 +127,15 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             'fm': QtGui.QFontMetrics(font),
         }
 
-        # list of words and references to the corresponding letters.
+        # sequential storage of characters to display and their
+        # states. This includes correct or incorrect entries and which
+        # word each character belongs to.
+        self.buf = []
+
+        # the location of caret within self.buf.
+        self.caret = 0
+
+        # list of words and their states.
         self.words = []
 
         self.engine = layout_engine
@@ -141,52 +149,83 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         self.title = title
         window.gui.title.setText(self.title)
 
+    def _init_char(self, ch):
+        """Constructs a character.
+
+        Constructs a character with its visibility state, whether user
+        typed it correctly and the incorrect letter if typed
+        incorrectly.
+
+        """
+        return {
+            'char': ch,
+            'word': None,
+            'visible': True,
+            'typed': None,
+            'correct': False,
+        }
+
+    def _init_word(self):
+        """Constructs a word.
+
+        Constructs a word with its visibility state, reference to the
+        last character of the word and whether it has been touched.
+
+        """
+        return {
+            'word': '',
+            'visible': True,
+            'touched': False,
+            'behind': False,
+            'last_char': None,
+        }
+
     def set_text(self, text):
-        colour = config.COLOURS['guide']
+        """Sets the text to be displayed in the canvas."""
+        (self.buf, self.words) = self._process_text(text)
+        self.caret = 0
+        self.set_level(window.gui.difficulty_level.value())
+
+        self._render()
+
+    def _process_text(self, text):
+        """Processes the given text.
+
+        Produces character buffer and groups the words together.  The
+        character buffer is used to show, hide and colour the letters.
+        The list of words is used to show or hide words.
+
+        """
         layout = self.engine.layout(text)
-        letters = []
+        buf = []
         words = []
-        y = 0
 
-        for (row, text) in enumerate(layout):
-            x = 0
-            line = []
-
-            # Construct a tuple of the word, its visibility state, the
-            # reference to its corresponding letters and whether it
-            # has been touched.
-            INIT_WORD = lambda: {
-                'word': '',
-                'visibility': 'shown',
-                'letters': [],
-                'touched': False,
-                'behind': False,
-            }
-            make_word = INIT_WORD()
+        for text in layout:
+            make_word = self._init_word()
 
             for ch in text:
-                line.append({ 'letter': ch, 'colour': colour, 'coord': (x, y) })
-                x = x + self.render['fm'].width(ch)
+                maybe_letter = self._init_char(ch)
+                buf.append(maybe_letter)
 
-                if len(make_word) > 0 and config.WORD_DELIMITERS.find(ch) >= 0:
-                    words.append(make_word)
-                    make_word = INIT_WORD()
+                if config.WORD_DELIMITERS.find(ch) >= 0:
+                    if len(make_word['word']) > 0:
+                        words.append(make_word)
+                        make_word = self._init_word()
+                    else:
+                        pass
                 else:
+                    maybe_letter['word'] = make_word
                     make_word['word'] = make_word['word'] + ch
-                    make_word['letters'].append((row, len(line) - 1))
+                    make_word['last_char'] = len(buf) - 1
 
             # the last word in the line
-            if len(make_word) > 0:
+            if len(make_word['word']) > 0:
                 words.append(make_word)
 
-            letters.append(line)
-            y = y + self.render['line_spacing']
+            # end of line
+            buf.append(self._init_char('\n'))
 
-        self.render['letters'] = letters
-        self.words = words
-
-        self.set_level(window.gui.difficulty_level.value())
-        self.render['caret'] = (0, 0)
+        return (buf, words)
 
     def set_level(self, level):
         """Sets the difficulty level.
@@ -199,7 +238,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         word_count = len(remaining)
         if word_count == 0:
             return
-        hidden = len([w for w in remaining if w['visibility'] == 'hidden'])
+        hidden = len([w for w in remaining if w['visible'] == False])
 
         rate = hidden / word_count
         target = Levels[level]['hidden_words']
@@ -226,11 +265,13 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             # do nothing
             pass
 
+        self._render()
+
     def _hide_random_words(self, count):
         """hides a random list of count words"""
         # all shown words that are untouched
         words = [w for w in self.words
-                 if w['visibility'] == 'shown' and w['behind'] == False]
+                 if w['visible'] == True and w['behind'] == False]
         for _ in range(0, count):
             pick = randrange(len(words))
 
@@ -246,7 +287,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         """reveals a random list of count words"""
         # all hidden words that are untouched
         words = [w for w in self.words
-                 if w['visibility'] == 'hidden' and w['behind'] == False]
+                 if w['visible'] == False and w['behind'] == False]
         for _ in range(0, count):
             pick = randrange(len(words))
             self._show_word(words[pick])
@@ -254,21 +295,15 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
     def _hide_word(self, word):
         """hides a specific word"""
-        letters = self.render['letters']
-        letter_refs = word['letters']
-        bgcolour = 'white'
-        word['visibility'] = 'hidden'
-        for ref in letter_refs:
-            letters[ref[0]][ref[1]]['colour'] = bgcolour
+        word['visible'] = False
+        for ch in [ch for ch in self.buf if ch['word'] is word]:
+            ch['visible'] = False
 
     def _show_word(self, word):
         """shows a specific word"""
-        letters = self.render['letters']
-        letter_refs = word['letters']
-        colour = config.COLOURS['guide']
-        word['visibility'] = 'shown'
-        for ref in letter_refs:
-            letters[ref[0]][ref[1]]['colour'] = colour
+        word['visible'] = True
+        for ch in [ch for ch in self.buf if ch['word'] is word]:
+            ch['visible'] = True
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Qt.Key_Up:
@@ -280,11 +315,12 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         elif event.key() == Qt.Qt.Key_Backspace:
             pass
         elif event.text() != '':
-            letter = self._letter_at_caret()
-            if event.text() == letter['letter']:
-                self._correct_letter(letter)
+            ch = self._char_at_caret()
+            ch['typed'] = event.text()
+            if event.text() == ch['char']:
+                ch['correct'] = True
             else:
-                self._incorrect_letter(letter, event.text())
+                ch['correct'] = False
 
             maybe_word = self._word_at_caret()
             if maybe_word is not None:
@@ -293,23 +329,59 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
                 # we are at the last letter, which means we are done
                 # with this word.
-                if word['letters'][-1] == self.render['caret']:
+                if self.caret == word['last_char']:
                     word['behind'] = True
 
             _ = self._forward_caret()
+            self._render()
             self.update()
+
+    def _render(self):
+        """Prepares the canvas for rendering.
+
+        This method transforms the internal data into a data structure
+        that can be used by paintEvent() method to draw the screen
+
+        """
+        letters = []
+        y = 0
+        x = 0
+        for (i, ch) in enumerate(self.buf):
+            if i == self.caret:
+                self.render['caret'] = (x, y)
+
+            if ch['char'] == '\n':
+                x = 0
+                y = y + self.render['line_spacing']
+            else:
+                if ch['typed'] is None:
+                    if ch['visible'] == True:
+                        (letter, colour) = (ch['char'], config.COLOURS['guide'])
+                    else:
+                        (letter, colour) = (' ', 'white')
+                elif ch['correct'] == True:
+                    (letter, colour) = self._render_correct_char(ch)
+                else:
+                    (letter, colour) = self._render_incorrect_char(ch)
+
+                letters.append({
+                    'letter': letter,
+                    'colour': colour,
+                    'coord': (x, y),
+                })
+                x = x + self.render['fm'].width(ch['char'])
+
+        self.render['letters'] = letters
 
     def paintEvent(self, event):
         qp = QtGui.QPainter()
         qp.begin(self)
         qp.fillRect(event.rect(), self.render['background'])
-
-        letters = self.render['letters']
-        flat = [x for sublist in letters for x in sublist]
-
         qp.setFont(self.render['font'])
 
-        for letter in flat:
+        letters = self.render['letters']
+
+        for letter in letters:
             self._render_letter(qp, self.render, letter)
 
         self._render_caret(qp, self.render, letters)
@@ -324,17 +396,13 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         qp.drawText(coord[0], coord[1] + render['fm'].ascent(), ch)
 
     def _render_caret(self, qp, render, letters):
-        caret = render['caret']
-        letter = letters[caret[0]][caret[1]]
-        (x, y) = letter['coord']
+        (x, y) = render['caret']
         qp.setPen(render['caret_colour'])
         qp.drawLine(x, y, x, y + render['fm'].height())
 
-    def _letter_at_caret(self):
-        """Returns the letter at the caret"""
-        caret = self.render['caret']
-        letter = self.render['letters'][caret[0]][caret[1]]
-        return letter
+    def _char_at_caret(self):
+        """Returns the character at the caret"""
+        return self.buf[self.caret]
 
     def _word_at_caret(self):
         """Returns the word at the caret
@@ -342,46 +410,32 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         Returns the word at the caret, or None if there is none found.
 
         """
-        caret = self.render['caret']
-        for word in self.words:
-            maybe_letter = [1 for l in word['letters']
-                            if l == (caret[0], caret[1])]
-            if len(maybe_letter) > 0:
-                return word
-        return None
+        return self.buf[self.caret]['word']
 
-    def _correct_letter(self, letter):
-        """Handles the case where user typed the correct letter"""
-        letter['colour'] = config.COLOURS['correct']
+    def _render_correct_char(self, char):
+        """Handles the case where user typed the correct character"""
+        return (char['char'], config.COLOURS['correct'])
 
-    def _incorrect_letter(self, letter, incorrect):
-        """Handles the case where user typed the incorrect letter"""
-        word = self._word_at_caret()
-        if word is None or word['visibility'] == 'shown':
-            letter['colour'] = config.COLOURS['incorrect']
+    def _render_incorrect_char(self, char):
+        """Handles the case where user typed the incorrect character"""
+        word = char['word']
+        if word is not None and word['visible'] == True:
+            return (char['char'], config.COLOURS['incorrect'])
         else:
-            letter['letter'] = incorrect
-            letter['colour'] = config.COLOURS['incorrect']
+            return (char['typed'], config.COLOURS['incorrect'])
 
     def _forward_caret(self):
         """Moves caret forward by one letter
 
-        If the caret is at the end of the line, move it to the first
-        letter in the next line.  If the caret is at the end of the
-        last line, returns False.  Otherwise returns True.
+        If the caret is at the end of the text, returns False.
+        Otherwise, advances the caret and returns True.
 
         """
-        caret = self.render['caret']
-        maybe = (caret[0], caret[1] + 1)
-        letters = self.render['letters']
-        while True:
-            if maybe[0] >= len(letters):
-                return False
-            elif maybe[1] >= len(letters[maybe[0]]):
-                maybe = (maybe[0] + 1, 0)
-            else:
-                self.render['caret'] = maybe
-                break
+        if self.caret + 1 >= len(self.buf):
+            return False
+        else:
+            self.caret = self.caret + 1
+            return True
 
 def _view_flash_cards():
     """switch to the flash cards screen"""
