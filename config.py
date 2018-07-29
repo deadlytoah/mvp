@@ -15,7 +15,7 @@ COLOURS = {
     'caret': 'black',
 }
 DEFAULT_TRANSLATION='esv'
-FONT_FAMILY = 'Helvetica Neue'
+FONT_FAMILY = 'Courier'
 SENTENCE_DELIMITERS = '.:;?!'
 WORD_DELIMITERS = ' .,:;?!'
 
