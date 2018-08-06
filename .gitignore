@@ -1,3 +1,5 @@
 __pycache__
 *.sdb
 xcuserdata
+target
+Cargo.lock
