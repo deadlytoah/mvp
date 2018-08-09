@@ -13,4 +13,4 @@ serde_json = "1.0.24"
 sqlite3 = "0.24.0"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["staticlib"]

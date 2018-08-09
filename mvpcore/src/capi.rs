@@ -20,7 +20,7 @@ pub struct Location {
 }
 
 #[repr(C)]
-pub enum ErrorCode {
+pub enum SessionError {
     OK,
     SessionExists,
     SessionCorruptData,
@@ -58,9 +58,9 @@ pub unsafe fn session_delete(session: *mut Session) {
 pub unsafe fn session_write(session: *mut Session) -> c_int {
     let session = Box::from_raw(session);
     if session.write().is_ok() {
-        ErrorCode::OK as c_int
+        SessionError::OK as c_int
     } else {
-        ErrorCode::SessionWriteError as c_int
+        SessionError::SessionWriteError as c_int
     }
 }
 
@@ -73,27 +73,27 @@ pub unsafe fn session_set_range(
     let book = if let Ok(book) = CStr::from_bytes_with_nul(&(*start).book) {
         book
     } else {
-        return ErrorCode::RangeParseError as c_int;
+        return SessionError::RangeParseError as c_int;
     };
     let book = if let Ok(book) = book.to_str() {
         book
     } else {
-        return ErrorCode::RangeParseError as c_int;
+        return SessionError::RangeParseError as c_int;
     };
     let book = if let Some(book) = Book::from_short_name(book) {
         book
     } else {
-        return ErrorCode::RangeParseError as c_int;
+        return SessionError::RangeParseError as c_int;
     };
     let translation = if let Ok(translation) = CStr::from_bytes_with_nul(&(*start).translation) {
         translation
     } else {
-        return ErrorCode::RangeParseError as c_int;
+        return SessionError::RangeParseError as c_int;
     };
     let translation = if let Ok(translation) = translation.to_str() {
         translation
     } else {
-        return ErrorCode::RangeParseError as c_int;
+        return SessionError::RangeParseError as c_int;
     };
     let s = location::Location {
         translation: translation.into(),
@@ -106,27 +106,27 @@ pub unsafe fn session_set_range(
     let book = if let Ok(book) = CStr::from_bytes_with_nul(&(*end).book) {
         book
     } else {
-        return ErrorCode::RangeParseError as c_int;
+        return SessionError::RangeParseError as c_int;
     };
     let book = if let Ok(book) = book.to_str() {
         book
     } else {
-        return ErrorCode::RangeParseError as c_int;
+        return SessionError::RangeParseError as c_int;
     };
     let book = if let Some(book) = Book::from_short_name(book) {
         book
     } else {
-        return ErrorCode::RangeParseError as c_int;
+        return SessionError::RangeParseError as c_int;
     };
     let translation = if let Ok(translation) = CStr::from_bytes_with_nul(&(*end).translation) {
         translation
     } else {
-        return ErrorCode::RangeParseError as c_int;
+        return SessionError::RangeParseError as c_int;
     };
     let translation = if let Ok(translation) = translation.to_str() {
         translation
     } else {
-        return ErrorCode::RangeParseError as c_int;
+        return SessionError::RangeParseError as c_int;
     };
     let e = location::Location {
         translation: translation.into(),
@@ -139,32 +139,32 @@ pub unsafe fn session_set_range(
     let mut session = Box::from_raw(session);
     session.range = Range { start: s, end: e };
     Box::into_raw(session);
-    ErrorCode::OK as c_int
+    SessionError::OK as c_int
 }
 
 #[no_mangle]
 pub unsafe fn session_set_level(session: *mut Session, level: c_int) -> c_int {
     if level < Level::Level1 as c_int || level > Level::Level5 as c_int {
-        ErrorCode::LevelUnknown as c_int
+        SessionError::LevelUnknown as c_int
     } else {
         let mut session = Box::from_raw(session);
         let level: Level = mem::transmute(level as u8);
         session.level = level;
         Box::into_raw(session);
-        ErrorCode::OK as c_int
+        SessionError::OK as c_int
     }
 }
 
 #[no_mangle]
 pub unsafe fn session_set_strategy(session: *mut Session, strategy: c_int) -> c_int {
     if strategy < Strategy::Simple as c_int || strategy > Strategy::FocusedLearning as c_int {
-        ErrorCode::StrategyUnknown as c_int
+        SessionError::StrategyUnknown as c_int
     } else {
         let mut session = Box::from_raw(session);
         let strategy: Strategy = mem::transmute(strategy as u8);
         session.strategy = strategy;
         Box::into_raw(session);
-        ErrorCode::OK as c_int
+        SessionError::OK as c_int
     }
 }
 
@@ -187,18 +187,18 @@ pub unsafe fn session_list_sessions(buf: *mut c_char, len: *mut size_t) -> c_int
                 actual_len += namebytes.len();
 
                 if actual_len > bufsize {
-                    return ErrorCode::SessionBufferTooSmall as c_int;
+                    return SessionError::SessionBufferTooSmall as c_int;
                 }
             } else {
-                return ErrorCode::SessionCorruptData as c_int;
+                return SessionError::SessionCorruptData as c_int;
             };
         }
 
         *len = actual_len;
 
-        ErrorCode::OK as c_int
+        SessionError::OK as c_int
     } else {
-        ErrorCode::SessionCorruptData as c_int
+        SessionError::SessionCorruptData as c_int
     }
 }
 
