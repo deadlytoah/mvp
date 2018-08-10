@@ -22,8 +22,9 @@ typedef struct {
 typedef struct Session Session;
 
 extern Session *session_new(const char *name);
-extern void session_delete(Session *);
+extern void session_destroy(Session *);
 extern int session_write(Session *);
+extern int session_delete(Session *);
 extern int session_set_range(Session *, Location *start, Location *end);
 extern int session_set_level(Session *, int level);
 extern int session_set_strategy(Session *, int strategy);

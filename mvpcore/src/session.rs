@@ -2,8 +2,8 @@ use failure::Error;
 use level::Level;
 use range::Range;
 use serde_json;
-use std::fs::File;
-use std::io::{BufReader, BufWriter};
+use std::fs::OpenOptions;
+use std::io::{BufReader, BufWriter, ErrorKind};
 use strategy::Strategy;
 
 const SESSIONS_FILE: &str = "sessions.json";
@@ -31,12 +31,21 @@ impl Session {
     }
 
     pub fn load_all_sessions() -> Result<Vec<Session>, Error> {
-        let reader = BufReader::new(File::open(SESSIONS_FILE)?);
+        let reader = match OpenOptions::new().read(true).open(SESSIONS_FILE) {
+            Ok(file) => BufReader::new(file),
+            Err(ref e) if e.kind() == ErrorKind::NotFound => return Ok(vec![]),
+            Err(e) => bail!(e),
+        };
         Ok(serde_json::from_reader(reader)?)
     }
 
     pub fn store_all_sessions(sessions: &[Session]) -> Result<(), Error> {
-        let writer = BufWriter::new(File::open(SESSIONS_FILE)?);
+        let writer = BufWriter::new(
+            OpenOptions::new()
+                .create(true)
+                .write(true)
+                .open(SESSIONS_FILE)?,
+        );
         serde_json::to_writer_pretty(writer, sessions)?;
         Ok(())
     }
@@ -50,6 +59,13 @@ impl Session {
             Session::store_all_sessions(&session_seq)?;
             Ok(())
         }
+    }
+
+    pub fn delete(self) -> Result<(), Error> {
+        let mut session_seq = Session::load_all_sessions()?;
+        session_seq.retain(|session| session.name != self.name);
+        Session::store_all_sessions(&session_seq)?;
+        Ok(())
     }
 }
 

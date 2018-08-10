@@ -22,9 +22,9 @@ pub struct Location {
 #[repr(C)]
 pub enum SessionError {
     OK,
+    IOError,
     SessionExists,
     SessionCorruptData,
-    SessionWriteError,
     SessionBufferTooSmall,
     RangeParseError,
     LevelUnknown,
@@ -33,9 +33,9 @@ pub enum SessionError {
 
 static ERROR_MESSAGES: &'static [&'static str] = &[
     "success\0",
+    "IO error\0",
     "session with the given name already exists\0",
     "session data file is corrupt\0",
-    "error writing session on disk\0",
     "error parsing range\0",
     "unknown level\0",
     "unknown strategy\0",
@@ -48,8 +48,9 @@ pub unsafe fn session_new(name: *const c_char) -> *mut Session {
     Box::into_raw(session)
 }
 
+/// Frees the session from the heap.
 #[no_mangle]
-pub unsafe fn session_delete(session: *mut Session) {
+pub unsafe fn session_destroy(session: *mut Session) {
     Box::from_raw(session);
 }
 
@@ -60,7 +61,18 @@ pub unsafe fn session_write(session: *mut Session) -> c_int {
     if session.write().is_ok() {
         SessionError::OK as c_int
     } else {
-        SessionError::SessionWriteError as c_int
+        SessionError::IOError as c_int
+    }
+}
+
+/// Deletes the session from disk.
+#[no_mangle]
+pub unsafe fn session_delete(session: *mut Session) -> c_int {
+    let session = Box::from_raw(session);
+    if session.delete().is_err() {
+        SessionError::IOError as c_int
+    } else {
+        0
     }
 }
 
