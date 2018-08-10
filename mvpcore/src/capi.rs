@@ -33,10 +33,10 @@ pub enum SessionError {
 
 static ERROR_MESSAGES: &'static [&'static str] = &[
     "success\0",
-    "session with that name already exists\0",
+    "session with the given name already exists\0",
     "session data file is corrupt\0",
-    "error writing the session on disk\0",
-    "error parsing the range\0",
+    "error writing session on disk\0",
+    "error parsing range\0",
     "unknown level\0",
     "unknown strategy\0",
 ];
