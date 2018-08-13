@@ -733,11 +733,11 @@
                                     <rect key="frame" x="1" y="1" width="438" height="203"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
-                                        <collectionView ambiguous="YES" id="PPd-D2-yM9">
+                                        <collectionView ambiguous="YES" selectable="YES" allowsMultipleSelection="YES" id="PPd-D2-yM9">
                                             <rect key="frame" x="0.0" y="0.0" width="438" height="158"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
                                             <collectionViewFlowLayout key="collectionViewLayout" minimumInteritemSpacing="10" minimumLineSpacing="10" id="NZX-oe-vtp">
-                                                <size key="itemSize" width="50" height="50"/>
+                                                <size key="itemSize" width="120" height="30"/>
                                             </collectionViewFlowLayout>
                                             <color key="primaryBackgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                         </collectionView>
@@ -756,7 +756,7 @@
                         </subviews>
                     </view>
                     <connections>
-                        <outlet property="session_view" destination="PPd-D2-yM9" id="AOr-Qs-wdW"/>
+                        <outlet property="sessionView" destination="PPd-D2-yM9" id="W34-kH-Esh"/>
                     </connections>
                 </viewController>
                 <customObject id="rPt-NT-nkU" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>

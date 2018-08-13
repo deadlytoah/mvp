@@ -8,15 +8,19 @@
 
 import Cocoa
 
-class SessionController: NSViewController {
-    @IBOutlet weak var session_view: NSCollectionView!
+class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectionViewDataSource {
+    @IBOutlet weak var sessionView: NSCollectionView!
 
     static let Title = "mvp — Sessions"
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Do any additional setup after loading the view.
+        let itemNib = NSNib(nibNamed: NSNib.Name(rawValue: "SessionColViewItem"), bundle: nil)
+
+        sessionView.register(itemNib, forItemWithIdentifier: NSUserInterfaceItemIdentifier(rawValue: "SessionColViewItem"))
+        sessionView.delegate = self
+        sessionView.dataSource = self
     }
 
     override func viewDidAppear() {
@@ -35,6 +39,16 @@ class SessionController: NSViewController {
                 alert.beginSheetModal(for: self.view.window!)
             }
         }
+    }
+
+    func collectionView(_ collectionView: NSCollectionView, numberOfItemsInSection section: Int) -> Int {
+        // TODO implement this
+        return 20
+    }
+
+    func collectionView(_ collectionView: NSCollectionView, itemForRepresentedObjectAt indexPath: IndexPath) -> NSCollectionViewItem {
+        // TODO implement this
+        return sessionView.makeItem(withIdentifier: NSUserInterfaceItemIdentifier(rawValue: "SessionColViewItem"), for: indexPath)
     }
 
     override var representedObject: Any? {
