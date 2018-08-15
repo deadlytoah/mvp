@@ -43,6 +43,7 @@ impl Session {
         let writer = BufWriter::new(
             OpenOptions::new()
                 .create(true)
+                .truncate(true)
                 .write(true)
                 .open(SESSIONS_FILE)?,
         );

@@ -138,8 +138,15 @@
     </property>
     <addaction name="action_jump_to"/>
    </widget>
+   <widget class="QMenu" name="menuSession">
+    <property name="title">
+     <string>Session</string>
+    </property>
+    <addaction name="action_edit_session"/>
+   </widget>
    <addaction name="menuTask"/>
    <addaction name="menuJump"/>
+   <addaction name="menuSession"/>
    <addaction name="menuDebug"/>
   </widget>
   <action name="action_enter_verses">
@@ -201,6 +208,11 @@
    </property>
    <property name="text">
     <string>Speed Type</string>
+   </property>
+  </action>
+  <action name="action_edit_session">
+   <property name="text">
+    <string>Edit</string>
    </property>
   </action>
  </widget>
