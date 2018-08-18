@@ -92,7 +92,7 @@ pub unsafe fn session_set_range(
     } else {
         return SessionError::RangeParseError as c_int;
     };
-    let book = if let Some(book) = Book::from_short_name(book) {
+    let book = if let Ok(book) = Book::from_short_name(book) {
         book
     } else {
         return SessionError::RangeParseError as c_int;
@@ -125,7 +125,7 @@ pub unsafe fn session_set_range(
     } else {
         return SessionError::RangeParseError as c_int;
     };
-    let book = if let Some(book) = Book::from_short_name(book) {
+    let book = if let Ok(book) = Book::from_short_name(book) {
         book
     } else {
         return SessionError::RangeParseError as c_int;

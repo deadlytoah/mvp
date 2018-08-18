@@ -1,4 +1,30 @@
+use std::fmt::{self, Display, Formatter};
 use std::mem;
+
+#[derive(Debug)]
+pub enum BookError {
+    UnknownBook { name: String },
+}
+
+impl ::std::error::Error for BookError {
+    fn description(&self) -> &str {
+        match *self {
+            BookError::UnknownBook { .. } => "unknown book",
+        }
+    }
+
+    fn cause(&self) -> Option<&::std::error::Error> {
+        None
+    }
+}
+
+impl Display for BookError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match *self {
+            BookError::UnknownBook { ref name } => write!(f, "{} is an unknown book", name),
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize)]
 #[repr(C)]
@@ -96,11 +122,14 @@ static SHORT_NAMES: &'static [&'static str] = &[
 ];
 
 impl Book {
-    pub fn from_short_name(short_name: &str) -> Option<Self> {
+    pub fn from_short_name(short_name: &str) -> Result<Self, BookError> {
         SHORT_NAMES
             .iter()
             .position(|n| *n == short_name)
             .map(|pos| unsafe { mem::transmute(pos as u32) })
+            .ok_or_else(|| BookError::UnknownBook {
+                name: short_name.into(),
+            })
     }
 }
 

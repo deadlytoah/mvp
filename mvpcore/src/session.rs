@@ -1,7 +1,7 @@
-use failure::Error;
 use level::Level;
 use range::Range;
 use serde_json;
+use std::fmt::{self, Display, Formatter};
 use std::fs::OpenOptions;
 use std::io::{BufReader, BufWriter, ErrorKind};
 use strategy::Strategy;
@@ -9,10 +9,53 @@ use strategy::Strategy;
 const SESSIONS_FILE: &str = "sessions.json";
 const MAX_SESSIONS: usize = 100;
 
-#[derive(Debug, Fail)]
+type Result<T> = ::std::result::Result<T, SessionError>;
+
+#[derive(Debug)]
 pub enum SessionError {
-    #[fail(display = "maximum number of sessions reached")]
+    Io(::std::io::Error),
+    SerdeJson(serde_json::Error),
     TooManySessions,
+}
+
+impl ::std::error::Error for SessionError {
+    fn description(&self) -> &str {
+        match *self {
+            SessionError::Io(ref e) => e.description(),
+            SessionError::SerdeJson(ref e) => e.description(),
+            SessionError::TooManySessions => "too many sessions",
+        }
+    }
+
+    fn cause(&self) -> Option<&::std::error::Error> {
+        match *self {
+            SessionError::Io(ref e) => Some(e),
+            SessionError::SerdeJson(ref e) => Some(e),
+            SessionError::TooManySessions => None,
+        }
+    }
+}
+
+impl Display for SessionError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match *self {
+            SessionError::Io(ref e) => write!(f, "IO error: {}", e),
+            SessionError::SerdeJson(ref e) => write!(f, "serde_json error: {}", e),
+            SessionError::TooManySessions => write!(f, "maximum number of sessions reached"),
+        }
+    }
+}
+
+impl From<::std::io::Error> for SessionError {
+    fn from(err: ::std::io::Error) -> SessionError {
+        SessionError::Io(err)
+    }
+}
+
+impl From<serde_json::Error> for SessionError {
+    fn from(err: serde_json::Error) -> SessionError {
+        SessionError::SerdeJson(err)
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -30,16 +73,18 @@ impl Session {
         session
     }
 
-    pub fn load_all_sessions() -> Result<Vec<Session>, Error> {
-        let reader = match OpenOptions::new().read(true).open(SESSIONS_FILE) {
-            Ok(file) => BufReader::new(file),
-            Err(ref e) if e.kind() == ErrorKind::NotFound => return Ok(vec![]),
-            Err(e) => bail!(e),
-        };
-        Ok(serde_json::from_reader(reader)?)
+    pub fn load_all_sessions() -> Result<Vec<Session>> {
+        match OpenOptions::new().read(true).open(SESSIONS_FILE) {
+            Ok(file) => {
+                let reader = BufReader::new(file);
+                serde_json::from_reader(reader).map_err(|e| e.into())
+            }
+            Err(ref e) if e.kind() == ErrorKind::NotFound => Ok(vec![]),
+            Err(e) => Err(e.into()),
+        }
     }
 
-    pub fn store_all_sessions(sessions: &[Session]) -> Result<(), Error> {
+    pub fn store_all_sessions(sessions: &[Session]) -> Result<()> {
         let writer = BufWriter::new(
             OpenOptions::new()
                 .create(true)
@@ -51,10 +96,10 @@ impl Session {
         Ok(())
     }
 
-    pub fn write(self) -> Result<(), Error> {
+    pub fn write(self) -> Result<()> {
         let mut session_seq = Session::load_all_sessions()?;
         if session_seq.len() > MAX_SESSIONS {
-            bail!(SessionError::TooManySessions);
+            Err(SessionError::TooManySessions)
         } else {
             session_seq.push(self);
             Session::store_all_sessions(&session_seq)?;
@@ -62,7 +107,7 @@ impl Session {
         }
     }
 
-    pub fn delete(self) -> Result<(), Error> {
+    pub fn delete(self) -> Result<()> {
         let mut session_seq = Session::load_all_sessions()?;
         session_seq.retain(|session| session.name != self.name);
         Session::store_all_sessions(&session_seq)?;

@@ -1,7 +1,3 @@
-#[macro_use]
-extern crate failure;
-#[macro_use]
-extern crate failure_derive;
 extern crate libc;
 //extern crate sqlite3;
 extern crate serde;
