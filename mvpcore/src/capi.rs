@@ -1,22 +1,70 @@
-use book::Book;
+use book::{Book, BookError};
 use level::Level;
 use libc::*;
 use location;
 use range::Range;
-use session::Session;
+use session::{self, Session};
 use std::boxed::Box;
 use std::ffi::{CStr, CString};
+use std::fmt::{self, Display, Formatter};
 use std::mem;
 use std::slice;
+use std::str;
 use strategy::Strategy;
 
-#[repr(C)]
-pub struct Location {
-    pub translation: [u8; 8],
-    pub book: [u8; 8],
-    pub chapter: u16,
-    pub sentence: u16,
-    pub verse: u16,
+type Result<T> = ::std::result::Result<T, CapiError>;
+
+#[derive(Debug)]
+pub enum CapiError {
+    Book(BookError),
+    Session(session::SessionError),
+    Utf8(str::Utf8Error),
+}
+
+impl ::std::error::Error for CapiError {
+    fn description(&self) -> &str {
+        match *self {
+            CapiError::Book(ref e) => e.description(),
+            CapiError::Session(ref e) => e.description(),
+            CapiError::Utf8(ref e) => e.description(),
+        }
+    }
+
+    fn cause(&self) -> Option<&::std::error::Error> {
+        match *self {
+            CapiError::Book(ref e) => Some(e),
+            CapiError::Session(ref e) => Some(e),
+            CapiError::Utf8(ref e) => Some(e),
+        }
+    }
+}
+
+impl Display for CapiError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match *self {
+            CapiError::Book(ref e) => write!(f, "book error: {}", e),
+            CapiError::Session(ref e) => write!(f, "session error: {}", e),
+            CapiError::Utf8(ref e) => write!(f, "utf8 error: {}", e),
+        }
+    }
+}
+
+impl From<BookError> for CapiError {
+    fn from(err: BookError) -> CapiError {
+        CapiError::Book(err)
+    }
+}
+
+impl From<session::SessionError> for CapiError {
+    fn from(err: session::SessionError) -> CapiError {
+        CapiError::Session(err)
+    }
+}
+
+impl From<str::Utf8Error> for CapiError {
+    fn from(err: str::Utf8Error) -> CapiError {
+        CapiError::Utf8(err)
+    }
 }
 
 #[repr(C)]
@@ -26,9 +74,26 @@ pub enum SessionError {
     SessionExists,
     SessionCorruptData,
     SessionBufferTooSmall,
+    SessionTooMany,
     RangeParseError,
     LevelUnknown,
     StrategyUnknown,
+    Utf8Error,
+    BookUnknown,
+}
+
+fn map_error_to_code(error: &CapiError) -> SessionError {
+    match *error {
+        CapiError::Book(ref e) => match *e {
+            BookError::UnknownBook { .. } => SessionError::BookUnknown,
+        },
+        CapiError::Session(ref e) => match *e {
+            session::SessionError::Io(_) => SessionError::IOError,
+            session::SessionError::SerdeJson(_) => SessionError::SessionCorruptData,
+            session::SessionError::TooManySessions => SessionError::SessionTooMany,
+        },
+        CapiError::Utf8(_) => SessionError::Utf8Error,
+    }
 }
 
 static ERROR_MESSAGES: &'static [&'static str] = &[
@@ -36,16 +101,72 @@ static ERROR_MESSAGES: &'static [&'static str] = &[
     "IO error\0",
     "session with the given name already exists\0",
     "session data file is corrupt\0",
+    "session buffer is too small\0",
+    "too many sessions\0",
     "error parsing range\0",
     "unknown level\0",
     "unknown strategy\0",
+    "utf-8 encoding error\0",
+    "unknown book\0",
 ];
 
 #[no_mangle]
-pub unsafe fn session_new(name: *const c_char) -> *mut Session {
-    let name = CStr::from_ptr(name).to_string_lossy();
-    let session = Box::new(Session::named(&name));
-    Box::into_raw(session)
+pub unsafe fn session_create(sess: *const imp::Session) -> c_int {
+    match imp::session_create(&*sess) {
+        Ok(()) => SessionError::OK as c_int,
+        Err(ref e) => map_error_to_code(e) as c_int,
+    }
+}
+
+mod imp {
+    use super::*;
+
+    #[repr(C)]
+    pub struct Session {
+        pub name: [u8; 64],
+        pub range: [Location; 2],
+        pub level: u8,
+        pub strategy: u8,
+    }
+
+    #[repr(C)]
+    pub struct Location {
+        pub translation: [u8; 8],
+        pub book: [u8; 8],
+        pub chapter: u16,
+        pub sentence: u16,
+        pub verse: u16,
+    }
+
+    impl Location {
+        pub fn to_library_location(&self) -> Result<location::Location> {
+            let translation = str::from_utf8(&self.translation)?;
+            let book = str::from_utf8(&self.book)?;
+            let book = Book::from_short_name(book)?;
+            let chapter = self.chapter;
+            let sentence = self.sentence;
+            let verse = self.verse;
+            Ok(location::Location {
+                translation: translation.into(),
+                book,
+                chapter,
+                sentence,
+                verse,
+            })
+        }
+    }
+
+    pub fn session_create(sess: &Session) -> Result<()> {
+        let name = str::from_utf8(&sess.name)?;
+        let mut s = session::Session::named(&name);
+        s.range = Range::default();
+        s.range.start = sess.range[0].to_library_location()?;
+        s.range.end = sess.range[1].to_library_location()?;
+        s.level = unsafe { ::std::mem::transmute(sess.level) };
+        s.strategy = unsafe { ::std::mem::transmute(sess.strategy) };
+        s.write()?;
+        Ok(())
+    }
 }
 
 /// Frees the session from the heap.
@@ -79,8 +200,8 @@ pub unsafe fn session_delete(session: *mut Session) -> c_int {
 #[no_mangle]
 pub unsafe fn session_set_range(
     session: *mut Session,
-    start: *const Location,
-    end: *const Location,
+    start: *const imp::Location,
+    end: *const imp::Location,
 ) -> c_int {
     let book = if let Ok(book) = CStr::from_bytes_with_nul(&(*start).book) {
         book
