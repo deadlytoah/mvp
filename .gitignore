@@ -3,3 +3,4 @@ __pycache__
 xcuserdata
 target
 Cargo.lock
+*.json

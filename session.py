@@ -1,124 +1,72 @@
 # coding: utf-8
-"""Acts as a bridge between the GUI and the session backend."""
+""" Stores and loads the session """
 
-from enum import Enum
-from libmvpcore import libmvpcore
-import ctypes
+import json
 
-######################################################################
-# Error Code and Types
-######################################################################
+SESSION_FILE = 'session.json'
 
-class ErrorKind(Enum):
-    OK = 0
-    IOError = 1
-    SessionExists = 2
-    SessionCorruptData = 3
-    SessionBufferTooSmall = 4
-    RangeParseError = 5
-    LevelUnknown = 6
-    StrategyUnknown = 7
+class InvalidSessionError(Exception):
+    """Indicates the session data found in the session file was corrupt or
+    invalid
 
-class Error(Exception):
-    def __init__(self, msg):
-        Exception.__init__(self, msg)
-
-class IOError(Error):
-    def __init__(self, msg):
-        Error.__init__(self, msg)
-
-class SessionExists(Error):
-    def __init__(self, msg):
-        Error.__init__(self, msg)
-
-class SessionCorruptData(Error):
-    def __init__(self, msg):
-        Error.__init__(self, msg)
-
-class SessionBufferTooSmall(Error):
-    def __init__(self, msg):
-        Error.__init__(self, msg)
-
-class RangeParseError(Error):
-    def __init__(self, msg):
-        Error.__init__(self, msg)
-
-class LevelUnknown(Error):
-    def __init__(self, msg):
-        Error.__init__(self, msg)
-
-class StrategyUnknown(Error):
-    def __init__(self, msg):
-        Error.__init__(self, msg)
-
-_error_switcher = {
-    ErrorKind.IOError: IOError,
-    ErrorKind.SessionExists: SessionExists,
-    ErrorKind.SessionCorruptData: SessionCorruptData,
-    ErrorKind.SessionBufferTooSmall: SessionBufferTooSmall,
-    ErrorKind.RangeParseError: RangeParseError,
-    ErrorKind.LevelUnknown: LevelUnknown,
-    ErrorKind.StrategyUnknown: StrategyUnknown,
-}
-
-def _map_error(errorkind):
-    return _error_switcher.get(errorkind, Error)
-
-######################################################################
-# Data Structures
-######################################################################
-
-class Location(ctypes.Structure):
-    """creates a struct to point to a location in the Bible"""
-
-    _fields_ = [('translation', ctypes.c_ubyte * 8),
-                ('book', ctypes.c_ubyte * 8),
-                ('chapter', ctypes.c_short),
-                ('sentence', ctypes.c_short),
-                ('verse', ctypes.c_short)]
-
-class Session:
-    def __init__(self, name):
-        """Initialises a new Session.
-
-        The new Session instance is not persisted in disk until
-        write() method is called.
-
-        """
-        self.handle = libmvpcore.session_new(ctypes.bytes(name, encoding='utf8'))
-
-    def __del__(self):
-        libmvpcore.session_destroy(self.handle)
-
-    def write(self):
-        res = libmvpcore.session_write(self.handle)
-        if res != 0:
-            raise _map_error(res)(get_message(res).value)
-
-    def delete(self):
-        res = libmvpcore.session_delete(self.handle)
-        if res != 0:
-            raise _map_error(res)(get_message(res).value)
-        else:
-            self.handle = None
-
-    def set_range(self, start, end):
-        res = libmvpcore.session_set_range(self.handle, start, end)
-        if res != 0:
-            raise _map_error(res)(get_message(res).value)
-
-    def set_level(self, level):
-        res = libmvpcore.session_set_level(self.handle, level)
-        if res != 0:
-            raise _map_error(res)(get_message(res).value)
-
-    def set_strategy(self, strategy):
-        res = libmvpcore.session_set_strategy(self.handle, strategy)
-        if res != 0:
-            raise _map_error(res)(get_message(res).value)
-
-def list_sessions():
+    """
     pass
 
-def get_message(error_code):
-    libmvpcore.session_get_message(error_code)
+def init():
+    """Creates a new session object with default values"""
+    return {
+        'name': 'default session',
+        'range': {
+            'start': {
+                'translation': 'esv',
+                'book': 'Gen',
+                'chapter': 1,
+                'verse': 1,
+                'sentence': 0,
+            },
+            'end': {
+                'translation': 'esv',
+                'book': 'Rev',
+                'chapter': 22,
+                'verse': 21,
+                'sentence': 29,
+            },
+        },
+        'level': 1,
+        'strategy': 0,
+    }
+
+def store(session):
+    """Persists the session on disk"""
+    with open(SESSION_FILE, 'w') as f:
+        json.dump(session, f, indent=2)
+
+def load():
+    """Reads the session from disk"""
+    try:
+        with open(SESSION_FILE, 'r') as f:
+            session = json.load(f)
+    except FileNotFoundError:
+        return init()
+    except json.decoder.JSONDecodeError:
+        raise InvalidSessionError()
+
+    if _validate(session):
+        return session
+    else:
+        raise InvalidSessionError()
+
+def _validate(session):
+    """Validates the session objects.  Checks if all attributes are there."""
+    for attr in ['name', 'range', 'level', 'strategy']:
+        if not attr in session:
+            return False
+    for attr in ['start', 'end']:
+        if not attr in session['range']:
+            return False
+    for attr in ['translation', 'book', 'chapter', 'verse', 'sentence']:
+        if not attr in session['range']['start']:
+            return False
+        if not attr in session['range']['end']:
+            return False
+    return True
