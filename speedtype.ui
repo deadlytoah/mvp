@@ -128,15 +128,7 @@
      <string>Debug</string>
     </property>
     <addaction name="action_debug_inspect_database"/>
-    <addaction name="action_debug_layout_engine"/>
     <addaction name="action_debug_sentences"/>
-    <addaction name="action_display_graph"/>
-   </widget>
-   <widget class="QMenu" name="menuJump">
-    <property name="title">
-     <string>Navigate</string>
-    </property>
-    <addaction name="action_jump_to"/>
    </widget>
    <widget class="QMenu" name="menuSession">
     <property name="title">
@@ -145,7 +137,6 @@
     <addaction name="action_edit_session"/>
    </widget>
    <addaction name="menuTask"/>
-   <addaction name="menuJump"/>
    <addaction name="menuSession"/>
    <addaction name="menuDebug"/>
   </widget>
