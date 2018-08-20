@@ -11,7 +11,6 @@ import screen
 import session
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 from PyQt5 import uic
-from address import Address
 from key import Key
 from random import randrange
 from sdb import Sdb
@@ -192,12 +191,31 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             'last_char': None,
         }
 
+    def clear_text(self):
+        """Clears the text"""
+        self.set_text('')
+
     def set_text(self, text):
         """Sets the text to be displayed in the canvas."""
         (self.buf, self.words) = self._process_text(text)
         self.caret = 0
         self.set_level(window.gui.difficulty_level.value())
 
+        self._render()
+
+    def append_sentence(self, sentence):
+        """Appends a sentence to the view.
+
+        Caller of this method must clear any text that may already be
+        on the view.  This can be done via clear_text().
+
+        set_text() may take a long time to complete if text is very
+        long.  This method lets you feed one sentence at a time.
+
+        """
+        (buf, words) = self._process_text(sentence['text'])
+        self.buf.extend(buf)
+        self.words.extend(words)
         self._render()
 
     def _process_text(self, text):
@@ -508,28 +526,23 @@ def _start_session():
     """Prepares and begins the session"""
     global window
 
+    loc = window.session['range']['start']
+    book = loc['book']
+    chapter = str(loc['chapter'])
+
+    records = window.verse_table.select_all()
+    sentences, _ = sentences_cons2(records, book, chapter)
+    label = window.session['name'] + ' ' + book + ' ' + chapter
+
+    window.canvas.set_title(label + ' (' + config.translation.upper() + ')')
+    window.canvas.clear_text()
+    for sentence in sentences:
+        window.canvas.append_sentence(sentence)
+
     # adjust difficulty level according to the session property.
     level = int(window.session['level'])
     window.gui.difficulty_level.setValue(level)
 
-    loc = window.session['range']['start']
-    key = Key(loc['book'], str(loc['chapter']), str(1))
-    _display_by_address(_address_from_key(key))
-
-def _address_from_key(key):
-    records = window.verse_table.select_all()
-    sentences, lookup = sentences_cons2(records, key.book, key.chapter)
-    sentence = sentences_index_by_verseno(sentences, lookup, key.verse)
-    return Address(sentences, lookup, (key.book, key.chapter, sentence))
-
-def _display_by_address(address):
-    records = window.verse_table.select_all()
-    sentences, lookup = sentences_cons2(records, address.book, address.chapter)
-    sentence = sentences[address.sentence]
-    label = sentence_make_label(sentence, address.book, address.chapter)
-
-    window.canvas.set_title(label + ' (' + config.translation.upper() + ')')
-    window.canvas.set_text(sentence['text'])
     window.canvas.update()
 
 def sentences_cons2(records, book, chapter):
