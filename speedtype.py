@@ -56,7 +56,7 @@ class SpeedTypeForm:
         self.gui.action_debug_sentences.triggered.connect(_debug_sentences)
 
         self.gui.difficulty_level.valueChanged.connect(
-            self._change_difficulty_level)
+            self._difficulty_level_changed)
 
         self.canvas = SpeedTypeCanvas(GraphLayout())
         layout = QtWidgets.QVBoxLayout(self.gui.show_verses)
@@ -99,8 +99,11 @@ class SpeedTypeForm:
         self.session = sess
         _start_session()
 
-    def _change_difficulty_level(self):
-        """user changed the difficulty level by manipulating the slider"""
+    def _difficulty_level_changed(self):
+        """called when user changes the difficulty level by manipulating the
+        slider
+
+        """
         self.canvas.set_level(self.gui.difficulty_level.value())
         self.canvas.update()
 
