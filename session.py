@@ -32,7 +32,7 @@ def init():
                 'sentence': 29,
             },
         },
-        'level': 1,
+        'level': 0,
         'strategy': 0,
     }
 

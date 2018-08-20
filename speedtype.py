@@ -507,6 +507,11 @@ def _edit_session():
 def _start_session():
     """Prepares and begins the session"""
     global window
+
+    # adjust difficulty level according to the session property.
+    level = int(window.session['level'])
+    window.gui.difficulty_level.setValue(level)
+
     loc = window.session['range']['start']
     key = Key(loc['book'], str(loc['chapter']), str(1))
     _display_by_address(_address_from_key(key))
