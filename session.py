@@ -47,7 +47,7 @@ def load():
         with open(SESSION_FILE, 'r') as f:
             session = json.load(f)
     except FileNotFoundError:
-        return init()
+        return None
     except json.decoder.JSONDecodeError:
         raise InvalidSessionError()
 

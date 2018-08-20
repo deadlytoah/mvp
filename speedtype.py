@@ -6,7 +6,9 @@ more words are hidden.
 """
 
 import config
+import os
 import screen
+import session
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from address import Address
@@ -54,6 +56,7 @@ class SpeedTypeForm:
         self.gui = uic.loadUi("speedtype.ui")
         self.gui.action_enter_verses.triggered.connect(_view_enter_verses)
         self.gui.action_view_flash_cards.triggered.connect(_view_flash_cards)
+        self.gui.action_edit_session.triggered.connect(_edit_session)
         self.gui.action_debug_inspect_database.triggered.connect(_debug_view_db)
         self.gui.action_debug_layout_engine.triggered.connect(_debug_layout_engine)
         self.gui.action_debug_sentences.triggered.connect(_debug_sentences)
@@ -77,6 +80,32 @@ class SpeedTypeForm:
         self.verse_table.verify()
         self.verse_table.service()
         records = self.verse_table.select_all()
+
+        # Load or initialise the session
+        try:
+            sess = session.load()
+        except session.InvalidSessionError as e:
+            print('failed to load session', e)
+            # Make a backup of the broken session file.  The
+            # documentation says this will fail on Windows if the
+            # target file already exists.
+            os.rename(session.SESSION_FILE, 'invalid-' + session.SESSION_FILE)
+            sess = None
+
+        if sess is None:
+            sess = session.init()
+
+            # set the range to phl 1
+            start = sess['range']['start']
+            start['book'] = 'Phl'
+            end = sess['range']['end']
+            end['book'] = 'Phl'
+            end['chapter'] = 1
+            end['verse'] = 30
+            end['sentence'] = 24
+            sess['range'] = { 'start': start, 'end': end }
+
+        self.session = sess
 
         # Stack is used to help implementing input session.  The top
         # of the stack contains the currently display flash card, and
@@ -457,6 +486,53 @@ def _view_flash_cards():
 def _view_enter_verses():
     """switch to the verse entry screen"""
     screen.switch_to(screen.DATA_ENTRY_INDEX)
+
+def _edit_session():
+    """show dialog to edit the current session"""
+    global window
+    dialog = Qt.QDialog(window.gui)
+    uic.loadUi('edit-session.ui', dialog)
+
+    dialog.edit_name.setText(window.session['name'])
+    start = window.session['range']['start']
+    dialog.edit_book_chapter.setText(start['book'] + ' ' + str(start['chapter']))
+    dialog.edit_level.setText(str(window.session['level']))
+    dialog.edit_strategy.setText(str(window.session['strategy']))
+
+    if dialog.exec_() == Qt.QDialog.Accepted:
+        if dialog.edit_name.text().strip() != '':
+            window.session['name'] = dialog.edit_name.text().strip()
+        else:
+            # try again
+            _edit_session()
+            return
+
+        if dialog.edit_book_chapter.text().strip() != '':
+            start = window.session['range']['start']
+            book, chapter = dialog.edit_book_chapter.text().split(None, 1)
+            start['book'] = book
+            start['chapter'] = chapter
+        else:
+            # try again
+            _edit_session()
+            return
+
+        if dialog.edit_level.text().strip() != '':
+            window.session['level'] = int(dialog.edit_level.text())
+        else:
+            # try again
+            _edit_session()
+            return
+
+        session.store(window.session)
+        _start_session()
+
+def _start_session():
+    """Prepares and begins the session"""
+    global window
+    loc = window.session['range']['start']
+    key = Key(loc['book'], str(loc['chapter']), str(1))
+    _display_by_address(_address_from_key(key))
 
 def _peek():
     dest = window.jump_to_dialog.lineedit_jump_to.text()
