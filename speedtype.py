@@ -410,6 +410,10 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
         self.render['letters'] = letters
 
+        # Fix the height of the canvas so the entire content may be
+        # visible.
+        self.setFixedHeight(y)
+
     def paintEvent(self, event):
         qp = QtGui.QPainter()
         qp.begin(self)
