@@ -475,12 +475,12 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             letter_end = cliptable[event.rect().y() + event.rect().height() - 1][1]
 
             for letter in letters[letter_start:letter_end + 1]:
-                self._render_letter(qp, self.render, letter)
+                self._paint_letter(qp, self.render, letter)
 
-        self._render_caret(qp, self.render, letters)
+        self._paint_caret(qp, self.render, letters)
         qp.end()
 
-    def _render_letter(self, qp, render, letter):
+    def _paint_letter(self, qp, render, letter):
         ch = letter['letter']
         colour = QtGui.QColor(letter['colour'])
         coord = letter['coord']
@@ -488,7 +488,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         qp.setPen(colour)
         qp.drawText(coord[0], coord[1] + render['fm'].ascent(), ch)
 
-    def _render_caret(self, qp, render, letters):
+    def _paint_caret(self, qp, render, letters):
         (x, y) = render['caret']
         qp.setPen(render['caret_colour'])
         qp.drawLine(x, y, x, y + render['fm'].height())
