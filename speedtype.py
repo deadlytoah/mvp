@@ -159,6 +159,9 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         # list of words and their states.
         self.words = []
 
+        # a cache for font metrics for letters.
+        self.fmcache = {}
+
         self.engine = layout_engine
 
     def set_empty_database(self):
@@ -418,7 +421,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                     'colour': colour,
                     'coord': (x, y),
                 })
-                x = x + self.render['fm'].width(ch['char'])
+                x = x + self._width(ch['char'])
 
                 ct_info.append({ 'y': y })
 
@@ -428,6 +431,12 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         # Fix the height of the canvas so the entire content may be
         # visible.
         if y > 0: self.setFixedHeight(y)
+
+    def _width(self, char):
+        """Provides caching for calculating the width of the character."""
+        if not char in self.fmcache:
+            self.fmcache[char] = self.render['fm'].width(char)
+        return self.fmcache[char]
 
     def make_cliptable(self):
         """Populates the cliptable, used to paint only what is necessary."""
