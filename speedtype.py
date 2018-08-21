@@ -121,6 +121,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         super(SpeedTypeCanvas, self).__init__()
 
         font = QtGui.QFont(config.FONT_FAMILY, 18)
+        fm = QtGui.QFontMetrics(font)
 
         # describes how to render the canvas.
         self.render = {
@@ -136,7 +137,15 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             'line_spacing': 30,
             'background': QtGui.QColor(config.COLOURS['background']),
             'font': font,
-            'fm': QtGui.QFontMetrics(font),
+            'fm': fm,
+
+            # Build the table of y coord to a pair of letters.  The first
+            # one is the letter that we should start painting if y is the
+            # beginning of clip region.  The second one is the letter that
+            # we should stop drawing if y is the end of clip region.
+            'cliptable': None,
+            'ct_info': None,
+            'fontheight': fm.height(),
         }
 
         # sequential storage of characters to display and their
@@ -384,6 +393,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         letters = []
         y = 0
         x = 0
+        ct_info = []
+
         for (i, ch) in enumerate(self.buf):
             if i == self.caret:
                 self.render['caret'] = (x, y)
@@ -409,11 +420,37 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 })
                 x = x + self.render['fm'].width(ch['char'])
 
+                ct_info.append({ 'y': y })
+
         self.render['letters'] = letters
+        self.render['ct_info'] = ct_info
 
         # Fix the height of the canvas so the entire content may be
         # visible.
-        self.setFixedHeight(y)
+        if y > 0: self.setFixedHeight(y)
+
+    def make_cliptable(self):
+        """Populates the cliptable, used to paint only what is necessary."""
+        cliptable = []
+        ct_info = self.render['ct_info']
+        fontheight = self.render['fontheight']
+
+        if len(ct_info) > 0:
+            for y in range(0, self.height()):
+                (first, second) = (None, None)
+
+                for (i, info) in enumerate(ct_info):
+                    if y < info['y'] + fontheight:
+                        first = i
+                        break
+
+                for (i, info) in reversed(list(enumerate(ct_info))):
+                    if y > info['y']:
+                        second = i
+                        break
+
+                cliptable.append((first, second))
+            self.render['cliptable'] = cliptable
 
     def paintEvent(self, event):
         qp = QtGui.QPainter()
@@ -422,9 +459,14 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         qp.setFont(self.render['font'])
 
         letters = self.render['letters']
+        cliptable = self.render['cliptable']
 
-        for letter in letters:
-            self._render_letter(qp, self.render, letter)
+        if cliptable is not None:
+            letter_start = cliptable[event.rect().y()][0]
+            letter_end = cliptable[event.rect().y() + event.rect().height() - 1][1]
+
+            for letter in letters[letter_start:letter_end + 1]:
+                self._render_letter(qp, self.render, letter)
 
         self._render_caret(qp, self.render, letters)
         qp.end()
@@ -548,6 +590,8 @@ def _start_session():
     level = int(window.session['level'])
     window.gui.difficulty_level.setValue(level)
 
+
+    window.canvas.make_cliptable()
     window.canvas.update()
 
 def sentences_cons2(records, book, chapter):
