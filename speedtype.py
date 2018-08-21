@@ -11,6 +11,7 @@ import screen
 import session
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 from PyQt5 import uic
+from address import Address
 from key import Key
 from random import randrange
 from sdb import Sdb
@@ -665,6 +666,12 @@ def _find_all_delimiters(text, delimiters):
             start = index
             index = text.find(delim, start + 1)
     return indicies
+
+def _address_from_key(key):
+    records = window.verse_table.select_all()
+    sentences, lookup = sentences_cons2(records, key.book, key.chapter)
+    sentence = sentences_index_by_verseno(sentences, lookup, key.verse)
+    return Address(sentences, lookup, (key.book, key.chapter, sentence))
 
 def _debug_view_db():
     from dbgviewdb import DbgViewDb
