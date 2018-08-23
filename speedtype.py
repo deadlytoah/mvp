@@ -478,9 +478,39 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 if self.caret == word['last_char']:
                     word['behind'] = True
 
-            _ = self._forward_caret()
-            self._render()
-            self.update()
+            if self._forward_caret():
+                self._render()
+                self.update()
+            else:
+                congrats = Qt.QMessageBox()
+                congrats.setText("Congratulations!")
+                level = int(self.session['level'])
+                nextlevel = level + 1
+
+                try_again = "Try Again"
+                try_next = "Try Next Difficulty"
+                choose_chapter = "Choose Another Chapter"
+
+                if nextlevel >= len(Levels):
+                    congrats.setInformativeText("Would you like to try again?")
+                    congrats.addButton(try_again, Qt.QMessageBox.AcceptRole)
+                else:
+                    congrats.setInformativeText("Would you like to try the next " +
+                                                "difficulty?")
+                    congrats.addButton(try_next, Qt.QMessageBox.AcceptRole)
+                    level = nextlevel
+
+                congrats.addButton(choose_chapter, Qt.QMessageBox.AcceptRole)
+                _ = congrats.exec_()
+
+                clicked = congrats.clickedButton()
+                if clicked.text() == try_again or clicked.text() == try_next:
+                    self.session['level'] = level
+                    self._start_session()
+                elif clicked.text() == choose_chapter:
+                    self.edit_session()
+                else:
+                    assert False, "Unexpected button clicked"
 
     def _render(self):
         """Prepares the canvas for rendering.
