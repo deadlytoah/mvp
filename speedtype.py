@@ -389,12 +389,19 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             info.setWindowTitle("mvp")
             info.setText("Text missing for " + ' '.join([book, chapter]))
             info.setInformativeText("The text for the chosen bible verses " +
-                                    "are missing from the database.  Please " +
-                                    "add it in the enter bible verses screen.")
-            info.exec_()
+                                    "are missing from the database.  Would " +
+                                    "you like to add it in the enter bible " +
+                                    "verses screen?")
+            info.setIcon(Qt.QMessageBox.Question)
+            info.addButton(Qt.QMessageBox.Ok)
+            info.addButton(Qt.QMessageBox.Cancel)
+            answer = info.exec_()
 
-            # Redirect user to the data entry screen.
-            _view_enter_verses()
+            if answer == Qt.QMessageBox.Ok:
+                # Redirect user to the data entry screen.
+                _view_enter_verses()
+            else:
+                pass
 
     def showEvent(self, event):
         """Handles the first time show event to set up the session."""
