@@ -51,7 +51,7 @@ class SpeedTypeForm:
         self.gui = uic.loadUi("speedtype.ui")
         self.gui.action_enter_verses.triggered.connect(_view_enter_verses)
         self.gui.action_view_flash_cards.triggered.connect(_view_flash_cards)
-        self.gui.action_edit_session.triggered.connect(_edit_session)
+        self.gui.action_edit_session.triggered.connect(self._edit_session)
         self.gui.action_debug_inspect_database.triggered.connect(_debug_view_db)
         self.gui.action_debug_sentences.triggered.connect(_debug_sentences)
 
@@ -79,6 +79,10 @@ class SpeedTypeForm:
         """
         self.canvas.set_level(self.gui.difficulty_level.value())
         self.canvas.update()
+
+    def _edit_session(self):
+        """Calls the speed type widget's edit_session method."""
+        self.canvas.edit_session()
 
 class SpeedTypeCanvas(QtWidgets.QWidget):
     """Widget that fascilitates typing
@@ -317,6 +321,81 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         for ch in [ch for ch in self.buf if ch['word'] is word]:
             ch['visible'] = True
 
+    def edit_session(self):
+        """show dialog to edit the current session"""
+        dialog = Qt.QDialog(self)
+        uic.loadUi('edit-session.ui', dialog)
+
+        dialog.edit_name.setText(self.session['name'])
+        start = self.session['range']['start']
+        dialog.edit_book_chapter.setText(start['book'] + ' ' + str(start['chapter']))
+        dialog.edit_level.setText(str(self.session['level']))
+        dialog.edit_strategy.setText(str(self.session['strategy']))
+
+        if dialog.exec_() == Qt.QDialog.Accepted:
+            if dialog.edit_name.text().strip() != '':
+                self.session['name'] = dialog.edit_name.text().strip()
+            else:
+                # try again
+                self.edit_session()
+                return
+
+            if dialog.edit_book_chapter.text().strip() != '':
+                start = self.session['range']['start']
+                book, chapter = dialog.edit_book_chapter.text().split(None, 1)
+                start['book'] = book
+                start['chapter'] = chapter
+            else:
+                # try again
+                self.edit_session()
+                return
+
+            if dialog.edit_level.text().strip() != '':
+                self.session['level'] = int(dialog.edit_level.text())
+            else:
+                # try again
+                self.edit_session()
+                return
+
+            session.store(self.session)
+            self._start_session()
+
+    def _start_session(self):
+        """Prepares and begins the session"""
+        global window
+
+        loc = self.session['range']['start']
+        book = loc['book']
+        chapter = str(loc['chapter'])
+
+        records = window.verse_table.select_all()
+        sentences, _ = sentences_cons2(records, book, chapter)
+
+        if len(sentences) > 0:
+            label = self.session['name'] + ' ' + book + ' ' + chapter
+            self.set_title(label + ' (' + config.translation.upper() + ')')
+            self.clear_text()
+            for sentence in sentences:
+                self.append_sentence(sentence)
+
+            # adjust difficulty level according to the session property.
+            level = int(self.session['level'])
+            window.gui.difficulty_level.setValue(level)
+
+            self.make_cliptable()
+            self.update()
+        else:
+            info = Qt.QMessageBox()
+            info.setWindowTitle("mvp")
+            info.setText("Text missing for " + ' '.join([book, chapter]))
+            info.setInformativeText("The text for the chosen bible verses " +
+                                    "are missing from the database.  Please " +
+                                    "add it in the enter bible verses screen.")
+            info.exec_()
+
+            # Redirect user to the data entry screen.
+            _view_enter_verses()
+
     def showEvent(self, event):
         """Handles the first time show event to set up the session."""
         if not event.spontaneous():
@@ -345,7 +424,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 sess['range'] = { 'start': start, 'end': end }
 
             self.session = sess
-            _start_session()
+            self._start_session()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Qt.Key_Backspace:
@@ -536,82 +615,6 @@ def _view_flash_cards():
 def _view_enter_verses():
     """switch to the verse entry screen"""
     screen.switch_to(screen.DATA_ENTRY_INDEX)
-
-def _edit_session():
-    """show dialog to edit the current session"""
-    global window
-    dialog = Qt.QDialog(window.gui)
-    uic.loadUi('edit-session.ui', dialog)
-
-    dialog.edit_name.setText(window.session['name'])
-    start = window.session['range']['start']
-    dialog.edit_book_chapter.setText(start['book'] + ' ' + str(start['chapter']))
-    dialog.edit_level.setText(str(window.session['level']))
-    dialog.edit_strategy.setText(str(window.session['strategy']))
-
-    if dialog.exec_() == Qt.QDialog.Accepted:
-        if dialog.edit_name.text().strip() != '':
-            window.session['name'] = dialog.edit_name.text().strip()
-        else:
-            # try again
-            _edit_session()
-            return
-
-        if dialog.edit_book_chapter.text().strip() != '':
-            start = window.session['range']['start']
-            book, chapter = dialog.edit_book_chapter.text().split(None, 1)
-            start['book'] = book
-            start['chapter'] = chapter
-        else:
-            # try again
-            _edit_session()
-            return
-
-        if dialog.edit_level.text().strip() != '':
-            window.session['level'] = int(dialog.edit_level.text())
-        else:
-            # try again
-            _edit_session()
-            return
-
-        session.store(window.session)
-        _start_session()
-
-def _start_session():
-    """Prepares and begins the session"""
-    global window
-
-    loc = window.canvas.session['range']['start']
-    book = loc['book']
-    chapter = str(loc['chapter'])
-
-    records = window.verse_table.select_all()
-    sentences, _ = sentences_cons2(records, book, chapter)
-
-    if len(sentences) > 0:
-        label = window.canvas.session['name'] + ' ' + book + ' ' + chapter
-        window.canvas.set_title(label + ' (' + config.translation.upper() + ')')
-        window.canvas.clear_text()
-        for sentence in sentences:
-            window.canvas.append_sentence(sentence)
-
-        # adjust difficulty level according to the session property.
-        level = int(window.canvas.session['level'])
-        window.gui.difficulty_level.setValue(level)
-
-        window.canvas.make_cliptable()
-        window.canvas.update()
-    else:
-        info = Qt.QMessageBox()
-        info.setWindowTitle("mvp")
-        info.setText("Text missing for " + ' '.join([book, chapter]))
-        info.setInformativeText("The text for the chosen bible verses " +
-                                "are missing from the database.  Please " +
-                                "add it in the enter bible verses screen.")
-        info.exec_()
-
-        # Redirect user to the data entry screen.
-        _view_enter_verses()
 
 def sentences_cons2(records, book, chapter):
     sentences = []
