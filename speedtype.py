@@ -141,6 +141,14 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
         self.engine = layout_engine
 
+    def set_missing_text(self):
+        loc = self.session['range']['start']
+        self.set_title(' '.join([loc['book'], loc['chapter']]) +
+                       ' (' + config.translation.upper() + ')')
+        self.set_text('The text is missing for the selected verses.  ' +
+                      'Please enter the text in the enter verses screen, ' +
+                      'or edit the current session.')
+
     def set_title(self, title):
         # accessor
         self.title = title
@@ -179,14 +187,14 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
     def clear_text(self):
         """Clears the text"""
-        self.set_text('')
+        self.buf = []
+        self.words = []
+        self.caret = 0
 
     def set_text(self, text):
         """Sets the text to be displayed in the canvas."""
+        self.clear_text()
         (self.buf, self.words) = self._process_text(text)
-        self.caret = 0
-        self.set_level(window.gui.difficulty_level.value())
-
         self._render()
 
     def append_sentence(self, sentence):
@@ -401,7 +409,9 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 # Redirect user to the data entry screen.
                 _view_enter_verses()
             else:
-                pass
+                self.set_missing_text()
+                self.make_cliptable()
+                self.update()
 
     def showEvent(self, event):
         """Handles the first time show event to set up the session."""
@@ -515,7 +525,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
         # Fix the height of the canvas so the entire content may be
         # visible.
-        if y > 0: self.setFixedHeight(y)
+        if y > 0: self.setMinimumHeight(y)
 
     def _width(self, char):
         """Provides caching for calculating the width of the character."""
