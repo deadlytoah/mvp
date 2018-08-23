@@ -29,7 +29,7 @@ def switch_to(form_index):
     global form
     form.gui.hide()
     form.gui.close()
-    form.gui.deleteLater()
+    form.gui.destroy(True, True)
 
     form = form_types[current_form_index]()
     form.gui.show()

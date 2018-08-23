@@ -72,33 +72,6 @@ class SpeedTypeForm:
         self.verse_table.verify()
         self.verse_table.service()
 
-        # Load or initialise the session
-        try:
-            sess = session.load()
-        except session.InvalidSessionError as e:
-            print('failed to load session', e)
-            # Make a backup of the broken session file.  The
-            # documentation says this will fail on Windows if the
-            # target file already exists.
-            os.rename(session.SESSION_FILE, 'invalid-' + session.SESSION_FILE)
-            sess = None
-
-        if sess is None:
-            sess = session.init()
-
-            # set the range to phl 1
-            start = sess['range']['start']
-            start['book'] = 'Phl'
-            end = sess['range']['end']
-            end['book'] = 'Phl'
-            end['chapter'] = 1
-            end['verse'] = 30
-            end['sentence'] = 24
-            sess['range'] = { 'start': start, 'end': end }
-
-        self.session = sess
-        _start_session()
-
     def _difficulty_level_changed(self):
         """called when user changes the difficulty level by manipulating the
         slider
@@ -163,10 +136,6 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         self.fmcache = {}
 
         self.engine = layout_engine
-
-    def set_empty_database(self):
-        self.set_title('Nothing in the database yet.')
-        self.set_text('Please enter some verses first.')
 
     def set_title(self, title):
         # accessor
@@ -347,6 +316,36 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         word['visible'] = True
         for ch in [ch for ch in self.buf if ch['word'] is word]:
             ch['visible'] = True
+
+    def showEvent(self, event):
+        """Handles the first time show event to set up the session."""
+        if not event.spontaneous():
+            # Load or initialise the session
+            try:
+                sess = session.load()
+            except session.InvalidSessionError as e:
+                print('failed to load session', e)
+                # Make a backup of the broken session file.  The
+                # documentation says this will fail on Windows if the
+                # target file already exists.
+                os.rename(session.SESSION_FILE, 'invalid-' + session.SESSION_FILE)
+                sess = None
+
+            if sess is None:
+                sess = session.init()
+
+                # set the range to phl 1
+                start = sess['range']['start']
+                start['book'] = 'Phl'
+                end = sess['range']['end']
+                end['book'] = 'Phl'
+                end['chapter'] = 1
+                end['verse'] = 30
+                end['sentence'] = 24
+                sess['range'] = { 'start': start, 'end': end }
+
+            self.session = sess
+            _start_session()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Qt.Key_Backspace:
@@ -582,26 +581,37 @@ def _start_session():
     """Prepares and begins the session"""
     global window
 
-    loc = window.session['range']['start']
+    loc = window.canvas.session['range']['start']
     book = loc['book']
     chapter = str(loc['chapter'])
 
     records = window.verse_table.select_all()
     sentences, _ = sentences_cons2(records, book, chapter)
-    label = window.session['name'] + ' ' + book + ' ' + chapter
 
-    window.canvas.set_title(label + ' (' + config.translation.upper() + ')')
-    window.canvas.clear_text()
-    for sentence in sentences:
-        window.canvas.append_sentence(sentence)
+    if len(sentences) > 0:
+        label = window.canvas.session['name'] + ' ' + book + ' ' + chapter
+        window.canvas.set_title(label + ' (' + config.translation.upper() + ')')
+        window.canvas.clear_text()
+        for sentence in sentences:
+            window.canvas.append_sentence(sentence)
 
-    # adjust difficulty level according to the session property.
-    level = int(window.session['level'])
-    window.gui.difficulty_level.setValue(level)
+        # adjust difficulty level according to the session property.
+        level = int(window.canvas.session['level'])
+        window.gui.difficulty_level.setValue(level)
 
+        window.canvas.make_cliptable()
+        window.canvas.update()
+    else:
+        info = Qt.QMessageBox()
+        info.setWindowTitle("mvp")
+        info.setText("Text missing for " + ' '.join([book, chapter]))
+        info.setInformativeText("The text for the chosen bible verses " +
+                                "are missing from the database.  Please " +
+                                "add it in the enter bible verses screen.")
+        info.exec_()
 
-    window.canvas.make_cliptable()
-    window.canvas.update()
+        # Redirect user to the data entry screen.
+        _view_enter_verses()
 
 def sentences_cons2(records, book, chapter):
     sentences = []
