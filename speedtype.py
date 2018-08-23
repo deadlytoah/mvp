@@ -353,29 +353,36 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         dialog.edit_strategy.setText(str(self.session['strategy']))
 
         if dialog.exec_() == Qt.QDialog.Accepted:
+            name = None
+            level = None
+            book = None
+            chapter = None
             if dialog.edit_name.text().strip() != '':
-                self.session['name'] = dialog.edit_name.text().strip()
+                name = dialog.edit_name.text().strip()
             else:
                 # try again
                 self.edit_session()
                 return
 
             if dialog.edit_book_chapter.text().strip() != '':
-                start = self.session['range']['start']
                 book, chapter = dialog.edit_book_chapter.text().split(None, 1)
-                start['book'] = book
-                start['chapter'] = chapter
             else:
                 # try again
                 self.edit_session()
                 return
 
             if dialog.edit_level.text().strip() != '':
-                self.session['level'] = int(dialog.edit_level.text())
+                level = int(dialog.edit_level.text())
             else:
                 # try again
                 self.edit_session()
                 return
+
+            self.session['name'] = name
+            self.session['level'] = level
+            start = self.session['range']['start']
+            start['book'] = book
+            start['chapter'] = chapter
 
             session.store(self.session)
             self._start_session()
