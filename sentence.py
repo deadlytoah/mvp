@@ -59,11 +59,6 @@ def sentences_cons2(records, book, chapter):
 
     return (sentences, lookup)
 
-def sentences_find_by_verseno(sentences, lookup, verseno):
-    i = int(verseno) - 1
-    sentid = lookup[i]
-    return sentences[sentid]
-
 def sentences_index_by_verseno(sentences, lookup, verseno):
     i = int(verseno) - 1
     return lookup[i]
