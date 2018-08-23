@@ -213,6 +213,17 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         self.words.extend(words)
         self._render()
 
+    def _remove_trailing_newline(self):
+        """Removes any trailing newline character.
+
+        This is helpful because it helps the session to finish at the
+        last letter that isn't new-line.  This spares user from typing
+        enter at the end of a session.
+
+        """
+        if self.buf[-1]["char"] == "\n":
+            del self.buf[-1]
+
     def _process_text(self, text):
         """Processes the given text.
 
@@ -387,6 +398,10 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             for sentence in sentences:
                 self.append_sentence(sentence)
 
+            # Remove the trailing newline.  The session should end
+            # when the last letter is entered without pressing enter.
+            self._remove_trailing_newline()
+
             # adjust difficulty level according to the session property.
             level = int(self.session['level'])
             window.gui.difficulty_level.setValue(level)
@@ -482,35 +497,58 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 self._render()
                 self.update()
             else:
-                congrats = Qt.QMessageBox()
-                congrats.setText("Congratulations!")
-                level = int(self.session['level'])
-                nextlevel = level + 1
+                # Finished?
+                self._render()
+                self.update()
+                Qt.QApplication.postEvent(self, SessionCompleteEvent())
+        else:
+            super(SpeedTypeCanvas, self).keyPressEvent(event)
 
-                try_again = "Try Again"
-                try_next = "Try Next Difficulty"
-                choose_chapter = "Choose Another Chapter"
+    def sessionCompleteEvent(self, event):
+        """Handles the custom event SessionCompleteEvent.
 
-                if nextlevel >= len(Levels):
-                    congrats.setInformativeText("Would you like to try again?")
-                    congrats.addButton(try_again, Qt.QMessageBox.AcceptRole)
-                else:
-                    congrats.setInformativeText("Would you like to try the next " +
-                                                "difficulty?")
-                    congrats.addButton(try_next, Qt.QMessageBox.AcceptRole)
-                    level = nextlevel
+        Doing this in an event lets the view to finish painting first.
+        It launches a message box that congratulates user for
+        finishing.
 
-                congrats.addButton(choose_chapter, Qt.QMessageBox.AcceptRole)
-                _ = congrats.exec_()
+        """
+        congrats = Qt.QMessageBox()
+        congrats.setText("Congratulations!")
+        level = int(self.session['level'])
+        nextlevel = level + 1
 
-                clicked = congrats.clickedButton()
-                if clicked.text() == try_again or clicked.text() == try_next:
-                    self.session['level'] = level
-                    self._start_session()
-                elif clicked.text() == choose_chapter:
-                    self.edit_session()
-                else:
-                    assert False, "Unexpected button clicked"
+        try_again = "Try Again"
+        try_next = "Try Next Difficulty"
+        choose_chapter = "Choose Another Chapter"
+
+        if nextlevel >= len(Levels):
+            congrats.setInformativeText("Would you like to try again?")
+            congrats.addButton(try_again, Qt.QMessageBox.AcceptRole)
+        else:
+            congrats.setInformativeText("Would you like to try the next " +
+                                        "difficulty?")
+            congrats.addButton(try_next, Qt.QMessageBox.AcceptRole)
+            level = nextlevel
+
+        congrats.addButton(choose_chapter, Qt.QMessageBox.AcceptRole)
+        _ = congrats.exec_()
+
+        clicked = congrats.clickedButton()
+        if clicked.text() == try_again or clicked.text() == try_next:
+            self.session['level'] = level
+            self._start_session()
+        elif clicked.text() == choose_chapter:
+            self.edit_session()
+        else:
+            assert False, "Unexpected button clicked"
+
+    def event(self, event):
+        """Processes custom events."""
+        if event.type() == SessionCompleteEvent.eventtype():
+            self.sessionCompleteEvent(event)
+            return True
+        else:
+            return super(SpeedTypeCanvas, self).event(event)
 
     def _render(self):
         """Prepares the canvas for rendering.
@@ -551,12 +589,17 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
                 ct_info.append({ 'y': y })
 
+        # Handle the case where caret is at the end of the entire
+        # text.
+        if self.caret >= len(self.buf):
+            self.render['caret'] = None
+
         self.render['letters'] = letters
         self.render['ct_info'] = ct_info
 
         # Fix the height of the canvas so the entire content may be
         # visible.
-        if y > 0: self.setMinimumHeight(y)
+        if y > 0: self.setMinimumHeight(y + self.render['line_spacing'])
 
     def _width(self, char):
         """Provides caching for calculating the width of the character."""
@@ -615,9 +658,10 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         qp.drawText(coord[0], coord[1] + render['fm'].ascent(), ch)
 
     def _paint_caret(self, qp, render, letters):
-        (x, y) = render['caret']
-        qp.setPen(render['caret_colour'])
-        qp.drawLine(x, y, x, y + render['fm'].height())
+        if render['caret'] is not None:
+            (x, y) = render['caret']
+            qp.setPen(render['caret_colour'])
+            qp.drawLine(x, y, x, y + render['fm'].height())
 
     def _char_at_caret(self):
         """Returns the character at the caret"""
@@ -650,11 +694,23 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         Otherwise, advances the caret and returns True.
 
         """
-        if self.caret + 1 >= len(self.buf):
+        self.caret = self.caret + 1
+        if self.caret >= len(self.buf):
             return False
         else:
-            self.caret = self.caret + 1
             return True
+
+class SessionCompleteEvent(Qt.QEvent):
+    """Custom event that is fired when the session is complete."""
+    def __init__(self):
+        """Initialises the SessionCompleteEvent."""
+        super(SessionCompleteEvent, self).__init__(SessionCompleteEvent.eventtype())
+
+    def eventtype():
+        """Generates and returns the type ID of the event."""
+        if not hasattr(SessionCompleteEvent, "_eventtype"):
+            SessionCompleteEvent._eventtype = Qt.QEvent.registerEventType()
+        return SessionCompleteEvent._eventtype
 
 def _view_flash_cards():
     """switch to the flash cards screen"""
