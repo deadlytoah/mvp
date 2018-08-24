@@ -73,13 +73,12 @@ class SpeedTypeForm:
         self.verse_table.verify()
         self.verse_table.service()
 
-    def _difficulty_level_changed(self):
+    def _difficulty_level_changed(self, value):
         """called when user changes the difficulty level by manipulating the
         slider
 
         """
-        self.canvas.set_level(self.gui.difficulty_level.value())
-        self.canvas.update()
+        self.canvas.set_level(value)
 
     def _edit_session(self):
         """Calls the speed type widget's edit_session method."""
@@ -264,7 +263,15 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         return (buf, words)
 
     def set_level(self, level):
-        """Sets the difficulty level.
+        """Sets the difficulty level."""
+        self.session["level"] = level
+        session.store(self.session)
+        self._apply_level(level)
+        self._render()
+        self.update()
+
+    def _apply_level(self, level):
+        """Applies the difficulty level.
 
         Sets the difficulty level and shows or hides some words as
         appropriate.
@@ -300,8 +307,6 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         else:
             # do nothing
             pass
-
-        self._render()
 
     def _hide_random_words(self, count):
         """hides a random list of count words"""
@@ -413,6 +418,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             level = int(self.session['level'])
             window.gui.difficulty_level.setValue(level)
 
+            self._apply_level(level)
+            self._render()
             self.make_cliptable()
             self.update()
         else:
