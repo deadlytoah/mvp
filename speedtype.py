@@ -303,7 +303,6 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 count = count + 1
             if count > 0:
                 self._reveal_random_words(count)
-            pass
         else:
             # do nothing
             pass
