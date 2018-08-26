@@ -142,6 +142,10 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         # the location of caret within self.buf.
         self.caret = 0
 
+        # marks the caret position in the buffer that triggers the
+        # session to end.
+        self.eobuf = 0
+
         # list of words and their states.
         self.words = []
 
@@ -210,6 +214,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         """Sets the text to be displayed in the canvas."""
         self.clear_text()
         (self.buf, self.words) = self._process_text(text)
+        self.eobuf = len(self.buf) - 1
         self._render()
 
     def append_sentence(self, sentence):
@@ -225,18 +230,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         (buf, words) = self._process_text(sentence['text'])
         self.buf.extend(buf)
         self.words.extend(words)
+        self.eobuf = len(self.buf) - 1
         self._render()
-
-    def _remove_trailing_newline(self):
-        """Removes any trailing newline character.
-
-        This is helpful because it helps the session to finish at the
-        last letter that isn't new-line.  This spares user from typing
-        enter at the end of a session.
-
-        """
-        if self.buf[-1]["char"] == "\n":
-            del self.buf[-1]
 
     def _process_text(self, text):
         """Processes the given text.
@@ -427,10 +422,6 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             for sentence in sentences:
                 self.append_sentence(sentence)
 
-            # Remove the trailing newline.  The session should end
-            # when the last letter is entered without pressing enter.
-            self._remove_trailing_newline()
-
             # adjust difficulty level according to the session property.
             level = int(self.session['level'])
             window.difficulty_level.setValue(level)
@@ -467,6 +458,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             self.session['progress'] = {
                 'buf': self.buf,
                 'caret': self.caret,
+                'eobuf': self.eobuf,
                 'title': self.title,
             }
         session.store(self.session)
@@ -514,6 +506,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         else:
             self.buf = progress['buf']
             self.caret = progress['caret']
+            self.eobuf = progress['eobuf']
             self.set_title(progress['title'])
 
             # Rewire the letters to the words.
@@ -785,11 +778,18 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         Otherwise, advances the caret and returns True.
 
         """
-        self.caret = self.caret + 1
-        if self.caret >= len(self.buf):
-            return False
+        caret = self.caret + 1
+        if caret >= len(self.buf):
+            # do not move caret behind buffer
+            pass
         else:
-            return True
+            self.caret = caret
+
+            # is the session ending?
+            if self.caret >= self.eobuf:
+                return False
+            else:
+                return True
 
 class SessionCompleteEvent(Qt.QEvent):
     """Custom event that is fired when the session is complete."""
