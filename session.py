@@ -34,6 +34,7 @@ def init():
         },
         'level': 0,
         'strategy': 0,
+        'progress': None,
     }
 
 def store(session):
@@ -58,7 +59,7 @@ def load():
 
 def _validate(session):
     """Validates the session objects.  Checks if all attributes are there."""
-    for attr in ['name', 'range', 'level', 'strategy']:
+    for attr in ['name', 'range', 'level', 'strategy', 'progress']:
         if not attr in session:
             return False
     for attr in ['start', 'end']:

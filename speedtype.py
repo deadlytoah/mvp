@@ -88,6 +88,11 @@ class SpeedTypeForm(UiMainWindow, QMainWindow):
         """Calls the speed type widget's edit_session method."""
         self.canvas.edit_session()
 
+    def closeEvent(self, event):
+        """Makes sure the session is stored before exiting."""
+        self.canvas.persist_on_exit()
+        event.accept()
+
 class SpeedTypeCanvas(QtWidgets.QWidget):
     """Widget that fascilitates typing
 
@@ -142,6 +147,12 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
         # a cache for font metrics for letters.
         self.fmcache = {}
+
+        # timer to persist the session and user's progress.
+        self.persist_timer = Qt.QTimer(self)
+        self.persist_timer.setSingleShot(True)
+        self.persist_timer.setInterval(config.PERSIST_INTERVAL)
+        self.persist_timer.timeout.connect(self.persist_session)
 
         self.engine = layout_engine
 
@@ -269,7 +280,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
     def set_level(self, level):
         """Sets the difficulty level."""
         self.session["level"] = level
-        session.store(self.session)
+        self.persist_session()
         self._apply_level(level)
         self._render()
         self.update()
@@ -386,11 +397,13 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 self.edit_session()
                 return
 
-            self.session['name'] = name
-            self.session['level'] = level
-            start = self.session['range']['start']
+            sess = session.init()
+            sess['name'] = name
+            sess['level'] = level
+            start = sess['range']['start']
             start['book'] = book
             start['chapter'] = chapter
+            self.session = sess
 
             session.store(self.session)
             self._start_session()
@@ -409,6 +422,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         if len(sentences) > 0:
             label = self.session['name'] + ' ' + book + ' ' + chapter
             self.set_title(label + ' (' + config.translation.upper() + ')')
+
             self.clear_text()
             for sentence in sentences:
                 self.append_sentence(sentence)
@@ -446,35 +460,85 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 self.make_cliptable()
                 self.update()
 
+    @Qt.pyqtSlot()
+    def persist_session(self):
+        """Persists the session and user's progress."""
+        if self.buf is not None and self.words is not None:
+            self.session['progress'] = {
+                'buf': self.buf,
+                'caret': self.caret,
+                'title': self.title,
+            }
+        session.store(self.session)
+
+    def _resume_session(self):
+        """Read the persisted session from the disk and prepare it for
+        resumption.
+
+        """
+        # Load or initialise the session
+        try:
+            sess = session.load()
+        except session.InvalidSessionError as e:
+            print('failed to load session', e)
+            # Make a backup of the broken session file.  The
+            # documentation says this will fail on Windows if the
+            # target file already exists.
+            os.rename(session.SESSION_FILE, 'invalid-' + session.SESSION_FILE)
+            sess = None
+
+        # Resumption failed, initialise a new session.
+        if sess is None:
+            sess = session.init()
+
+            # set the range to phl 1
+            start = sess['range']['start']
+            start['book'] = 'Phl'
+            end = sess['range']['end']
+            end['book'] = 'Phl'
+            end['chapter'] = 1
+            end['verse'] = 30
+            end['sentence'] = 24
+            sess['range'] = { 'start': start, 'end': end }
+
+        self.session = sess
+
+        if self.session['progress'] is not None:
+            progress = self.session['progress']
+            self.session['progress'] = None
+        else:
+            progress = None
+ 
+        if progress is None:
+            self._start_session()
+        else:
+            self.buf = progress['buf']
+            self.caret = progress['caret']
+            self.set_title(progress['title'])
+
+            # Rewire the letters to the words.
+            words = []
+            for ch in self.buf:
+                if ch['word'] is not None:
+                    if ch['word'] not in words:
+                        words.append(ch['word'])
+                    else:
+                        ch['word'] = words[-1]
+            self.words = words
+
+            # adjust difficulty level according to the session property.
+            level = int(self.session['level'])
+            window.difficulty_level.setValue(level)
+
+            self._apply_level(level)
+            self._render()
+            self.make_cliptable()
+            self.update()
+
     def showEvent(self, event):
         """Handles the first time show event to set up the session."""
         if not event.spontaneous():
-            # Load or initialise the session
-            try:
-                sess = session.load()
-            except session.InvalidSessionError as e:
-                print('failed to load session', e)
-                # Make a backup of the broken session file.  The
-                # documentation says this will fail on Windows if the
-                # target file already exists.
-                os.rename(session.SESSION_FILE, 'invalid-' + session.SESSION_FILE)
-                sess = None
-
-            if sess is None:
-                sess = session.init()
-
-                # set the range to phl 1
-                start = sess['range']['start']
-                start['book'] = 'Phl'
-                end = sess['range']['end']
-                end['book'] = 'Phl'
-                end['chapter'] = 1
-                end['verse'] = 30
-                end['sentence'] = 24
-                sess['range'] = { 'start': start, 'end': end }
-
-            self.session = sess
-            self._start_session()
+            self._resume_session()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Qt.Key_Backspace:
@@ -486,6 +550,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 word = ch['word']
                 if word is not None:
                     word['behind'] = False
+
+                self.persist_timer.start()
 
                 self._render()
                 self.update()
@@ -509,6 +575,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 # with this word.
                 if self.caret == word['last_char']:
                     word['behind'] = True
+
+            self.persist_timer.start()
 
             if self._forward_caret():
                 self._render()
@@ -558,6 +626,12 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             self.edit_session()
         else:
             assert False, "Unexpected button clicked"
+
+    def persist_on_exit(self):
+        """Persists the session and progress before exiting."""
+        if self.persist_timer.isActive():
+            self.persist_timer.stop()
+            self.persist_session()
 
     def event(self, event):
         """Processes custom events."""
