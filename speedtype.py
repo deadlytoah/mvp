@@ -42,29 +42,33 @@ Levels = [Level1, Level2, Level3, Level4, Level5]
 
 window = None
 
-class SpeedTypeForm:
+UiMainWindow, QMainWindow = uic.loadUiType('speedtype.ui')
+
+class SpeedTypeForm(UiMainWindow, QMainWindow):
     """ main form for the speed type tutor style memorisation """
 
     def __init__(self):
+        super(SpeedTypeForm, self).__init__()
+        self.setupUi(self)
+
         global window
         window = self
+        self.gui = self
 
-        self.gui = uic.loadUi("speedtype.ui")
-        self.gui.action_enter_verses.triggered.connect(_view_enter_verses)
-        self.gui.action_view_flash_cards.triggered.connect(_view_flash_cards)
-        self.gui.action_edit_session.triggered.connect(self._edit_session)
-        self.gui.action_debug_inspect_database.triggered.connect(_debug_view_db)
-        self.gui.action_debug_sentences.triggered.connect(_debug_sentences)
+        self.action_enter_verses.triggered.connect(_view_enter_verses)
+        self.action_view_flash_cards.triggered.connect(_view_flash_cards)
+        self.action_edit_session.triggered.connect(self._edit_session)
+        self.action_debug_inspect_database.triggered.connect(_debug_view_db)
+        self.action_debug_sentences.triggered.connect(_debug_sentences)
 
-        self.gui.difficulty_level.valueChanged.connect(
-            self._difficulty_level_changed)
+        self.difficulty_level.valueChanged.connect(self._difficulty_level_changed)
 
         self.canvas = SpeedTypeCanvas(GraphLayout())
-        layout = QtWidgets.QVBoxLayout(self.gui.show_verses)
+        layout = QtWidgets.QVBoxLayout(self.show_verses)
         layout.addWidget(self.canvas)
         self.canvas.setFocus(True)
 
-        self.gui.title.setFont(QtGui.QFont(config.FONT_FAMILY, 20))
+        self.title.setFont(QtGui.QFont(config.FONT_FAMILY, 20))
 
         self.database = Sdb(config.translation + config.DB_EXT).__enter__()
         self.verse_table = [table for table in self.database.get_tables()
@@ -152,7 +156,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
     def set_title(self, title):
         # accessor
         self.title = title
-        window.gui.title.setText(self.title)
+        window.title.setText(self.title)
 
     def _init_char(self, ch):
         """Constructs a character.
@@ -415,7 +419,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
             # adjust difficulty level according to the session property.
             level = int(self.session['level'])
-            window.gui.difficulty_level.setValue(level)
+            window.difficulty_level.setValue(level)
 
             self._apply_level(level)
             self._render()
