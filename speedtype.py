@@ -162,7 +162,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
     def set_missing_text(self):
         loc = self.session['range']['start']
-        self.set_title(' '.join([loc['book'], loc['chapter']]) +
+        self.set_title(' '.join([loc['book'], str(loc['chapter'])]) +
                        ' (' + config.translation.upper() + ')')
         self.set_text('The text is missing for the selected verses.  ' +
                       'Please enter the text in the enter verses screen, ' +
