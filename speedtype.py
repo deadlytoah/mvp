@@ -471,6 +471,16 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         # Load or initialise the session
         try:
             sess = session.load()
+
+            # Persisted translation is different from the current
+            # translation.  Back up the old session file and start
+            # anew.
+            if sess is not None and \
+               sess['range']['start']['translation'] != config.translation:
+                print('translation mismatch - starting a new session')
+                os.rename(session.SESSION_FILE, session.SESSION_FILE +
+                          '.' + sess['range']['start']['translation'])
+                sess = None
         except session.InvalidSessionError as e:
             print('failed to load session', e)
             # Make a backup of the broken session file.  The
