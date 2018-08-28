@@ -2,27 +2,19 @@
 """Displays the flash card of the Bible verses."""
 
 import config
+import screen
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from address import Address
 from key import Key
-from screen import toggle_screen
 from sdb import Sdb
+from sentence import sentence_make_label, sentences_cons2, sentences_index_by_verseno
 from graphlayout import GraphLayout
-
-DB_EXT = '.sdb'
-FONT_FAMILY = 'Helvetica Neue'
-SENTENCE_DELIMITERS = '.:;?!'
-COLOURS = {
-    'background': QtGui.QColor(Qt.Qt.white),
-    'foreground': QtGui.QColor(Qt.Qt.black),
-    'title': QtGui.QColor(Qt.Qt.lightGray)
-}
 
 window = None
 
 class FlashCardForm:
-    """form for entering new verses"""
+    """form for viewing verses in flash cards """
     def __init__(self):
         global window
         window = self
@@ -33,7 +25,8 @@ class FlashCardForm:
         self.jump_to_dialog.move(0, 0)
 
         self.gui = uic.loadUi("flashcard.ui")
-        self.gui.action_enter_verses.triggered.connect(enter_verses)
+        self.gui.action_enter_verses.triggered.connect(_view_enter_verses)
+        self.gui.action_speed_type.triggered.connect(_view_speed_type)
         self.gui.action_debug_inspect_database.triggered.connect(debug_view_db)
         self.gui.action_debug_layout_engine.triggered.connect(debug_layout_engine)
         self.gui.action_debug_sentences.triggered.connect(debug_sentences)
@@ -44,7 +37,7 @@ class FlashCardForm:
         self.gui.setCentralWidget(self.canvas)
         self.canvas.setFocus(True)
 
-        self.database = Sdb(config.translation + DB_EXT).__enter__()
+        self.database = Sdb(config.translation + config.DB_EXT).__enter__()
         self.verse_table = [table for table in self.database.get_tables()
                             if table.name() == 'verse'][0]
         self.verse_table.create_manager()
@@ -71,14 +64,14 @@ class FlashCardCanvas(QtWidgets.QWidget):
             'lines': [],
             'line_spacing': 30,
             'view_rect': None,
-            'background': COLOURS['background']
+            'background': QtGui.QColor(config.COLOURS['background']),
         }
 
         self.engine = layout_engine
 
         self.EMPTY_LINE = {
-            'font': QtGui.QFont(FONT_FAMILY, 12),
-            'colour': COLOURS['foreground'],
+            'font': QtGui.QFont(config.FONT_FAMILY, 12),
+            'colour': QtGui.QColor(config.COLOURS['foreground']),
             'text': ''
         }
 
@@ -91,8 +84,8 @@ class FlashCardCanvas(QtWidgets.QWidget):
         self.title = title
 
         title = {
-            'font': QtGui.QFont(FONT_FAMILY, 20, QtGui.QFont.Black),
-            'colour': COLOURS['title'],
+            'font': QtGui.QFont(config.FONT_FAMILY, 20, QtGui.QFont.Black),
+            'colour': QtGui.QColor(config.COLOURS['title']),
             'text': title
         }
 
@@ -115,8 +108,8 @@ class FlashCardCanvas(QtWidgets.QWidget):
         while len(lines) < 2:
             lines.append(self.EMPTY_LINE)
 
-        font = QtGui.QFont(FONT_FAMILY, 18)
-        colour = COLOURS['foreground']
+        font = QtGui.QFont(config.FONT_FAMILY, 18)
+        colour = QtGui.QColor(config.COLOURS['foreground'])
 
         layout = self.engine.layout(text)
 
@@ -140,7 +133,7 @@ class FlashCardCanvas(QtWidgets.QWidget):
         qp.begin(self)
 
         self.render['view_rect'] = event.rect()
-        qp.fillRect(event.rect(), COLOURS['background'])
+        qp.fillRect(event.rect(), self.render['background'])
 
         lines = self.render['lines']
         middle = len(lines) / 2
@@ -162,9 +155,13 @@ class FlashCardCanvas(QtWidgets.QWidget):
         qp.setFont(font)
         qp.drawText(rect, QtCore.Qt.AlignCenter, text)
 
-def enter_verses():
+def _view_enter_verses():
     """switch to the verse entry screen"""
-    toggle_screen()
+    screen.switch_to(screen.DATA_ENTRY_INDEX)
+
+def _view_speed_type():
+    """ switch to the speed type screen """
+    screen.switch_to(screen.SPEED_TYPE_INDEX)
 
 def _peek():
     dest = window.jump_to_dialog.lineedit_jump_to.text()
@@ -228,122 +225,6 @@ def _prepare_jump():
         window.jump_to_dialog.show()
     else:
         QtWidgets.QMessageBox.warning(window.gui, 'mvp – Jump to', 'Unable to jump right now.')
-
-def sentences_cons2(records, book, chapter):
-    sentences = []
-    lookup = []
-    keyprefix = ' '.join([book, chapter])
-
-    matches = []
-    for rec in records:
-        key = Key.from_str(rec['key'])
-        if key.book == book and \
-           key.chapter == chapter and \
-           rec['deleted'] == '0':
-            matches.append({
-                'key': key,
-                'record': rec
-            })
-
-    verseseq = [match['record']['text']
-                for match in sorted(matches,
-                                    key=lambda m: int(m['key'].verse))]
-
-    # step 1 split verses into a queue of partial or whole verses.
-    indiciesseq = [sorted(_find_all_delimiters(text, SENTENCE_DELIMITERS)) for text in verseseq]
-    splitsseq = []
-    for i, text in enumerate(verseseq):
-        splitsseq.append(_split_verse(i + 1, text, indiciesseq[i]))
-
-    # flatten list of lists
-    queue = [split for splits in splitsseq for split in splits]
-
-    # step 2 process the queue to produce sentences and look up table.
-    sentence = {
-        'text': '',
-        'textseq': [],
-        'sources': []
-    }
-    for split in queue:
-        sentence['textseq'].append(split['text'])
-        sentence['sources'].append({
-            'verse': split['origin'],
-            'partid': split['partid'],
-            'iswhole': split['iswhole']
-        })
-
-        if len(lookup) < split['origin']:
-            lookup.append(len(sentences))
-
-        if split['isfinal']:
-            sentence['text'] = ' '.join(sentence['textseq'])
-            sentences.append(sentence)
-            sentence = {
-                'text': '',
-                'textseq': [],
-                'sources': []
-            }
-
-    return (sentences, lookup)
-
-def sentences_find_by_verseno(sentences, lookup, verseno):
-    i = int(verseno) - 1
-    sentid = lookup[i]
-    return sentences[sentid]
-
-def sentences_index_by_verseno(sentences, lookup, verseno):
-    i = int(verseno) - 1
-    return lookup[i]
-
-def sentence_make_label(sentence, book, chapter):
-    srclist = []
-    sources = sentence['sources']
-    for source in sources:
-        if source['iswhole']:
-            srclist.append(str(source['verse']))
-        else:
-            srclist.append(str(source['verse']) + chr(ord('a') + source['partid']))
-    return book + ' ' + chapter + ':' + ', '.join(srclist)
-
-def _split_verse(verse, text, indices):
-    split = []
-    start = 0
-
-    # use of lstrip() is due to a whitespace that follows a
-    # punctuation.
-    for j, index in enumerate(indices):
-        split.append({
-            'text': text[start:index + 1].lstrip(),
-            'partid': j,
-            'origin': verse,
-            'isfinal': True,
-            'iswhole': False
-        })
-        start = index + 1
-
-    if len(text[start:]) > 0:
-        split.append({
-            'text': text[start:].lstrip(),
-            'partid': len(split),
-            'origin': verse,
-            'isfinal': False,
-            'iswhole': False
-        })
-
-    if len(split) == 1:
-        split[0]['iswhole'] = True
-
-    return split
-
-def _find_all_delimiters(text, delimiters):
-    indicies = []
-    for delim in delimiters:
-        index = text.find(delim, 0)
-        while index >= 0:
-            indicies.append(index)
-            start = index
-            index = text.find(delim, start + 1)
-    return indicies
 
 def debug_view_db():
     from dbgviewdb import DbgViewDb

@@ -6,8 +6,6 @@ import json
 from PyQt5 import uic
 from sdb import Sdb
 
-DB_EXT = '.sdb'
-
 window = None
 
 class DbgViewDb():
@@ -18,7 +16,7 @@ class DbgViewDb():
         global window
         window = self
 
-        with Sdb(config.translation + DB_EXT) as database:
+        with Sdb(config.translation + config.DB_EXT) as database:
             self.verse_table = [table for table in database.get_tables()
                             if table.name() == 'verse'][0]
             self.verse_table.create_manager()

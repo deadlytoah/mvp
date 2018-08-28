@@ -91,7 +91,8 @@
      <string>Screen</string>
     </property>
     <addaction name="action_view_flash_cards"/>
-    <addaction name="actionVerse_Entry"/>
+    <addaction name="action_verse_entry"/>
+    <addaction name="action_speed_type"/>
    </widget>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
@@ -110,7 +111,7 @@
     <string>Scrub</string>
    </property>
   </action>
-  <action name="actionVerse_Entry">
+  <action name="action_verse_entry">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -128,9 +129,6 @@
    <property name="text">
     <string>Flash Card</string>
    </property>
-   <property name="shortcut">
-    <string>Ctrl+Return</string>
-   </property>
   </action>
   <action name="action_debug_inspect_database">
    <property name="text">
@@ -145,6 +143,14 @@
   <action name="action_display_graph">
    <property name="text">
     <string>Display Graph</string>
+   </property>
+  </action>
+  <action name="action_speed_type">
+   <property name="text">
+    <string>Speed Type</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Return</string>
    </property>
   </action>
  </widget>

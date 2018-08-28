@@ -27,8 +27,9 @@
     <property name="title">
      <string>Screen</string>
     </property>
-    <addaction name="actionView_Flash_Cards"/>
+    <addaction name="action_view_flash_cards"/>
     <addaction name="action_enter_verses"/>
+    <addaction name="action_speed_type"/>
    </widget>
    <widget class="QMenu" name="menuDebug">
     <property name="title">
@@ -60,7 +61,7 @@
     <string>Ctrl+Return</string>
    </property>
   </action>
-  <action name="actionView_Flash_Cards">
+  <action name="action_view_flash_cards">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -97,6 +98,11 @@
   <action name="action_display_graph">
    <property name="text">
     <string>Display Graph</string>
+   </property>
+  </action>
+  <action name="action_speed_type">
+   <property name="text">
+    <string>Speed Type</string>
    </property>
   </action>
  </widget>

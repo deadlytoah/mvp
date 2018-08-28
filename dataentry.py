@@ -3,12 +3,10 @@
 
 import config
 import re
+import screen
 from PyQt5 import QtWidgets
 from PyQt5 import uic
 from sdb import Sdb
-from screen import toggle_screen
-
-DB_EXT = '.sdb'
 
 window = None
 
@@ -18,7 +16,8 @@ class DataEntryForm:
         self.gui = uic.loadUi("dataentry.ui")
         self.gui.button_enter.clicked.connect(enter_verses)
         self.gui.action_scrub.triggered.connect(menu_scrub)
-        self.gui.action_view_flash_cards.triggered.connect(view_flash_cards)
+        self.gui.action_view_flash_cards.triggered.connect(_view_flash_cards)
+        self.gui.action_speed_type.triggered.connect(_view_speed_type)
         self.gui.action_debug_inspect_database.triggered.connect(debug_view_db)
         self.gui.action_debug_layout_engine.triggered.connect(debug_layout_engine)
         self.gui.action_display_graph.triggered.connect(debug_display_graph)
@@ -30,7 +29,7 @@ def enter_verses():
     """action for the enter push button. enters verses into the database
 
     """
-    with Sdb(config.translation + DB_EXT) as database:
+    with Sdb(config.translation + config.DB_EXT) as database:
         verse_table = [table for table in database.get_tables()
                        if table.name() == 'verse'][0]
         verse_table.create_manager()
@@ -89,9 +88,13 @@ def _scrub_verses(info, text):
 
     return '\n'.join(array)
 
-def view_flash_cards():
+def _view_flash_cards():
     """switch to the flash cards screen"""
-    toggle_screen()
+    screen.switch_to(screen.FLASH_CARD_INDEX)
+
+def _view_speed_type():
+    """ switch to the speed type screen """
+    screen.switch_to(screen.SPEED_TYPE_INDEX)
 
 def debug_view_db():
     from dbgviewdb import DbgViewDb
