@@ -677,6 +677,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
         self.render['letters'] = letters
         self.render['ct_info'] = ct_info
+        self.render['caret'] = self.caret.render()
 
         # Fix the height of the canvas so the entire content may be
         # visible.
@@ -727,7 +728,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             for letter in letters[letter_start:letter_end + 1]:
                 self._paint_letter(qp, self.render, letter)
 
-        self.caret.paint(qp)
+        self._paint_caret(qp, self.render['caret'])
         qp.end()
 
     def _paint_letter(self, qp, render, letter):
@@ -737,6 +738,12 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
         qp.setPen(colour)
         qp.drawText(coord[0], coord[1] + render['fm'].ascent(), ch)
+
+    def _paint_caret(self, qp, render):
+        if render is not None:
+            (x, y) = render['pos']
+            qp.fillRect(x, y, render['width'], render['height'],
+                        QtGui.QColor(render['colour']))
 
     def _char_at_caret(self):
         """Returns the character at the caret"""

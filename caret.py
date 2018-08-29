@@ -1,5 +1,4 @@
 import config
-from PyQt5 import QtGui
 
 class Caret:
     """Models and controls the caret in speedtype widget.
@@ -58,12 +57,18 @@ class Caret:
         y = self.pos[1]
         return y - quarter
 
-    def paint(self, painter):
-        """Paints the caret."""
+    def render(self):
+        """Provides data for painting the caret."""
         if self.is_visible():
             (x, y) = self.pos
-            painter.setPen(QtGui.QColor(self.colour))
-            painter.drawLine(x, y, x, y + self.height)
+            return {
+                'colour': self.colour,
+                'pos': (x, y),
+                'height': self.height,
+                'width': self.width,
+            }
+        else:
+            return None
 
     def forward(self):
         """Moves caret forward by one letter.
