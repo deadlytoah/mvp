@@ -12,6 +12,7 @@ import session
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from address import Address
+from caret import Caret
 from key import Key
 from random import randrange
 from sentence import sentences_cons2, sentences_index_by_verseno
@@ -115,11 +116,6 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             # coordinates.  Each inner array corresponds to a line.
             'letters': [],
 
-            # Set caret to the first letter of the first sentence.
-            # This is line followed by column.
-            'caret': (0, 0),
-            'caret_colour': QtGui.QColor(config.COLOURS['caret']),
-
             'line_spacing': 30,
             'background': QtGui.QColor(config.COLOURS['background']),
             'font': font,
@@ -139,12 +135,9 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         # word each character belongs to.
         self.buf = []
 
-        # the location of caret within self.buf.
-        self.caret = 0
-
-        # marks the caret position in the buffer that triggers the
-        # session to end.
-        self.eobuf = 0
+        # The caret.
+        self.caret = Caret(fm.height(), window.scroll_area.viewport().height(),
+                           window.scroll_area.viewportMargins().top())
 
         # list of words and their states.
         self.words = []
@@ -208,13 +201,14 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         """Clears the text"""
         self.buf = []
         self.words = []
-        self.caret = 0
+        self.caret.charpos = 0
 
     def set_text(self, text):
         """Sets the text to be displayed in the canvas."""
         self.clear_text()
         (self.buf, self.words) = self._process_text(text)
-        self.eobuf = len(self.buf) - 1
+        self.caret.buflen = len(self.buf)
+        self.caret.eobuf = len(self.buf) - 1
         self._render()
 
     def append_sentence(self, sentence):
@@ -230,7 +224,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         (buf, words) = self._process_text(sentence['text'])
         self.buf.extend(buf)
         self.words.extend(words)
-        self.eobuf = len(self.buf) - 1
+        self.caret.buflen = len(self.buf)
+        self.caret.eobuf = len(self.buf) - 1
         self._render()
 
     def _process_text(self, text):
@@ -457,8 +452,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         if self.buf is not None and self.words is not None:
             self.session['progress'] = {
                 'buf': self.buf,
-                'caret': self.caret,
-                'eobuf': self.eobuf,
+                'caret': self.caret.persist(),
                 'title': self.title,
             }
         session.store(self.session)
@@ -515,8 +509,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             self._start_session()
         else:
             self.buf = progress['buf']
-            self.caret = progress['caret']
-            self.eobuf = progress['eobuf']
+            self.caret.restore(progress['caret'])
             self.set_title(progress['title'])
 
             # Rewire the letters to the words.
@@ -545,9 +538,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Qt.Key_Backspace:
-            if self.caret > 0:
-                self.caret = self.caret - 1
-                ch = self.buf[self.caret]
+            if self.caret.backward():
+                ch = self.buf[self.caret.charpos]
                 ch['typed'] = None
                 ch['correct'] = False
                 word = ch['word']
@@ -576,12 +568,12 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
                 # we are at the last letter, which means we are done
                 # with this word.
-                if self.caret == word['last_char']:
+                if self.caret.charpos == word['last_char']:
                     word['behind'] = True
 
             self.persist_timer.start()
 
-            if self._forward_caret():
+            if self.caret.forward():
                 self._render()
                 self.update()
             else:
@@ -657,8 +649,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         ct_info = []
 
         for (i, ch) in enumerate(self.buf):
-            if i == self.caret:
-                self.render['caret'] = (x, y)
+            if i == self.caret.charpos:
+                self.caret.pos = (x, y)
 
             if ch['char'] == '\n':
                 x = 0
@@ -682,11 +674,6 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 x = x + self._width(ch['char'])
 
                 ct_info.append({ 'y': y })
-
-        # Handle the case where caret is at the end of the entire
-        # text.
-        if self.caret >= len(self.buf):
-            self.render['caret'] = None
 
         self.render['letters'] = letters
         self.render['ct_info'] = ct_info
@@ -740,7 +727,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             for letter in letters[letter_start:letter_end + 1]:
                 self._paint_letter(qp, self.render, letter)
 
-        self._paint_caret(qp, self.render, letters)
+        self.caret.paint(qp)
         qp.end()
 
     def _paint_letter(self, qp, render, letter):
@@ -751,15 +738,9 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         qp.setPen(colour)
         qp.drawText(coord[0], coord[1] + render['fm'].ascent(), ch)
 
-    def _paint_caret(self, qp, render, letters):
-        if render['caret'] is not None:
-            (x, y) = render['caret']
-            qp.setPen(render['caret_colour'])
-            qp.drawLine(x, y, x, y + render['fm'].height())
-
     def _char_at_caret(self):
         """Returns the character at the caret"""
-        return self.buf[self.caret]
+        return self.buf[self.caret.charpos]
 
     def _word_at_caret(self):
         """Returns the word at the caret
@@ -767,7 +748,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         Returns the word at the caret, or None if there is none found.
 
         """
-        return self.buf[self.caret]['word']
+        return self.buf[self.caret.charpos]['word']
 
     def _render_correct_char(self, char):
         """Handles the case where user typed the correct character"""
@@ -780,26 +761,6 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             return (char['char'], config.COLOURS['incorrect'])
         else:
             return (char['typed'], config.COLOURS['incorrect'])
-
-    def _forward_caret(self):
-        """Moves caret forward by one letter
-
-        If the caret is at the end of the text, returns False.
-        Otherwise, advances the caret and returns True.
-
-        """
-        caret = self.caret + 1
-        if caret >= len(self.buf):
-            # do not move caret behind buffer
-            pass
-        else:
-            self.caret = caret
-
-            # is the session ending?
-            if self.caret >= self.eobuf:
-                return False
-            else:
-                return True
 
 class SessionCompleteEvent(Qt.QEvent):
     """Custom event that is fired when the session is complete."""
