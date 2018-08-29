@@ -89,7 +89,7 @@
          <property name="widgetResizable">
           <bool>true</bool>
          </property>
-         <widget class="QWidget" name="show_verses">
+         <widget class="QWidget" name="speedtype">
           <property name="geometry">
            <rect>
             <x>0</x>

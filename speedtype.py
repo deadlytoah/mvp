@@ -64,7 +64,7 @@ class SpeedTypeForm(UiMainWindow, QMainWindow):
         self.difficulty_level.valueChanged.connect(self._difficulty_level_changed)
 
         self.canvas = SpeedTypeCanvas(GraphLayout())
-        layout = QtWidgets.QVBoxLayout(self.show_verses)
+        layout = QtWidgets.QVBoxLayout(self.speedtype)
         layout.addWidget(self.canvas)
         self.canvas.setFocus(True)
 
@@ -590,7 +590,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 self.update()
                 Qt.QApplication.postEvent(self, SessionCompleteEvent())
         else:
-            super(SpeedTypeCanvas, self).keyPressEvent(event)
+            return super(SpeedTypeCanvas, self).keyPressEvent(event)
 
     def sessionCompleteEvent(self, event):
         """Handles the custom event SessionCompleteEvent.
