@@ -5,7 +5,7 @@ use location;
 use range::Range;
 use session::{self, Session};
 use std::boxed::Box;
-use std::ffi::{CStr, CString};
+use std::ffi::{self, CStr, CString};
 use std::fmt::{self, Display, Formatter};
 use std::mem;
 use std::slice;
@@ -19,6 +19,7 @@ pub enum CapiError {
     Book(BookError),
     Session(session::SessionError),
     Utf8(str::Utf8Error),
+    FromBytesWithNul(ffi::FromBytesWithNulError),
 }
 
 impl ::std::error::Error for CapiError {
@@ -27,6 +28,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Book(ref e) => e.description(),
             CapiError::Session(ref e) => e.description(),
             CapiError::Utf8(ref e) => e.description(),
+            CapiError::FromBytesWithNul(ref e) => e.description(),
         }
     }
 
@@ -35,6 +37,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Book(ref e) => Some(e),
             CapiError::Session(ref e) => Some(e),
             CapiError::Utf8(ref e) => Some(e),
+            CapiError::FromBytesWithNul(ref e) => Some(e),
         }
     }
 }
@@ -45,6 +48,7 @@ impl Display for CapiError {
             CapiError::Book(ref e) => write!(f, "book error: {}", e),
             CapiError::Session(ref e) => write!(f, "session error: {}", e),
             CapiError::Utf8(ref e) => write!(f, "utf8 error: {}", e),
+            CapiError::FromBytesWithNul(ref e) => write!(f, "string conversion error: {}", e),
         }
     }
 }
@@ -67,6 +71,12 @@ impl From<str::Utf8Error> for CapiError {
     }
 }
 
+impl From<ffi::FromBytesWithNulError> for CapiError {
+    fn from(err: ffi::FromBytesWithNulError) -> CapiError {
+        CapiError::FromBytesWithNul(err)
+    }
+}
+
 #[repr(C)]
 pub enum SessionError {
     OK,
@@ -80,6 +90,7 @@ pub enum SessionError {
     StrategyUnknown,
     Utf8Error,
     BookUnknown,
+    StringConvertError,
 }
 
 fn map_error_to_code(error: &CapiError) -> SessionError {
@@ -93,6 +104,7 @@ fn map_error_to_code(error: &CapiError) -> SessionError {
             session::SessionError::TooManySessions => SessionError::SessionTooMany,
         },
         CapiError::Utf8(_) => SessionError::Utf8Error,
+        CapiError::FromBytesWithNul(_) => SessionError::StringConvertError,
     }
 }
 
@@ -108,6 +120,7 @@ static ERROR_MESSAGES: &'static [&'static str] = &[
     "unknown strategy\0",
     "utf-8 encoding error\0",
     "unknown book\0",
+    "error converting null-terminated string\0",
 ];
 
 #[no_mangle]
@@ -120,6 +133,7 @@ pub unsafe fn session_create(sess: *const imp::Session) -> c_int {
 
 mod imp {
     use super::*;
+    use std::ffi::CStr;
 
     #[repr(C)]
     pub struct Session {
@@ -140,8 +154,8 @@ mod imp {
 
     impl Location {
         pub fn to_library_location(&self) -> Result<location::Location> {
-            let translation = str::from_utf8(&self.translation)?;
-            let book = str::from_utf8(&self.book)?;
+            let translation = CStr::from_bytes_with_nul(&self.translation)?.to_str()?;
+            let book = CStr::from_bytes_with_nul(&self.book)?.to_str()?;
             let book = Book::from_short_name(book)?;
             let chapter = self.chapter;
             let sentence = self.sentence;
