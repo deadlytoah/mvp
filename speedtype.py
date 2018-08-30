@@ -707,7 +707,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                         first = i
                         break
 
-                for (i, yclip) in reversed(list(enumerate(ct_info))):
+                for i in range(len(ct_info) - 1, -1, -1):
+                    yclip = ct_info[i]
                     if y > yclip:
                         second = i
                         break
