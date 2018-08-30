@@ -676,7 +676,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 })
                 x = x + self._width(ch['char'])
 
-                ct_info.append({ 'y': y })
+                ct_info.append(y)
 
         self.render['letters'] = letters
         self.render['ct_info'] = ct_info
@@ -702,13 +702,13 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             for y in range(0, self.height()):
                 (first, second) = (None, None)
 
-                for (i, info) in enumerate(ct_info):
-                    if y < info['y'] + fontheight:
+                for (i, yclip) in enumerate(ct_info):
+                    if y < yclip + fontheight:
                         first = i
                         break
 
-                for (i, info) in reversed(list(enumerate(ct_info))):
-                    if y > info['y']:
+                for (i, yclip) in reversed(list(enumerate(ct_info))):
+                    if y > yclip:
                         second = i
                         break
 
