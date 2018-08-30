@@ -10,6 +10,7 @@ COLOURS = {
     'foreground': 'black',
     'title': 'lightgray',
     'guide': 'gray',
+    'underscore': 'lightgray',
     'correct': 'black',
     'incorrect': 'red',
     'caret': 'black',

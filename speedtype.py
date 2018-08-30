@@ -176,6 +176,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         """
         return {
             'char': ch,
+            'whitespace': ch == ' ' or ch == '\n',
             'word': None,
             'visible': True,
             'typed': None,
@@ -659,8 +660,10 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 if ch['typed'] is None:
                     if ch['visible'] == True:
                         (letter, colour) = (ch['char'], config.COLOURS['guide'])
-                    else:
+                    elif ch['whitespace']:
                         (letter, colour) = (' ', 'white')
+                    else:
+                        (letter, colour) = ('_', config.COLOURS['underscore'])
                 elif ch['correct'] == True:
                     (letter, colour) = self._render_correct_char(ch)
                 else:
