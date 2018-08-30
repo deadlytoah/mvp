@@ -176,8 +176,8 @@ mod imp {
         s.range = Range::default();
         s.range.start = sess.range[0].to_library_location()?;
         s.range.end = sess.range[1].to_library_location()?;
-        s.level = unsafe { ::std::mem::transmute(sess.level) };
-        s.strategy = unsafe { ::std::mem::transmute(sess.strategy) };
+        s.level = sess.level.into();
+        s.strategy = sess.strategy.into();
         s.write()?;
         Ok(())
     }
