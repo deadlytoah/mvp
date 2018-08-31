@@ -48,6 +48,8 @@ UiMainWindow, QMainWindow = uic.loadUiType('speedtype.ui')
 class SpeedTypeForm(UiMainWindow, QMainWindow):
     """ main form for the speed type tutor style memorisation """
 
+    resized = Qt.pyqtSignal()
+
     def __init__(self):
         super(SpeedTypeForm, self).__init__()
         self.setupUi(self)
@@ -66,6 +68,7 @@ class SpeedTypeForm(UiMainWindow, QMainWindow):
 
         self.canvas = SpeedTypeCanvas(GraphLayout())
         layout = QtWidgets.QVBoxLayout(self.speedtype)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.canvas)
         self.canvas.setFocus(True)
 
@@ -93,6 +96,10 @@ class SpeedTypeForm(UiMainWindow, QMainWindow):
         """Makes sure the session is stored before exiting."""
         self.canvas.persist_on_exit()
         event.accept()
+
+    def resizeEvent(self, event):
+        """Makes sure the dimensions are updated for algorithms."""
+        self.resized.emit()
 
 class SpeedTypeCanvas(QtWidgets.QWidget):
     """Widget that fascilitates typing
@@ -136,8 +143,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         self.buf = []
 
         # The caret.
-        self.caret = Caret(fm.height(), window.scroll_area.viewport().height(),
-                           window.scroll_area.viewportMargins().top())
+        self.caret = None
 
         # list of words and their states.
         self.words = []
@@ -424,6 +430,10 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
             self._apply_level(level)
             self._render()
+            if not self.caret.visible_in_viewport(window.speedtype.y()):
+                # Defer this action until the initialisation
+                # completes.
+                Qt.QTimer.singleShot(0, self._reveal_caret)
             self.make_cliptable()
             self.update()
         else:
@@ -529,12 +539,20 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
             self._apply_level(level)
             self._render()
+            if not self.caret.visible_in_viewport(window.speedtype.y()):
+                # Defer this action until the initialisation
+                # completes.
+                Qt.QTimer.singleShot(0, self._reveal_caret)
             self.make_cliptable()
             self.update()
 
     def showEvent(self, event):
         """Handles the first time show event to set up the session."""
         if not event.spontaneous():
+            self.caret = Caret(self.render['fm'].height(),
+                               window.scroll_area.viewport().height())
+            window.resized.connect(self.update_caret_for_resize)
+
             self._resume_session()
 
     def keyPressEvent(self, event):
@@ -550,6 +568,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 self.persist_timer.start()
 
                 self._render()
+                if not self.caret.visible_in_viewport(window.speedtype.y()):
+                    self._reveal_caret()
                 self.update()
             else:
                 # caret at the beginning of the text
@@ -576,6 +596,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
             if self.caret.forward():
                 self._render()
+                if not self.caret.visible_in_viewport(window.speedtype.y()):
+                    self._reveal_caret()
                 self.update()
             else:
                 # Finished?
@@ -748,6 +770,21 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             (x, y) = render['pos']
             qp.fillRect(x, y, render['width'], render['height'],
                         QtGui.QColor(render['colour']))
+
+    @Qt.pyqtSlot()
+    def _reveal_caret(self):
+        """Scrolls the view so that the caret is visible."""
+        ydelta = self.caret.ideal_ydelta()
+        if ydelta > 0:
+            ydelta = 0
+        elif ydelta + self.caret.viewport_height > self.height():
+            ydelta = 1 - self.height() + self.caret.viewport_height
+        window.scroll_area.verticalScrollBar().setValue(-ydelta)
+
+    @Qt.pyqtSlot()
+    def update_caret_for_resize(self):
+        """Updates the caret when the window resizes."""
+        self.caret.viewport_height = window.scroll_area.viewport().height()
 
     def _char_at_caret(self):
         """Returns the character at the caret"""

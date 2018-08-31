@@ -8,7 +8,7 @@ class Caret:
 
     """
 
-    def __init__(self, height, viewport_height, viewport_margin):
+    def __init__(self, height, viewport_height):
         """Initializes the caret."""
         self.charpos = 0
 
@@ -21,25 +21,20 @@ class Caret:
         self.width = 1
         self.colour = config.COLOURS['caret']
         self.viewport_height = viewport_height
-        self.viewport_margin = viewport_margin
         self.buflen = None
 
         # marks the caret position in the buffer that triggers the
         # session to end.
         self.eobuf = None
 
-        # The y coordinate of the speedtype widget with respect to the
-        # origin of the viewport.
-        self.ydelta = 0
-
     def is_visible(self):
         """Indicates whether the caret is visible."""
         return self.visible and self.charpos < self.eobuf
 
-    def viewport_visible(self):
+    def visible_in_viewport(self, ydelta):
         """Is the caret wholy visible in the viewport?"""
         y = self.pos[1]
-        ybeg = y + self.ydelta
+        ybeg = y + ydelta
         yend = ybeg + self.height
         return ybeg >= 0 and yend <= self.viewport_height
 
@@ -53,9 +48,9 @@ class Caret:
         What is returned is an ideal value, and may not be valid.
 
         """
-        quarter = self.viewport_height / 4
+        quarter = self.viewport_height // 4
         y = self.pos[1]
-        return y - quarter
+        return quarter - y
 
     def render(self):
         """Provides data for painting the caret."""
