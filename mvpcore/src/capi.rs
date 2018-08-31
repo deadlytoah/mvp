@@ -1,16 +1,13 @@
 use book::{Book, BookError};
-use level::Level;
 use libc::*;
 use location;
 use range::Range;
 use session::{self, Session};
 use std::boxed::Box;
-use std::ffi::{self, CStr, CString};
+use std::ffi::{self, CString};
 use std::fmt::{self, Display, Formatter};
-use std::mem;
 use std::slice;
 use std::str;
-use strategy::Strategy;
 
 type Result<T> = ::std::result::Result<T, CapiError>;
 
@@ -183,23 +180,6 @@ mod imp {
     }
 }
 
-/// Frees the session from the heap.
-#[no_mangle]
-pub unsafe fn session_destroy(session: *mut Session) {
-    Box::from_raw(session);
-}
-
-/// Writes the session to disk and deletes it.
-#[no_mangle]
-pub unsafe fn session_write(session: *mut Session) -> c_int {
-    let session = Box::from_raw(session);
-    if session.write().is_ok() {
-        SessionError::OK as c_int
-    } else {
-        SessionError::IOError as c_int
-    }
-}
-
 /// Deletes the session from disk.
 #[no_mangle]
 pub unsafe fn session_delete(session: *mut Session) -> c_int {
@@ -208,110 +188,6 @@ pub unsafe fn session_delete(session: *mut Session) -> c_int {
         SessionError::IOError as c_int
     } else {
         0
-    }
-}
-
-#[no_mangle]
-pub unsafe fn session_set_range(
-    session: *mut Session,
-    start: *const imp::Location,
-    end: *const imp::Location,
-) -> c_int {
-    let book = if let Ok(book) = CStr::from_bytes_with_nul(&(*start).book) {
-        book
-    } else {
-        return SessionError::RangeParseError as c_int;
-    };
-    let book = if let Ok(book) = book.to_str() {
-        book
-    } else {
-        return SessionError::RangeParseError as c_int;
-    };
-    let book = if let Ok(book) = Book::from_short_name(book) {
-        book
-    } else {
-        return SessionError::RangeParseError as c_int;
-    };
-    let translation = if let Ok(translation) = CStr::from_bytes_with_nul(&(*start).translation) {
-        translation
-    } else {
-        return SessionError::RangeParseError as c_int;
-    };
-    let translation = if let Ok(translation) = translation.to_str() {
-        translation
-    } else {
-        return SessionError::RangeParseError as c_int;
-    };
-    let s = location::Location {
-        translation: translation.into(),
-        book,
-        chapter: (*start).chapter,
-        sentence: (*start).sentence,
-        verse: (*start).verse,
-    };
-
-    let book = if let Ok(book) = CStr::from_bytes_with_nul(&(*end).book) {
-        book
-    } else {
-        return SessionError::RangeParseError as c_int;
-    };
-    let book = if let Ok(book) = book.to_str() {
-        book
-    } else {
-        return SessionError::RangeParseError as c_int;
-    };
-    let book = if let Ok(book) = Book::from_short_name(book) {
-        book
-    } else {
-        return SessionError::RangeParseError as c_int;
-    };
-    let translation = if let Ok(translation) = CStr::from_bytes_with_nul(&(*end).translation) {
-        translation
-    } else {
-        return SessionError::RangeParseError as c_int;
-    };
-    let translation = if let Ok(translation) = translation.to_str() {
-        translation
-    } else {
-        return SessionError::RangeParseError as c_int;
-    };
-    let e = location::Location {
-        translation: translation.into(),
-        book,
-        chapter: (*end).chapter,
-        sentence: (*end).sentence,
-        verse: (*end).verse,
-    };
-
-    let mut session = Box::from_raw(session);
-    session.range = Range { start: s, end: e };
-    Box::into_raw(session);
-    SessionError::OK as c_int
-}
-
-#[no_mangle]
-pub unsafe fn session_set_level(session: *mut Session, level: c_int) -> c_int {
-    if level < Level::Level1 as c_int || level > Level::Level5 as c_int {
-        SessionError::LevelUnknown as c_int
-    } else {
-        let mut session = Box::from_raw(session);
-        let level: Level = mem::transmute(level as u8);
-        session.level = level;
-        Box::into_raw(session);
-        SessionError::OK as c_int
-    }
-}
-
-#[no_mangle]
-pub unsafe fn session_set_strategy(session: *mut Session, strategy: c_int) -> c_int {
-    if strategy < Strategy::Simple as c_int || strategy > Strategy::FocusedLearning as c_int {
-        SessionError::StrategyUnknown as c_int
-    } else {
-        let mut session = Box::from_raw(session);
-        let strategy: Strategy = mem::transmute(strategy as u8);
-        session.strategy = strategy;
-        Box::into_raw(session);
-        SessionError::OK as c_int
     }
 }
 
