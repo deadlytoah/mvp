@@ -43,12 +43,13 @@ class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectio
 
     func collectionView(_ collectionView: NSCollectionView, numberOfItemsInSection section: Int) -> Int {
         // TODO implement this
-        return 20
+        return 5
     }
 
     func collectionView(_ collectionView: NSCollectionView, itemForRepresentedObjectAt indexPath: IndexPath) -> NSCollectionViewItem {
-        // TODO implement this
-        return sessionView.makeItem(withIdentifier: NSUserInterfaceItemIdentifier(rawValue: "SessionColViewItem"), for: indexPath)
+        let item = sessionView.makeItem(withIdentifier: NSUserInterfaceItemIdentifier(rawValue: "SessionColViewItem"), for: indexPath)
+        item.textField?.stringValue = "Session \(indexPath[1] + 1)"
+        return item
     }
 
     override var representedObject: Any? {
