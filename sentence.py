@@ -4,6 +4,7 @@ from key import Key
 def sentences_cons2(records, book, chapter):
     sentences = []
     lookup = []
+    chapter = str(chapter)
     keyprefix = ' '.join([book, chapter])
 
     matches = []
@@ -71,7 +72,7 @@ def sentence_make_label(sentence, book, chapter):
             srclist.append(str(source['verse']))
         else:
             srclist.append(str(source['verse']) + chr(ord('a') + source['partid']))
-    return book + ' ' + chapter + ':' + ', '.join(srclist)
+    return book + ' ' + str(chapter) + ':' + ', '.join(srclist)
 
 def _split_verse(verse, text, indices):
     split = []

@@ -814,7 +814,7 @@ def _debug_sentences():
     (sentences, lookup) = sentences_cons2(records, address.book, address.chapter)
     info = DbgSentences()
     info.gui.label_source.setText('Sentences constructed from: '
-                                  + ' '.join([address.book, address.chapter]))
+                                  + ' '.join([address.book, str(address.chapter)]))
 
     sentencesstr = ''
     for sentence in sentences:
