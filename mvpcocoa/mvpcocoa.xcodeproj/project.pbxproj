@@ -14,7 +14,7 @@
 		0F1A2979211182BB00D348B8 /* mvpcocoaUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F1A2978211182BB00D348B8 /* mvpcocoaUITests.swift */; };
 		0F3C50ED211DB0AD0040B010 /* SessionColViewItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3C50EB211DB0AD0040B010 /* SessionColViewItem.swift */; };
 		0F3C50EE211DB0AD0040B010 /* SessionColViewItem.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0F3C50EC211DB0AD0040B010 /* SessionColViewItem.xib */; };
-		0F94EEAF211BDA13005349E7 /* libmvpcore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE76A412119FD1C00E36923 /* libmvpcore.a */; };
+		0FF57BC02138E13000C4136C /* libmvpcore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FF57BBF2138E13000C4136C /* libmvpcore.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,7 +44,7 @@
 		0FB155472119633C00B888CE /* session.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = session.h; sourceTree = "<group>"; };
 		0FE76A3B2119FB8500E36923 /* mvpcore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = mvpcore; path = ../mvpcore; sourceTree = "<group>"; };
 		0FE76A3D2119FB8C00E36923 /* mvpcocoa.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = mvpcocoa.xcodeproj; sourceTree = "<group>"; };
-		0FE76A412119FD1C00E36923 /* libmvpcore.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmvpcore.a; path = ../mvpcore/target/debug/libmvpcore.a; sourceTree = "<group>"; };
+		0FF57BBF2138E13000C4136C /* libmvpcore.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmvpcore.a; path = ../../target/debug/libmvpcore.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,7 +52,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0F94EEAF211BDA13005349E7 /* libmvpcore.a in Frameworks */,
+				0FF57BC02138E13000C4136C /* libmvpcore.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -114,7 +114,7 @@
 		0FB1553F2119621300B888CE /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				0FE76A412119FD1C00E36923 /* libmvpcore.a */,
+				0FF57BBF2138E13000C4136C /* libmvpcore.a */,
 				0FE76A3D2119FB8C00E36923 /* mvpcocoa.xcodeproj */,
 				0FE76A3B2119FB8500E36923 /* mvpcore */,
 			);
@@ -397,8 +397,9 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
-					/Users/hcs/Code/mvp/mvpcore/target/debug,
+					/Users/hcs/Code/target/debug,
 				);
+				LIBRARY_SEARCH_PATHS = $HOME/Code/target/debug;
 				PRODUCT_BUNDLE_IDENTIFIER = net.heesuk.mvpcocoa;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "mvpcocoa/mvpcocoa-Bridging-Header.h";
@@ -420,6 +421,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = $HOME/Code/target/debug;
 				PRODUCT_BUNDLE_IDENTIFIER = net.heesuk.mvpcocoa;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "mvpcocoa/mvpcocoa-Bridging-Header.h";
