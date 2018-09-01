@@ -26,7 +26,7 @@ impl Display for BookError {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 #[repr(C)]
 pub enum Book {
     ///////////////////

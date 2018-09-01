@@ -4,8 +4,9 @@ use location;
 use range::Range;
 use session::{self, Session};
 use std::boxed::Box;
-use std::ffi::{self, CString};
+use std::ffi;
 use std::fmt::{self, Display, Formatter};
+use std::mem;
 use std::slice;
 use std::str;
 
@@ -17,6 +18,7 @@ pub enum CapiError {
     Session(session::SessionError),
     Utf8(str::Utf8Error),
     FromBytesWithNul(ffi::FromBytesWithNulError),
+    Nul(ffi::NulError),
 }
 
 impl ::std::error::Error for CapiError {
@@ -26,6 +28,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Session(ref e) => e.description(),
             CapiError::Utf8(ref e) => e.description(),
             CapiError::FromBytesWithNul(ref e) => e.description(),
+            CapiError::Nul(ref e) => e.description(),
         }
     }
 
@@ -35,6 +38,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Session(ref e) => Some(e),
             CapiError::Utf8(ref e) => Some(e),
             CapiError::FromBytesWithNul(ref e) => Some(e),
+            CapiError::Nul(ref e) => Some(e),
         }
     }
 }
@@ -46,6 +50,7 @@ impl Display for CapiError {
             CapiError::Session(ref e) => write!(f, "session error: {}", e),
             CapiError::Utf8(ref e) => write!(f, "utf8 error: {}", e),
             CapiError::FromBytesWithNul(ref e) => write!(f, "string conversion error: {}", e),
+            CapiError::Nul(ref e) => write!(f, "nul character found in string: {}", e),
         }
     }
 }
@@ -74,12 +79,18 @@ impl From<ffi::FromBytesWithNulError> for CapiError {
     }
 }
 
+impl From<ffi::NulError> for CapiError {
+    fn from(err: ffi::NulError) -> CapiError {
+        CapiError::Nul(err)
+    }
+}
+
 #[repr(C)]
 pub enum SessionError {
     OK,
     IOError,
     SessionExists,
-    SessionCorruptData,
+    SessionDataCorrupt,
     SessionBufferTooSmall,
     SessionTooMany,
     RangeParseError,
@@ -88,6 +99,7 @@ pub enum SessionError {
     Utf8Error,
     BookUnknown,
     StringConvertError,
+    NulError,
 }
 
 fn map_error_to_code(error: &CapiError) -> SessionError {
@@ -97,11 +109,12 @@ fn map_error_to_code(error: &CapiError) -> SessionError {
         },
         CapiError::Session(ref e) => match *e {
             session::SessionError::Io(_) => SessionError::IOError,
-            session::SessionError::SerdeJson(_) => SessionError::SessionCorruptData,
+            session::SessionError::SerdeJson(_) => SessionError::SessionDataCorrupt,
             session::SessionError::TooManySessions => SessionError::SessionTooMany,
         },
         CapiError::Utf8(_) => SessionError::Utf8Error,
         CapiError::FromBytesWithNul(_) => SessionError::StringConvertError,
+        CapiError::Nul(_) => SessionError::NulError,
     }
 }
 
@@ -118,6 +131,7 @@ static ERROR_MESSAGES: &'static [&'static str] = &[
     "utf-8 encoding error\0",
     "unknown book\0",
     "error converting null-terminated string\0",
+    "unexpected null character found in string\0",
 ];
 
 #[no_mangle]
@@ -128,10 +142,49 @@ pub unsafe fn session_create(sess: *const imp::Session) -> c_int {
     }
 }
 
+/// Returns the persisted sessions from disk.
+///
+/// Caller is required to allocate enough memory and pass the address
+/// to the buffer in buf and the object count in *len.  Then the
+/// address is populated with the sessions and the actual number of
+/// sessions is recorded in *len.
+///
+/// buf and len must point to accessible memory addresses.
+///
+/// Each session is stored as per imp::Session data structure.
+///
+/// If buf is not large enough, returns SessionBufferTooSmall.  If
+/// there is an error loading the sessions, returns
+/// SessionDataCorrupt.  Otherwise returns OK and buf is filled with
+/// sessions.
+#[no_mangle]
+pub unsafe fn session_list_sessions(buf: *mut imp::Session, len: *mut size_t) -> c_int {
+    let count = *len;
+    match imp::session_list_sessions() {
+        Ok(v) => {
+            if v.len() > count {
+                SessionError::SessionBufferTooSmall as c_int
+            } else {
+                let bufslice = slice::from_raw_parts_mut(
+                    buf as *mut imp::Session,
+                    count * mem::size_of::<imp::Session>(),
+                );
+                bufslice[..v.len()].copy_from_slice(&v);
+                *len = v.len();
+                SessionError::OK as c_int
+            }
+        }
+        Err(e) => map_error_to_code(&e) as c_int,
+    }
+}
+
 mod imp {
     use super::*;
-    use std::ffi::CStr;
+    use book;
+    use std::ffi::{CStr, CString};
+    use std::mem;
 
+    #[derive(Clone, Copy)]
     #[repr(C)]
     pub struct Session {
         pub name: [u8; 64],
@@ -140,6 +193,7 @@ mod imp {
         pub strategy: u8,
     }
 
+    #[derive(Clone, Copy)]
     #[repr(C)]
     pub struct Location {
         pub translation: [u8; 8],
@@ -165,6 +219,27 @@ mod imp {
                 verse,
             })
         }
+
+        pub fn from_library_location(loc: &location::Location) -> Result<Self> {
+            let mut retval = Location {
+                translation: unsafe { mem::zeroed() },
+                book: unsafe { mem::zeroed() },
+                chapter: loc.chapter,
+                sentence: loc.sentence,
+                verse: loc.verse,
+            };
+
+            let translation = CString::new(loc.translation.clone())?;
+            let translation = translation.as_bytes_with_nul();
+            retval.translation[..translation.len()].copy_from_slice(translation);
+
+            let book = book::get_short_name(loc.book);
+            let book = CString::new(book)?;
+            let book = book.as_bytes_with_nul();
+            retval.book[..book.len()].copy_from_slice(book);
+
+            Ok(retval)
+        }
     }
 
     pub fn session_create(sess: &Session) -> Result<()> {
@@ -178,6 +253,33 @@ mod imp {
         s.write()?;
         Ok(())
     }
+
+    /// Loads from disk all persisted sessions.
+    pub fn session_list_sessions() -> Result<Vec<Session>> {
+        let mut seq = vec![];
+
+        for session in session::Session::load_all_sessions()? {
+            let name = CString::new(session.name)?;
+            let start = Location::from_library_location(&session.range.start)?;
+            let end = Location::from_library_location(&session.range.end)?;
+            let level = session.level as u8;
+            let strategy = session.strategy as u8;
+
+            let mut s = Session {
+                name: unsafe { mem::zeroed() },
+                range: [start, end],
+                level,
+                strategy,
+            };
+
+            let name = name.as_bytes_with_nul();
+            s.name[..name.len()].copy_from_slice(name);
+
+            seq.push(s);
+        }
+
+        Ok(seq)
+    }
 }
 
 /// Deletes the session from disk.
@@ -188,40 +290,6 @@ pub unsafe fn session_delete(session: *mut Session) -> c_int {
         SessionError::IOError as c_int
     } else {
         0
-    }
-}
-
-/// Loads from disk the list of names of all sessions.  The returned
-/// list is a sequence of null terminated strings stored back to back
-/// in the memory.
-#[no_mangle]
-pub unsafe fn session_list_sessions(buf: *mut c_char, len: *mut size_t) -> c_int {
-    if let Ok(session_seq) = Session::load_all_sessions() {
-        let bufsize = *len as usize;
-        let mut actual_len = 0usize;
-        let mut offset = 0isize;
-
-        for session in session_seq {
-            if let Ok(sessname) = CString::new(session.name) {
-                let bufslice = slice::from_raw_parts_mut(buf.offset(offset) as *mut u8, bufsize);
-                let namebytes = sessname.as_bytes_with_nul();
-                bufslice.copy_from_slice(namebytes);
-                offset += namebytes.len() as isize;
-                actual_len += namebytes.len();
-
-                if actual_len > bufsize {
-                    return SessionError::SessionBufferTooSmall as c_int;
-                }
-            } else {
-                return SessionError::SessionCorruptData as c_int;
-            };
-        }
-
-        *len = actual_len;
-
-        SessionError::OK as c_int
-    } else {
-        SessionError::SessionCorruptData as c_int
     }
 }
 
