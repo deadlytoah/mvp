@@ -180,7 +180,6 @@ mod imp {
     use book;
     use std::ffi::{CStr, CString};
 
-    #[derive(Clone, Copy)]
     #[repr(C)]
     pub struct Session {
         pub name: [u8; 64],
@@ -189,7 +188,6 @@ mod imp {
         pub strategy: u8,
     }
 
-    #[derive(Clone, Copy)]
     #[repr(C)]
     pub struct Location {
         pub translation: [u8; 8],
@@ -258,7 +256,7 @@ mod imp {
             Err(CapiError::BufferTooSmall)
         } else {
             for (i, session) in sessions.into_iter().enumerate() {
-                let mut buf = seq[i];
+                let buf = &mut seq[i];
 
                 let name = CString::new(session.name)?;
                 let name = name.as_bytes_with_nul();
@@ -323,5 +321,27 @@ mod test {
             });
             assert!(false);
         }
+    }
+
+    #[test]
+    fn test_session_list_sessions() {
+        test_session_create();
+
+        let mut buf: [imp::Session; 20] = unsafe { ::std::mem::zeroed() };
+        let mut len: usize = 20;
+        {
+            let bufref = &mut buf;
+            let ret = unsafe { session_list_sessions(bufref.as_mut_ptr(), &mut len) };
+            assert_eq!(ret, 0);
+        }
+        assert!(len > 0);
+
+        let list = &buf[..len];
+        let found = list.iter().any(|session| {
+            let name = unsafe { CStr::from_ptr(session.name.as_ptr() as *const i8) };
+            let name = name.to_str().expect("to_str");
+            name == "test"
+        });
+        assert!(found);
     }
 }
