@@ -217,7 +217,7 @@ mod imp {
             })
         }
 
-        pub fn from_library_location(&mut self, loc: &location::Location) -> Result<()> {
+        pub fn copy_from_library_location(&mut self, loc: &location::Location) -> Result<()> {
             self.chapter = loc.chapter;
             self.sentence = loc.sentence;
             self.verse = loc.verse;
@@ -263,8 +263,8 @@ mod imp {
                 let name = name.as_bytes_with_nul();
                 buf.name[..name.len()].copy_from_slice(name);
 
-                buf.range[0].from_library_location(&session.range.start)?;
-                buf.range[1].from_library_location(&session.range.end)?;
+                buf.range[0].copy_from_library_location(&session.range.start)?;
+                buf.range[1].copy_from_library_location(&session.range.end)?;
 
                 buf.level = session.level as u8;
                 buf.strategy = session.strategy as u8;
