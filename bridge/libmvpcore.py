@@ -10,14 +10,9 @@ LIB_NAME = "libmvpcore.dylib"
 
 """Data structure defining functions and types of their
 arguments."""
-EXTFNS = [["session_new", [ctypes.c_char_p], ctypes.c_void_p],
-          ["session_destroy", [ctypes.c_void_p], None],
-          ["session_write", [ctypes.c_void_p], ctypes.c_int],
-          ["session_delete", [ctypes.c_void_p], ctypes.c_int],
-          ["session_set_range", [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p], ctypes.c_int],
-          ["session_set_level", [ctypes.c_void_p, ctypes.c_int], ctypes.c_int],
-          ["session_set_strategy", [ctypes.c_void_p, ctypes.c_int], ctypes.c_int],
+EXTFNS = [["session_create", [ctypes.c_void_p], ctypes.c_int],
           ["session_list_sessions", [ctypes.c_char_p, POINTER(ctypes.c_size_t)], ctypes.c_int],
+          ["session_delete", [ctypes.c_void_p], ctypes.c_int],
           ["session_get_message", [ctypes.c_int], ctypes.c_char_p]]
 
 class Libmvpcore:
