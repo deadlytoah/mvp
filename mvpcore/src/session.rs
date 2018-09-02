@@ -10,7 +10,7 @@ use strategy::Strategy;
 
 const APP_DIR: &str = "mvp-speedtype";
 const SESSIONS_FILE: &str = "sessions.json";
-const MAX_SESSIONS: usize = 100;
+const MAX_SESSIONS: usize = 20;
 
 type Result<T> = ::std::result::Result<T, SessionError>;
 
