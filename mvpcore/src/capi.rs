@@ -291,7 +291,7 @@ mod test {
 
     #[test]
     fn test_session_list_sessions() {
-        let res = create_test_session();
+        let res = create_test_session().0;
         assert!(res == SessionError::OK as c_int || res == SessionError::SessionExists as c_int);
 
         let mut buf: [imp::Session; 20] = unsafe { ::std::mem::zeroed() };
@@ -314,15 +314,40 @@ mod test {
 
     #[test]
     fn test_session_create_existing() {
-        let res = create_test_session();
+        let res = create_test_session().0;
         assert!(res == SessionError::OK as c_int || res == SessionError::SessionExists as c_int);
 
         // Try creating the same session again.
-        let res = create_test_session();
+        let res = create_test_session().0;
         assert_eq!(res, SessionError::SessionExists as c_int);
     }
 
-    fn create_test_session() -> c_int {
+    #[test]
+    fn test_session_delete() {
+        let (res, mut session) = create_test_session();
+        assert!(res == SessionError::OK as c_int || res == SessionError::SessionExists as c_int);
+
+        let res = unsafe { session_delete(&mut session) };
+        assert_eq!(res, 0);
+
+        let mut buf: [imp::Session; 20] = unsafe { ::std::mem::zeroed() };
+        let mut len: usize = 20;
+        {
+            let bufref = &mut buf;
+            let ret = unsafe { session_list_sessions(bufref.as_mut_ptr(), &mut len) };
+            assert_eq!(ret, 0);
+        }
+
+        let list = &buf[..len];
+        let none = list.iter().all(|session| {
+            let name = unsafe { CStr::from_ptr(session.name.as_ptr() as *const i8) };
+            let name = name.to_str().expect("to_str");
+            name != "test"
+        });
+        assert!(none);
+    }
+
+    fn create_test_session() -> (c_int, imp::Session) {
         let start = imp::Location {
             translation: [b'E', b'S', b'V', 0, 0, 0, 0, 0],
             book: [b'P', b'h', b'i', b'l', 0, 0, 0, 0],
@@ -347,6 +372,7 @@ mod test {
 
         session.name[0..4].copy_from_slice(&[b't', b'e', b's', b't']);
 
-        unsafe { session_create(&session) }
+        let res = unsafe { session_create(&session) };
+        (res, session)
     }
 }
