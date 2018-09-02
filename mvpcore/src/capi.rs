@@ -15,7 +15,6 @@ pub enum CapiError {
     Book(BookError),
     Session(session::SessionError),
     Utf8(str::Utf8Error),
-    FromBytesWithNul(ffi::FromBytesWithNulError),
     Nul(ffi::NulError),
     BufferTooSmall,
 }
@@ -26,7 +25,6 @@ impl ::std::error::Error for CapiError {
             CapiError::Book(ref e) => e.description(),
             CapiError::Session(ref e) => e.description(),
             CapiError::Utf8(ref e) => e.description(),
-            CapiError::FromBytesWithNul(ref e) => e.description(),
             CapiError::Nul(ref e) => e.description(),
             CapiError::BufferTooSmall => "buffer is too small",
         }
@@ -37,7 +35,6 @@ impl ::std::error::Error for CapiError {
             CapiError::Book(ref e) => Some(e),
             CapiError::Session(ref e) => Some(e),
             CapiError::Utf8(ref e) => Some(e),
-            CapiError::FromBytesWithNul(ref e) => Some(e),
             CapiError::Nul(ref e) => Some(e),
             CapiError::BufferTooSmall => None,
         }
@@ -50,7 +47,6 @@ impl Display for CapiError {
             CapiError::Book(ref e) => write!(f, "book error: {}", e),
             CapiError::Session(ref e) => write!(f, "session error: {}", e),
             CapiError::Utf8(ref e) => write!(f, "utf8 error: {}", e),
-            CapiError::FromBytesWithNul(ref e) => write!(f, "string conversion error: {}", e),
             CapiError::Nul(ref e) => write!(f, "nul character found in string: {}", e),
             CapiError::BufferTooSmall => write!(f, "buffer is too small"),
         }
@@ -75,12 +71,6 @@ impl From<str::Utf8Error> for CapiError {
     }
 }
 
-impl From<ffi::FromBytesWithNulError> for CapiError {
-    fn from(err: ffi::FromBytesWithNulError) -> CapiError {
-        CapiError::FromBytesWithNul(err)
-    }
-}
-
 impl From<ffi::NulError> for CapiError {
     fn from(err: ffi::NulError) -> CapiError {
         CapiError::Nul(err)
@@ -100,7 +90,6 @@ pub enum SessionError {
     StrategyUnknown,
     Utf8Error,
     BookUnknown,
-    StringConvertError,
     NulError,
 }
 
@@ -115,7 +104,6 @@ fn map_error_to_code(error: &CapiError) -> SessionError {
             session::SessionError::TooManySessions => SessionError::SessionTooMany,
         },
         CapiError::Utf8(_) => SessionError::Utf8Error,
-        CapiError::FromBytesWithNul(_) => SessionError::StringConvertError,
         CapiError::Nul(_) => SessionError::NulError,
         CapiError::BufferTooSmall => SessionError::SessionBufferTooSmall,
     }
@@ -133,7 +121,6 @@ static ERROR_MESSAGES: &'static [&'static str] = &[
     "unknown strategy\0",
     "utf-8 encoding error\0",
     "unknown book\0",
-    "error converting null-terminated string\0",
     "unexpected null character found in string\0",
 ];
 
@@ -214,8 +201,10 @@ mod imp {
 
     impl Location {
         pub fn to_library_location(&self) -> Result<location::Location> {
-            let translation = CStr::from_bytes_with_nul(&self.translation)?.to_str()?;
-            let book = CStr::from_bytes_with_nul(&self.book)?.to_str()?;
+            let translation = unsafe { CStr::from_ptr(self.translation.as_ptr() as *const i8) };
+            let translation = translation.to_str()?;
+            let book = unsafe { CStr::from_ptr(self.book.as_ptr() as *const i8) };
+            let book = book.to_str()?;
             let book = Book::from_short_name(book)?;
             let chapter = self.chapter;
             let sentence = self.sentence;
@@ -248,7 +237,8 @@ mod imp {
     }
 
     pub fn session_create(sess: &Session) -> Result<()> {
-        let name = str::from_utf8(&sess.name)?;
+        let name = unsafe { CStr::from_ptr(sess.name.as_ptr() as *const i8) };
+        let name = name.to_str()?;
         let mut s = session::Session::named(&name);
         s.range = Range::default();
         s.range.start = sess.range[0].to_library_location()?;
@@ -287,10 +277,51 @@ mod imp {
 
     /// Deletes the session with the give name from disk.
     pub fn session_delete(session: &Session) -> Result<()> {
-        let name = CStr::from_bytes_with_nul(&session.name)?;
+        let name = unsafe { CStr::from_ptr(session.name.as_ptr() as *const i8) };
         let name = name.to_str()?;
         let session = session::Session::named(name);
         session.delete()?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::ffi::CStr;
+
+    #[test]
+    fn test_session_create() {
+        let start = imp::Location {
+            translation: [b'E', b'S', b'V', 0, 0, 0, 0, 0],
+            book: [b'P', b'h', b'i', b'l', 0, 0, 0, 0],
+            chapter: 1,
+            sentence: 0,
+            verse: 1,
+        };
+        let end = imp::Location {
+            translation: [b'E', b'S', b'V', 0, 0, 0, 0, 0],
+            book: [b'P', b'h', b'i', b'l', 0, 0, 0, 0],
+            chapter: 2,
+            sentence: 0,
+            verse: 1,
+        };
+
+        let mut session = imp::Session {
+            name: unsafe { ::std::mem::zeroed() },
+            range: [start, end],
+            level: 0,
+            strategy: 0,
+        };
+
+        session.name[0..4].copy_from_slice(&[b't', b'e', b's', b't']);
+
+        let res = unsafe { session_create(&session) };
+        if res != 0 {
+            eprintln!("session_create: {:?}", unsafe {
+                CStr::from_ptr(session_get_message(res))
+            });
+            assert!(false);
+        }
     }
 }
