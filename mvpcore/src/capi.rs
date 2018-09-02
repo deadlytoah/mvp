@@ -5,7 +5,6 @@ use range::Range;
 use session;
 use std::ffi;
 use std::fmt::{self, Display, Formatter};
-use std::mem;
 use std::slice;
 use std::str;
 
@@ -18,6 +17,7 @@ pub enum CapiError {
     Utf8(str::Utf8Error),
     FromBytesWithNul(ffi::FromBytesWithNulError),
     Nul(ffi::NulError),
+    BufferTooSmall,
 }
 
 impl ::std::error::Error for CapiError {
@@ -28,6 +28,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Utf8(ref e) => e.description(),
             CapiError::FromBytesWithNul(ref e) => e.description(),
             CapiError::Nul(ref e) => e.description(),
+            CapiError::BufferTooSmall => "buffer is too small",
         }
     }
 
@@ -38,6 +39,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Utf8(ref e) => Some(e),
             CapiError::FromBytesWithNul(ref e) => Some(e),
             CapiError::Nul(ref e) => Some(e),
+            CapiError::BufferTooSmall => None,
         }
     }
 }
@@ -50,6 +52,7 @@ impl Display for CapiError {
             CapiError::Utf8(ref e) => write!(f, "utf8 error: {}", e),
             CapiError::FromBytesWithNul(ref e) => write!(f, "string conversion error: {}", e),
             CapiError::Nul(ref e) => write!(f, "nul character found in string: {}", e),
+            CapiError::BufferTooSmall => write!(f, "buffer is too small"),
         }
     }
 }
@@ -114,6 +117,7 @@ fn map_error_to_code(error: &CapiError) -> SessionError {
         CapiError::Utf8(_) => SessionError::Utf8Error,
         CapiError::FromBytesWithNul(_) => SessionError::StringConvertError,
         CapiError::Nul(_) => SessionError::NulError,
+        CapiError::BufferTooSmall => SessionError::SessionBufferTooSmall,
     }
 }
 
@@ -158,20 +162,13 @@ pub unsafe fn session_create(sess: *const imp::Session) -> c_int {
 /// sessions.
 #[no_mangle]
 pub unsafe fn session_list_sessions(buf: *mut imp::Session, len: *mut size_t) -> c_int {
-    let count = *len;
-    match imp::session_list_sessions() {
-        Ok(v) => {
-            if v.len() > count {
-                SessionError::SessionBufferTooSmall as c_int
-            } else {
-                let bufslice = slice::from_raw_parts_mut(
-                    buf as *mut imp::Session,
-                    count * mem::size_of::<imp::Session>(),
-                );
-                bufslice[..v.len()].copy_from_slice(&v);
-                *len = v.len();
-                SessionError::OK as c_int
-            }
+    let size = *len;
+    let bufslice = slice::from_raw_parts_mut(buf as *mut imp::Session, size);
+
+    match imp::session_list_sessions(bufslice) {
+        Ok(count) => {
+            *len = count;
+            SessionError::OK as c_int
         }
         Err(e) => map_error_to_code(&e) as c_int,
     }
@@ -195,7 +192,6 @@ mod imp {
     use super::*;
     use book;
     use std::ffi::{CStr, CString};
-    use std::mem;
 
     #[derive(Clone, Copy)]
     #[repr(C)]
@@ -233,25 +229,21 @@ mod imp {
             })
         }
 
-        pub fn from_library_location(loc: &location::Location) -> Result<Self> {
-            let mut retval = Location {
-                translation: unsafe { mem::zeroed() },
-                book: unsafe { mem::zeroed() },
-                chapter: loc.chapter,
-                sentence: loc.sentence,
-                verse: loc.verse,
-            };
+        pub fn from_library_location(&mut self, loc: &location::Location) -> Result<()> {
+            self.chapter = loc.chapter;
+            self.sentence = loc.sentence;
+            self.verse = loc.verse;
 
             let translation = CString::new(loc.translation.clone())?;
             let translation = translation.as_bytes_with_nul();
-            retval.translation[..translation.len()].copy_from_slice(translation);
+            self.translation[..translation.len()].copy_from_slice(translation);
 
             let book = book::get_short_name(loc.book);
             let book = CString::new(book)?;
             let book = book.as_bytes_with_nul();
-            retval.book[..book.len()].copy_from_slice(book);
+            self.book[..book.len()].copy_from_slice(book);
 
-            Ok(retval)
+            Ok(())
         }
     }
 
@@ -267,31 +259,30 @@ mod imp {
         Ok(())
     }
 
-    /// Loads from disk all persisted sessions.
-    pub fn session_list_sessions() -> Result<Vec<Session>> {
-        let mut seq = vec![];
+    /// Loads all sessions persisted on disk.
+    pub fn session_list_sessions(seq: &mut [Session]) -> Result<usize> {
+        let sessions = session::Session::load_all_sessions()?;
+        let session_count = sessions.len();
 
-        for session in session::Session::load_all_sessions()? {
-            let name = CString::new(session.name)?;
-            let start = Location::from_library_location(&session.range.start)?;
-            let end = Location::from_library_location(&session.range.end)?;
-            let level = session.level as u8;
-            let strategy = session.strategy as u8;
+        if session_count > seq.len() {
+            Err(CapiError::BufferTooSmall)
+        } else {
+            for (i, session) in sessions.into_iter().enumerate() {
+                let mut buf = seq[i];
 
-            let mut s = Session {
-                name: unsafe { mem::zeroed() },
-                range: [start, end],
-                level,
-                strategy,
-            };
+                let name = CString::new(session.name)?;
+                let name = name.as_bytes_with_nul();
+                buf.name[..name.len()].copy_from_slice(name);
 
-            let name = name.as_bytes_with_nul();
-            s.name[..name.len()].copy_from_slice(name);
+                buf.range[0].from_library_location(&session.range.start)?;
+                buf.range[1].from_library_location(&session.range.end)?;
 
-            seq.push(s);
+                buf.level = session.level as u8;
+                buf.strategy = session.strategy as u8;
+            }
+
+            Ok(session_count)
         }
-
-        Ok(seq)
     }
 
     /// Deletes the session with the give name from disk.
