@@ -2,8 +2,7 @@ use book::{Book, BookError};
 use libc::*;
 use location;
 use range::Range;
-use session::{self, Session};
-use std::boxed::Box;
+use session;
 use std::ffi;
 use std::fmt::{self, Display, Formatter};
 use std::mem;
@@ -178,6 +177,20 @@ pub unsafe fn session_list_sessions(buf: *mut imp::Session, len: *mut size_t) ->
     }
 }
 
+/// Deletes the session from disk.
+#[no_mangle]
+pub unsafe fn session_delete(session: *mut imp::Session) -> c_int {
+    match imp::session_delete(&*session) {
+        Ok(_) => SessionError::OK as c_int,
+        Err(e) => map_error_to_code(&e) as c_int,
+    }
+}
+
+#[no_mangle]
+pub fn session_get_message(error_code: c_int) -> *const c_char {
+    ERROR_MESSAGES[error_code as usize].as_ptr() as *const c_char
+}
+
 mod imp {
     use super::*;
     use book;
@@ -280,20 +293,13 @@ mod imp {
 
         Ok(seq)
     }
-}
 
-/// Deletes the session from disk.
-#[no_mangle]
-pub unsafe fn session_delete(session: *mut Session) -> c_int {
-    let session = Box::from_raw(session);
-    if session.delete().is_err() {
-        SessionError::IOError as c_int
-    } else {
-        0
+    /// Deletes the session with the give name from disk.
+    pub fn session_delete(session: &Session) -> Result<()> {
+        let name = CStr::from_bytes_with_nul(&session.name)?;
+        let name = name.to_str()?;
+        let session = session::Session::named(name);
+        session.delete()?;
+        Ok(())
     }
-}
-
-#[no_mangle]
-pub fn session_get_message(error_code: c_int) -> *const c_char {
-    ERROR_MESSAGES[error_code as usize].as_ptr() as *const c_char
 }
