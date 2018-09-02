@@ -102,6 +102,7 @@ fn map_error_to_code(error: &CapiError) -> SessionError {
             session::SessionError::Io(_) => SessionError::IOError,
             session::SessionError::SerdeJson(_) => SessionError::SessionDataCorrupt,
             session::SessionError::TooManySessions => SessionError::SessionTooMany,
+            session::SessionError::SessionExists => SessionError::SessionExists,
         },
         CapiError::Utf8(_) => SessionError::Utf8Error,
         CapiError::Nul(_) => SessionError::NulError,
@@ -289,7 +290,39 @@ mod test {
     use std::ffi::CStr;
 
     #[test]
-    fn test_session_create() {
+    fn test_session_list_sessions() {
+        let res = create_test_session();
+        assert!(res == SessionError::OK as c_int || res == SessionError::SessionExists as c_int);
+
+        let mut buf: [imp::Session; 20] = unsafe { ::std::mem::zeroed() };
+        let mut len: usize = 20;
+        {
+            let bufref = &mut buf;
+            let ret = unsafe { session_list_sessions(bufref.as_mut_ptr(), &mut len) };
+            assert_eq!(ret, 0);
+        }
+        assert!(len > 0);
+
+        let list = &buf[..len];
+        let found = list.iter().any(|session| {
+            let name = unsafe { CStr::from_ptr(session.name.as_ptr() as *const i8) };
+            let name = name.to_str().expect("to_str");
+            name == "test"
+        });
+        assert!(found);
+    }
+
+    #[test]
+    fn test_session_create_existing() {
+        let res = create_test_session();
+        assert!(res == SessionError::OK as c_int || res == SessionError::SessionExists as c_int);
+
+        // Try creating the same session again.
+        let res = create_test_session();
+        assert_eq!(res, SessionError::SessionExists as c_int);
+    }
+
+    fn create_test_session() -> c_int {
         let start = imp::Location {
             translation: [b'E', b'S', b'V', 0, 0, 0, 0, 0],
             book: [b'P', b'h', b'i', b'l', 0, 0, 0, 0],
@@ -314,34 +347,6 @@ mod test {
 
         session.name[0..4].copy_from_slice(&[b't', b'e', b's', b't']);
 
-        let res = unsafe { session_create(&session) };
-        if res != 0 {
-            eprintln!("session_create: {:?}", unsafe {
-                CStr::from_ptr(session_get_message(res))
-            });
-            assert!(false);
-        }
-    }
-
-    #[test]
-    fn test_session_list_sessions() {
-        test_session_create();
-
-        let mut buf: [imp::Session; 20] = unsafe { ::std::mem::zeroed() };
-        let mut len: usize = 20;
-        {
-            let bufref = &mut buf;
-            let ret = unsafe { session_list_sessions(bufref.as_mut_ptr(), &mut len) };
-            assert_eq!(ret, 0);
-        }
-        assert!(len > 0);
-
-        let list = &buf[..len];
-        let found = list.iter().any(|session| {
-            let name = unsafe { CStr::from_ptr(session.name.as_ptr() as *const i8) };
-            let name = name.to_str().expect("to_str");
-            name == "test"
-        });
-        assert!(found);
+        unsafe { session_create(&session) }
     }
 }

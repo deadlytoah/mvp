@@ -19,6 +19,7 @@ pub enum SessionError {
     Io(::std::io::Error),
     SerdeJson(serde_json::Error),
     TooManySessions,
+    SessionExists,
 }
 
 impl ::std::error::Error for SessionError {
@@ -27,6 +28,7 @@ impl ::std::error::Error for SessionError {
             SessionError::Io(ref e) => e.description(),
             SessionError::SerdeJson(ref e) => e.description(),
             SessionError::TooManySessions => "too many sessions",
+            SessionError::SessionExists => "session exists",
         }
     }
 
@@ -35,6 +37,7 @@ impl ::std::error::Error for SessionError {
             SessionError::Io(ref e) => Some(e),
             SessionError::SerdeJson(ref e) => Some(e),
             SessionError::TooManySessions => None,
+            SessionError::SessionExists => None,
         }
     }
 }
@@ -45,6 +48,7 @@ impl Display for SessionError {
             SessionError::Io(ref e) => write!(f, "IO error: {}", e),
             SessionError::SerdeJson(ref e) => write!(f, "serde_json error: {}", e),
             SessionError::TooManySessions => write!(f, "maximum number of sessions reached"),
+            SessionError::SessionExists => write!(f, "session exists"),
         }
     }
 }
@@ -112,6 +116,8 @@ impl Session {
         let mut session_seq = Session::load_all_sessions()?;
         if session_seq.len() > MAX_SESSIONS {
             Err(SessionError::TooManySessions)
+        } else if session_seq.iter().any(|session| session.name == self.name) {
+            Err(SessionError::SessionExists)
         } else {
             session_seq.push(self);
             Session::store_all_sessions(&session_seq)?;
