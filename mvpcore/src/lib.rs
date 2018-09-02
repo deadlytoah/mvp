@@ -1,3 +1,4 @@
+extern crate dirs;
 extern crate libc;
 //extern crate sqlite3;
 extern crate serde;

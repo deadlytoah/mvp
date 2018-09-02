@@ -1,11 +1,14 @@
+use dirs;
 use level::Level;
 use range::Range;
 use serde_json;
 use std::fmt::{self, Display, Formatter};
-use std::fs::OpenOptions;
+use std::fs::{self, OpenOptions};
 use std::io::{BufReader, BufWriter, ErrorKind};
+use std::path::PathBuf;
 use strategy::Strategy;
 
+const APP_DIR: &str = "mvp-speedtype";
 const SESSIONS_FILE: &str = "sessions.json";
 const MAX_SESSIONS: usize = 100;
 
@@ -74,7 +77,10 @@ impl Session {
     }
 
     pub fn load_all_sessions() -> Result<Vec<Session>> {
-        match OpenOptions::new().read(true).open(SESSIONS_FILE) {
+        let mut path = Session::sessions_dir();
+        path.push(SESSIONS_FILE);
+
+        match OpenOptions::new().read(true).open(&path) {
             Ok(file) => {
                 let reader = BufReader::new(file);
                 serde_json::from_reader(reader).map_err(|e| e.into())
@@ -85,12 +91,18 @@ impl Session {
     }
 
     pub fn store_all_sessions(sessions: &[Session]) -> Result<()> {
+        let mut path = Session::sessions_dir();
+        if !path.exists() {
+            fs::create_dir(&path)?;
+        }
+        path.push(SESSIONS_FILE);
+
         let writer = BufWriter::new(
             OpenOptions::new()
                 .create(true)
                 .truncate(true)
                 .write(true)
-                .open(SESSIONS_FILE)?,
+                .open(&path)?,
         );
         serde_json::to_writer_pretty(writer, sessions)?;
         Ok(())
@@ -112,6 +124,12 @@ impl Session {
         session_seq.retain(|session| session.name != self.name);
         Session::store_all_sessions(&session_seq)?;
         Ok(())
+    }
+
+    fn sessions_dir() -> PathBuf {
+        let mut path = dirs::data_dir().expect("data directory");
+        path.push(APP_DIR);
+        path
     }
 }
 
