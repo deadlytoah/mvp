@@ -398,6 +398,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             sess['name'] = name
             sess['level'] = level
             start = sess['range']['start']
+            start['translation'] = config.translation
             start['book'] = book
             start['chapter'] = chapter
             self.session = sess
