@@ -16,7 +16,7 @@ COLOURS = {
     'caret': 'black',
 }
 DEFAULT_TRANSLATION='esv'
-FONT_FAMILY = 'Courier'
+FONT_FAMILY = 'Menlo'
 PERSIST_INTERVAL = 300
 SENTENCE_DELIMITERS = '.:;?!'
 WORD_DELIMITERS = ' .,:;?!'
