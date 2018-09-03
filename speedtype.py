@@ -218,7 +218,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         self.caret.eobuf = len(self.buf) - 1
         self._render()
 
-    def append_sentence(self, sentence):
+    def append_sentence(self, sentence_text):
         """Appends a sentence to the view.
 
         Caller of this method must clear any text that may already be
@@ -228,7 +228,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         long.  This method lets you feed one sentence at a time.
 
         """
-        (buf, words) = self._process_text(sentence['text'])
+        (buf, words) = self._process_text(sentence_text)
         self.buf.extend(buf)
         self.words.extend(words)
         self.caret.buflen = len(self.buf)
@@ -422,7 +422,13 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
             self.clear_text()
             for sentence in sentences:
-                self.append_sentence(sentence)
+                text = sentence['text']
+
+                # Remove square brackets [] found in some translation
+                # because it's very awkward to type those in.
+                text = text.replace('[', '').replace(']', '')
+
+                self.append_sentence(text)
 
             # adjust difficulty level according to the session property.
             level = int(self.session['level'])
