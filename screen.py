@@ -8,7 +8,7 @@ FLASH_CARD_INDEX = 0
 DATA_ENTRY_INDEX = 1
 SPEED_TYPE_INDEX = 2
 
-INIT_FORM_INDEX = FLASH_CARD_INDEX
+INIT_FORM_INDEX = SPEED_TYPE_INDEX
 
 def init_screens():
     """initialises the screens created using the given form types."""
