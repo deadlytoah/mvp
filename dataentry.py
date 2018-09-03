@@ -2,11 +2,11 @@
 """Provides GUI for the data entry screen."""
 
 import config
+import model
 import re
 import screen
 from PyQt5 import QtWidgets
 from PyQt5 import uic
-from sdb import Sdb
 
 window = None
 
@@ -29,27 +29,16 @@ def enter_verses():
     """action for the enter push button. enters verses into the database
 
     """
-    with Sdb(config.translation + config.DB_EXT) as database:
-        verse_table = [table for table in database.get_tables()
-                       if table.name() == 'verse'][0]
-        verse_table.create_manager()
-        verse_table.verify()
-        verse_table.service()
+    book = window.gui.lineedit_book.text().strip()
+    chapter = window.gui.lineedit_chapter.text().strip()
+    input_text = window.gui.textedit_verses.toPlainText()
 
-        key = window.gui.lineedit_book.text().strip() + ' ' + \
-              window.gui.lineedit_chapter.text().strip() + ':'
-        input_text = window.gui.textedit_verses.toPlainText()
+    for line in input_text.splitlines():
+        line = line.strip()
+        if len(line) > 0:
+            verse, text = line.split(' ', 1)
 
-        for line in input_text.splitlines():
-            line = line.strip()
-            if len(line) > 0:
-                verse, text = line.split(' ', 1)
-                record = {
-                    'key': key + verse,
-                    'text': text,
-                    'deleted': '0',
-                }
-                verse_table.insert(record)
+        model.verse.insert(book, chapter, verse, text)
 
 def menu_scrub():
     """action for the scrub menu item"""

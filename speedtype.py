@@ -6,6 +6,7 @@ more words are hidden.
 """
 
 import config
+import model
 import os
 import screen
 import session
@@ -16,7 +17,6 @@ from caret import Caret
 from key import Key
 from random import randrange
 from sentence import sentences_cons2, sentences_index_by_verseno
-from sdb import Sdb
 from graphlayout import GraphLayout
 
 Level1 = {
@@ -73,13 +73,6 @@ class SpeedTypeForm(UiMainWindow, QMainWindow):
         self.canvas.setFocus(True)
 
         self.title.setFont(QtGui.QFont(config.FONT_FAMILY, 20))
-
-        self.database = Sdb(config.translation + config.DB_EXT).__enter__()
-        self.verse_table = [table for table in self.database.get_tables()
-                            if table.name() == 'verse'][0]
-        self.verse_table.create_manager()
-        self.verse_table.verify()
-        self.verse_table.service()
 
     def _difficulty_level_changed(self, value):
         """called when user changes the difficulty level by manipulating the
@@ -414,7 +407,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         book = loc['book']
         chapter = str(loc['chapter'])
 
-        records = window.verse_table.select_all()
+        records = model.verse.find_all()
         sentences, _ = sentences_cons2(records, book, chapter)
 
         if len(sentences) > 0:
@@ -838,7 +831,7 @@ def _view_enter_verses():
     screen.switch_to(screen.DATA_ENTRY_INDEX)
 
 def _address_from_key(key):
-    records = window.verse_table.select_all()
+    records = model.verse.find_all()
     sentences, lookup = sentences_cons2(records, key.book, key.chapter)
     sentence = sentences_index_by_verseno(sentences, lookup, key.verse)
     return Address(sentences, lookup, (key.book, key.chapter, sentence))
@@ -854,7 +847,7 @@ def _debug_sentences():
     global window
     loc = window.canvas.session['range']['start']
     address = _address_from_key(Key(loc['book'], loc['chapter'], str(1)))
-    records = window.verse_table.select_all()
+    records = model.verse.find_all()
     (sentences, lookup) = sentences_cons2(records, address.book, address.chapter)
     info = DbgSentences()
     info.gui.label_source.setText('Sentences constructed from: '
