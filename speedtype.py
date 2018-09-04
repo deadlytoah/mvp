@@ -142,6 +142,9 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         # list of words and their states.
         self.words = []
 
+        # list of indices to words that belong to each sentence.
+        self.sentences = []
+
         # a cache for font metrics for letters.
         self.fmcache = {}
 
@@ -207,7 +210,10 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
     def set_text(self, text):
         """Sets the text to be displayed in the canvas."""
         self.clear_text()
+
         (self.buf, self.words) = self._process_text(text)
+        self.sentences = [[index for (index, _) in enumerate(self.words)]]
+
         self.caret.buflen = len(self.buf)
         self.caret.eobuf = len(self.buf) - 1
         self._render()
@@ -223,8 +229,12 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
         """
         (buf, words) = self._process_text(sentence_text)
+
+        sentence = [len(self.words) + index for (index, _) in enumerate(words)]
+        self.sentences.append(sentence)
         self.buf.extend(buf)
         self.words.extend(words)
+
         self.caret.buflen = len(self.buf)
         self.caret.eobuf = len(self.buf) - 1
         self._render()
@@ -468,6 +478,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         if self.buf is not None and self.words is not None:
             self.session['progress'] = {
                 'buf': self.buf,
+                'sentences': self.sentences,
                 'caret': self.caret.persist(),
                 'title': self.title,
             }
@@ -525,6 +536,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             self._start_session()
         else:
             self.buf = progress['buf']
+            self.sentences = progress['sentences']
             self.caret.restore(progress['caret'])
             self.set_title(progress['title'])
 
