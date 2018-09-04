@@ -123,6 +123,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             # coordinates.  Each inner array corresponds to a line.
             'letters': [],
 
+            'caret': None,
             'line_spacing': 30,
             'background': QtGui.QColor(config.COLOURS['background']),
             'font': font,
