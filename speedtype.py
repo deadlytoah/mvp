@@ -201,6 +201,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
         """
         return {
+            'id': None,
             'word': '',
             'visible': True,
             'touched': False,
@@ -272,7 +273,9 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                     else:
                         pass
                 else:
-                    maybe_letter['word'] = make_word
+                    word_index = len(words) + len(self.words)
+                    maybe_letter['word'] = word_index
+                    make_word['id'] = word_index
                     make_word['word'] = make_word['word'] + ch
                     make_word['last_char'] = len(buf) - 1
 
@@ -335,8 +338,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         assert(len(words) >= count)
 
         # all shown words that are untouched
-        words = [w for w in words
-                 if w['visible'] == True and w['behind'] == False]
+        words = [w for w in words if w['visible'] == True and w['behind'] == False]
         for _ in range(0, count):
             pick = randrange(len(words))
 
@@ -353,8 +355,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         assert(len(words) >= count)
 
         # all hidden words that are untouched
-        words = [w for w in words
-                 if w['visible'] == False and w['behind'] == False]
+        words = [w for w in words if w['visible'] == False and w['behind'] == False]
         for _ in range(0, count):
             pick = randrange(len(words))
             self._show_word(words[pick])
@@ -363,13 +364,13 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
     def _hide_word(self, word):
         """hides a specific word"""
         word['visible'] = False
-        for ch in [ch for ch in self.buf if ch['word'] is word]:
+        for ch in [ch for ch in self.buf if ch['word'] == word['id']]:
             ch['visible'] = False
 
     def _show_word(self, word):
         """shows a specific word"""
         word['visible'] = True
-        for ch in [ch for ch in self.buf if ch['word'] is word]:
+        for ch in [ch for ch in self.buf if ch['word'] == word['id']]:
             ch['visible'] = True
 
     def edit_session(self):
@@ -446,6 +447,10 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
                 self.append_sentence(text)
 
+            # The index is expected to match the id property.
+            assert([i for (i, w) in enumerate(self.words) if i == w['id']] ==
+                   [word['id'] for word in self.words])
+
             # adjust difficulty level according to the session property.
             level = int(self.session['level'])
             window.difficulty_level.setValue(level)
@@ -485,6 +490,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         if self.buf is not None and self.words is not None:
             self.session['progress'] = {
                 'buf': self.buf,
+                'words': self.words,
                 'sentences': self.sentences,
                 'caret': self.caret.persist(),
                 'title': self.title,
@@ -543,19 +549,10 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             self._start_session()
         else:
             self.buf = progress['buf']
+            self.words = progress['words']
             self.sentences = progress['sentences']
             self.caret.restore(progress['caret'])
             self.set_title(progress['title'])
-
-            # Rewire the letters to the words.
-            words = []
-            for ch in self.buf:
-                if ch['word'] is not None:
-                    if ch['word'] not in words:
-                        words.append(ch['word'])
-                    else:
-                        ch['word'] = words[-1]
-            self.words = words
 
             # adjust difficulty level according to the session property.
             level = int(self.session['level'])
@@ -585,8 +582,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 ch = self.buf[self.caret.charpos]
                 ch['typed'] = None
                 ch['correct'] = False
-                word = ch['word']
-                if word is not None:
+                if ch['word'] is not None:
+                    word = self.words[ch['word']]
                     word['behind'] = False
 
                 self.persist_timer.start()
@@ -820,7 +817,10 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         Returns the word at the caret, or None if there is none found.
 
         """
-        return self.buf[self.caret.charpos]['word']
+        if self.buf[self.caret.charpos]['word'] is not None:
+            return self.words[self.buf[self.caret.charpos]['word']]
+        else:
+            return None
 
     def _render_correct_char(self, char):
         """Handles the case where user typed the correct character"""
@@ -828,8 +828,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
     def _render_incorrect_char(self, char):
         """Handles the case where user typed the incorrect character"""
-        word = char['word']
-        if word is not None and word['visible'] == True:
+        index = char['word']
+        if index is not None and self.words[index]['visible'] == True:
             return (char['char'], config.COLOURS['incorrect'])
         else:
             return (char['typed'], config.COLOURS['incorrect'])
