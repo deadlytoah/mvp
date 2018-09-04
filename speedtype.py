@@ -308,22 +308,24 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             count = count - 1
 
             if count > 0:
-                self._hide_random_words(count)
+                self._hide_random_words(self.words, count)
         elif rate > target:
             # reveal some words
             count = 0
             while (hidden - count) / word_count > target:
                 count = count + 1
             if count > 0:
-                self._reveal_random_words(count)
+                self._reveal_random_words(self.words, count)
         else:
             # do nothing
             pass
 
-    def _hide_random_words(self, count):
-        """hides a random list of count words"""
+    def _hide_random_words(self, words, count):
+        """Hides the given number, count, of words from words."""
+        assert(len(words) >= count)
+
         # all shown words that are untouched
-        words = [w for w in self.words
+        words = [w for w in words
                  if w['visible'] == True and w['behind'] == False]
         for _ in range(0, count):
             pick = randrange(len(words))
@@ -336,10 +338,12 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
             del words[pick]
 
-    def _reveal_random_words(self, count):
-        """reveals a random list of count words"""
+    def _reveal_random_words(self, words, count):
+        """Reveals the given number, count, of words from words."""
+        assert(len(words) >= count)
+
         # all hidden words that are untouched
-        words = [w for w in self.words
+        words = [w for w in words
                  if w['visible'] == False and w['behind'] == False]
         for _ in range(0, count):
             pick = randrange(len(words))
