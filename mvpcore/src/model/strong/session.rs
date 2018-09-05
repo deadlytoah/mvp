@@ -1,12 +1,12 @@
 use dirs;
-use level::Level;
-use range::Range;
+use model::strong::level::Level;
+use model::strong::range::Range;
+use model::strong::strategy::Strategy;
 use serde_json;
 use std::fmt::{self, Display, Formatter};
 use std::fs::{self, OpenOptions};
 use std::io::{BufReader, BufWriter, ErrorKind};
 use std::path::PathBuf;
-use strategy::Strategy;
 
 const APP_DIR: &str = "mvp-speedtype";
 const SESSIONS_FILE: &str = "sessions.json";

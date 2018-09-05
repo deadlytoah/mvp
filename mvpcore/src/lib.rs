@@ -6,12 +6,7 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 
-mod book;
-mod level;
-mod location;
-mod range;
-mod session;
-mod strategy;
+mod model;
 
 mod capi;
 pub use capi::*;

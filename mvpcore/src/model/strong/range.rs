@@ -1,5 +1,5 @@
-use book::Book;
-use location::Location;
+use model::strong::book::Book;
+use model::strong::location::Location;
 
 #[derive(Serialize, Deserialize)]
 pub struct Range {

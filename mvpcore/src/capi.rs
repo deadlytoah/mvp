@@ -1,19 +1,19 @@
-use book::{Book, BookError};
 use libc::*;
-use location;
-use range::Range;
-use session;
+use model;
+use model::strong::BookError;
+use model::strong::Range;
+use model::strong;
 use std::ffi;
 use std::fmt::{self, Display, Formatter};
 use std::slice;
 use std::str;
 
-type Result<T> = ::std::result::Result<T, CapiError>;
+pub type Result<T> = ::std::result::Result<T, CapiError>;
 
 #[derive(Debug)]
 pub enum CapiError {
     Book(BookError),
-    Session(session::SessionError),
+    Session(strong::SessionError),
     Utf8(str::Utf8Error),
     Nul(ffi::NulError),
     BufferTooSmall,
@@ -59,8 +59,8 @@ impl From<BookError> for CapiError {
     }
 }
 
-impl From<session::SessionError> for CapiError {
-    fn from(err: session::SessionError) -> CapiError {
+impl From<strong::SessionError> for CapiError {
+    fn from(err: strong::SessionError) -> CapiError {
         CapiError::Session(err)
     }
 }
@@ -99,10 +99,10 @@ fn map_error_to_code(error: &CapiError) -> SessionError {
             BookError::UnknownBook { .. } => SessionError::BookUnknown,
         },
         CapiError::Session(ref e) => match *e {
-            session::SessionError::Io(_) => SessionError::IOError,
-            session::SessionError::SerdeJson(_) => SessionError::SessionDataCorrupt,
-            session::SessionError::TooManySessions => SessionError::SessionTooMany,
-            session::SessionError::SessionExists => SessionError::SessionExists,
+            strong::SessionError::Io(_) => SessionError::IOError,
+            strong::SessionError::SerdeJson(_) => SessionError::SessionDataCorrupt,
+            strong::SessionError::TooManySessions => SessionError::SessionTooMany,
+            strong::SessionError::SessionExists => SessionError::SessionExists,
         },
         CapiError::Utf8(_) => SessionError::Utf8Error,
         CapiError::Nul(_) => SessionError::NulError,
@@ -126,7 +126,7 @@ static ERROR_MESSAGES: &'static [&'static str] = &[
 ];
 
 #[no_mangle]
-pub unsafe fn session_create(sess: *const imp::Session) -> c_int {
+pub unsafe fn session_create(sess: *const model::compat::Session) -> c_int {
     match imp::session_create(&*sess) {
         Ok(()) => SessionError::OK as c_int,
         Err(ref e) => map_error_to_code(e) as c_int,
@@ -142,16 +142,17 @@ pub unsafe fn session_create(sess: *const imp::Session) -> c_int {
 ///
 /// buf and len must point to accessible memory addresses.
 ///
-/// Each session is stored as per imp::Session data structure.
+/// Each session is stored as per model::compat::Session data
+/// structure.
 ///
 /// If buf is not large enough, returns SessionBufferTooSmall.  If
 /// there is an error loading the sessions, returns
 /// SessionDataCorrupt.  Otherwise returns OK and buf is filled with
 /// sessions.
 #[no_mangle]
-pub unsafe fn session_list_sessions(buf: *mut imp::Session, len: *mut size_t) -> c_int {
+pub unsafe fn session_list_sessions(buf: *mut model::compat::Session, len: *mut size_t) -> c_int {
     let size = *len;
-    let bufslice = slice::from_raw_parts_mut(buf as *mut imp::Session, size);
+    let bufslice = slice::from_raw_parts_mut(buf as *mut model::compat::Session, size);
 
     match imp::session_list_sessions(bufslice) {
         Ok(count) => {
@@ -164,7 +165,7 @@ pub unsafe fn session_list_sessions(buf: *mut imp::Session, len: *mut size_t) ->
 
 /// Deletes the session from disk.
 #[no_mangle]
-pub unsafe fn session_delete(session: *mut imp::Session) -> c_int {
+pub unsafe fn session_delete(session: *mut model::compat::Session) -> c_int {
     match imp::session_delete(&*session) {
         Ok(_) => SessionError::OK as c_int,
         Err(e) => map_error_to_code(&e) as c_int,
@@ -178,66 +179,13 @@ pub fn session_get_message(error_code: c_int) -> *const c_char {
 
 mod imp {
     use super::*;
+    use model::compat::Session;
     use std::ffi::{CStr, CString};
-
-    #[repr(C)]
-    pub struct Session {
-        pub name: [u8; 64],
-        pub range: [Location; 2],
-        pub level: u8,
-        pub strategy: u8,
-    }
-
-    #[repr(C)]
-    pub struct Location {
-        pub translation: [u8; 8],
-        pub book: [u8; 8],
-        pub chapter: u16,
-        pub sentence: u16,
-        pub verse: u16,
-    }
-
-    impl Location {
-        pub fn to_strong_typed(&self) -> Result<location::Location> {
-            let translation = unsafe { CStr::from_ptr(self.translation.as_ptr() as *const i8) };
-            let translation = translation.to_str()?;
-            let book = unsafe { CStr::from_ptr(self.book.as_ptr() as *const i8) };
-            let book = book.to_str()?;
-            let book = Book::from_short_name(book)?;
-            let chapter = self.chapter;
-            let sentence = self.sentence;
-            let verse = self.verse;
-            Ok(location::Location {
-                translation: translation.into(),
-                book,
-                chapter,
-                sentence,
-                verse,
-            })
-        }
-
-        pub fn copy_from_strong_typed(&mut self, loc: &location::Location) -> Result<()> {
-            self.chapter = loc.chapter;
-            self.sentence = loc.sentence;
-            self.verse = loc.verse;
-
-            let translation = CString::new(loc.translation.clone())?;
-            let translation = translation.as_bytes_with_nul();
-            self.translation[..translation.len()].copy_from_slice(translation);
-
-            let book = loc.book.short_name();
-            let book = CString::new(book)?;
-            let book = book.as_bytes_with_nul();
-            self.book[..book.len()].copy_from_slice(book);
-
-            Ok(())
-        }
-    }
 
     pub fn session_create(sess: &Session) -> Result<()> {
         let name = unsafe { CStr::from_ptr(sess.name.as_ptr() as *const i8) };
         let name = name.to_str()?;
-        let mut s = session::Session::named(&name);
+        let mut s = strong::Session::named(&name);
         s.range = Range::default();
         s.range.start = sess.range[0].to_strong_typed()?;
         s.range.end = sess.range[1].to_strong_typed()?;
@@ -249,7 +197,7 @@ mod imp {
 
     /// Loads all sessions persisted on disk.
     pub fn session_list_sessions(seq: &mut [Session]) -> Result<usize> {
-        let sessions = session::Session::load_all_sessions()?;
+        let sessions = strong::Session::load_all_sessions()?;
         let session_count = sessions.len();
 
         if session_count > seq.len() {
@@ -277,7 +225,7 @@ mod imp {
     pub fn session_delete(session: &Session) -> Result<()> {
         let name = unsafe { CStr::from_ptr(session.name.as_ptr() as *const i8) };
         let name = name.to_str()?;
-        let session = session::Session::named(name);
+        let session = strong::Session::named(name);
         session.delete()?;
         Ok(())
     }
@@ -293,7 +241,7 @@ mod test {
         let res = create_test_session().0;
         assert!(res == SessionError::OK as c_int || res == SessionError::SessionExists as c_int);
 
-        let mut buf: [imp::Session; 20] = unsafe { ::std::mem::zeroed() };
+        let mut buf: [model::compat::Session; 20] = unsafe { ::std::mem::zeroed() };
         let mut len: usize = 20;
         {
             let bufref = &mut buf;
@@ -329,7 +277,7 @@ mod test {
         let res = unsafe { session_delete(&mut session) };
         assert_eq!(res, 0);
 
-        let mut buf: [imp::Session; 20] = unsafe { ::std::mem::zeroed() };
+        let mut buf: [model::compat::Session; 20] = unsafe { ::std::mem::zeroed() };
         let mut len: usize = 20;
         {
             let bufref = &mut buf;
@@ -346,15 +294,15 @@ mod test {
         assert!(none);
     }
 
-    fn create_test_session() -> (c_int, imp::Session) {
-        let start = imp::Location {
+    fn create_test_session() -> (c_int, model::compat::Session) {
+        let start = model::compat::Location {
             translation: [b'E', b'S', b'V', 0, 0, 0, 0, 0],
             book: [b'P', b'h', b'i', b'l', 0, 0, 0, 0],
             chapter: 1,
             sentence: 0,
             verse: 1,
         };
-        let end = imp::Location {
+        let end = model::compat::Location {
             translation: [b'E', b'S', b'V', 0, 0, 0, 0, 0],
             book: [b'P', b'h', b'i', b'l', 0, 0, 0, 0],
             chapter: 2,
@@ -362,7 +310,7 @@ mod test {
             verse: 1,
         };
 
-        let mut session = imp::Session {
+        let mut session = model::compat::Session {
             name: unsafe { ::std::mem::zeroed() },
             range: [start, end],
             level: 0,
