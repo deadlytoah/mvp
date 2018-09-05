@@ -198,7 +198,7 @@ mod imp {
     }
 
     impl Location {
-        pub fn to_library_location(&self) -> Result<location::Location> {
+        pub fn to_strong_typed(&self) -> Result<location::Location> {
             let translation = unsafe { CStr::from_ptr(self.translation.as_ptr() as *const i8) };
             let translation = translation.to_str()?;
             let book = unsafe { CStr::from_ptr(self.book.as_ptr() as *const i8) };
@@ -216,7 +216,7 @@ mod imp {
             })
         }
 
-        pub fn copy_from_library_location(&mut self, loc: &location::Location) -> Result<()> {
+        pub fn copy_from_strong_typed(&mut self, loc: &location::Location) -> Result<()> {
             self.chapter = loc.chapter;
             self.sentence = loc.sentence;
             self.verse = loc.verse;
@@ -239,8 +239,8 @@ mod imp {
         let name = name.to_str()?;
         let mut s = session::Session::named(&name);
         s.range = Range::default();
-        s.range.start = sess.range[0].to_library_location()?;
-        s.range.end = sess.range[1].to_library_location()?;
+        s.range.start = sess.range[0].to_strong_typed()?;
+        s.range.end = sess.range[1].to_strong_typed()?;
         s.level = sess.level.into();
         s.strategy = sess.strategy.into();
         s.write()?;
@@ -262,8 +262,8 @@ mod imp {
                 let name = name.as_bytes_with_nul();
                 buf.name[..name.len()].copy_from_slice(name);
 
-                buf.range[0].copy_from_library_location(&session.range.start)?;
-                buf.range[1].copy_from_library_location(&session.range.end)?;
+                buf.range[0].copy_from_strong_typed(&session.range.start)?;
+                buf.range[1].copy_from_strong_typed(&session.range.end)?;
 
                 buf.level = session.level as u8;
                 buf.strategy = session.strategy as u8;
