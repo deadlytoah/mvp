@@ -26,7 +26,7 @@ impl Display for BookError {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 #[repr(C)]
 pub enum Book {
     ///////////////////
@@ -131,9 +131,22 @@ impl Book {
                 name: short_name.into(),
             })
     }
+
+    pub fn short_name(&self) -> &str {
+        SHORT_NAMES[*self as usize]
+    }
 }
 
-#[allow(dead_code)]
-pub fn get_short_name(book: Book) -> &'static str {
-    SHORT_NAMES[book as usize]
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::mem;
+
+    #[test]
+    fn test_from_short_name() {
+        assert_eq!(
+            mem::discriminant(&Book::from_short_name("Phil").expect("Book::from_short_name")),
+            mem::discriminant(&Book::Philippians)
+        );
+    }
 }
