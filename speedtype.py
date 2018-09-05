@@ -303,7 +303,18 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         appropriate.
 
         """
-        remaining = [w for w in self.words if w['behind'] == False]
+        for sentence in self.sentences:
+            words = [self.words[index] for index in sentence]
+            self._apply_level_words(level, words)
+
+    def _apply_level_words(self, level, words):
+        """Applies the difficulty level in the given words.
+
+        Sets the difficulty level and shows or hides some words as
+        appropriate.
+
+        """
+        remaining = [w for w in words if w['behind'] == False]
         word_count = len(remaining)
         if word_count == 0:
             return
@@ -321,14 +332,14 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             count = count - 1
 
             if count > 0:
-                self._hide_random_words(self.words, count)
+                self._hide_random_words(words, count)
         elif rate > target:
             # reveal some words
             count = 0
             while (hidden - count) / word_count > target:
                 count = count + 1
             if count > 0:
-                self._reveal_random_words(self.words, count)
+                self._reveal_random_words(words, count)
         else:
             # do nothing
             pass
