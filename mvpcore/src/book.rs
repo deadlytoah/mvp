@@ -131,11 +131,10 @@ impl Book {
                 name: short_name.into(),
             })
     }
-}
 
-#[allow(dead_code)]
-pub fn get_short_name(book: Book) -> &'static str {
-    SHORT_NAMES[book as usize]
+    pub fn short_name(&self) -> &str {
+        SHORT_NAMES[*self as usize]
+    }
 }
 
 #[cfg(test)]

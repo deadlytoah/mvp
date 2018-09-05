@@ -178,7 +178,6 @@ pub fn session_get_message(error_code: c_int) -> *const c_char {
 
 mod imp {
     use super::*;
-    use book;
     use std::ffi::{CStr, CString};
 
     #[repr(C)]
@@ -226,7 +225,7 @@ mod imp {
             let translation = translation.as_bytes_with_nul();
             self.translation[..translation.len()].copy_from_slice(translation);
 
-            let book = book::get_short_name(loc.book);
+            let book = loc.book.short_name();
             let book = CString::new(book)?;
             let book = book.as_bytes_with_nul();
             self.book[..book.len()].copy_from_slice(book);
