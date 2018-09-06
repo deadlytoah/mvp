@@ -27,9 +27,20 @@ class SpeedTypeController: NSViewController {
                 verse_find_all(translationPtr, viewPtr)
             })
         })
-        
+
         if retval == 0 {
-            
+            withUnsafePointer(to: &verseView.verses.0, { verses in
+                for i in 0..<verseView.count {
+                    var verse = verses[i]
+                    _ = withUnsafePointer(to: &verse.key.0, { ptr in
+                        return String(cString: ptr)
+                    })
+                    let text = withUnsafePointer(to: &verse.text.0, { ptr in
+                        return String(cString: ptr)
+                    })
+                    self.speedTypeView.lines.append(text)
+                }
+            })
         } else {
             let alert = NSAlert()
             alert.alertStyle = .critical

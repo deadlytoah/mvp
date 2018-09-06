@@ -1,4 +1,5 @@
 use capi::Result;
+use dirs;
 use libc::{c_char, c_int};
 use sdb::Sdb;
 use std::ffi::CStr;
@@ -44,10 +45,20 @@ pub unsafe fn verse_find_all(translation: *const c_char, view: *mut VerseView) -
 
 mod imp {
     use super::*;
+    use std::fs;
 
     pub fn verse_find_all(translation: &CStr, view: &mut VerseView) -> Result<()> {
+        let mut dbpath = dirs::data_dir().expect("unable to get platform's data directory.");
+        dbpath.push("mvp-speedtype");
+        if !dbpath.exists() {
+            fs::create_dir(&dbpath)?;
+        }
+
         let translation = translation.to_str()?;
-        let mut sdb = Sdb::open(&(translation.to_owned() + DB_EXT))?;
+        dbpath.push(&(translation.to_owned() + DB_EXT));
+        let dbpath = dbpath.to_str().expect("failed to convert path to string");
+
+        let mut sdb = Sdb::open(&dbpath)?;
         let verse_table = sdb
             .tables_mut()
             .iter_mut()

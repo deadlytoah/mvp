@@ -18,6 +18,7 @@ pub enum CapiError {
     Utf8(str::Utf8Error),
     Nul(ffi::NulError),
     Sdb(sdb::Error),
+    Io(::std::io::Error),
     BufferTooSmall,
 }
 
@@ -29,6 +30,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Utf8(ref e) => e.description(),
             CapiError::Nul(ref e) => e.description(),
             CapiError::Sdb(ref e) => e.description(),
+            CapiError::Io(ref e) => e.description(),
             CapiError::BufferTooSmall => "buffer is too small",
         }
     }
@@ -40,6 +42,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Utf8(ref e) => Some(e),
             CapiError::Nul(ref e) => Some(e),
             CapiError::Sdb(ref e) => Some(e),
+            CapiError::Io(ref e) => Some(e),
             CapiError::BufferTooSmall => None,
         }
     }
@@ -53,6 +56,7 @@ impl Display for CapiError {
             CapiError::Utf8(ref e) => write!(f, "utf8 error: {}", e),
             CapiError::Nul(ref e) => write!(f, "nul character found in string: {}", e),
             CapiError::Sdb(ref e) => write!(f, "error in database: {}", e),
+            CapiError::Io(ref e) => write!(f, "IO error: {}", e),
             CapiError::BufferTooSmall => write!(f, "buffer is too small"),
         }
     }
@@ -88,6 +92,12 @@ impl From<sdb::Error> for CapiError {
     }
 }
 
+impl From<::std::io::Error> for CapiError {
+    fn from(err: ::std::io::Error) -> CapiError {
+        CapiError::Io(err)
+    }
+}
+
 #[repr(C)]
 pub enum SessionError {
     OK,
@@ -120,6 +130,7 @@ fn map_error_to_code(error: &CapiError) -> SessionError {
         CapiError::Nul(_) => SessionError::NulError,
         CapiError::BufferTooSmall => SessionError::SessionBufferTooSmall,
         CapiError::Sdb(_) => SessionError::SdbError,
+        CapiError::Io(_) => SessionError::IOError,
     }
 }
 
