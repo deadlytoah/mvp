@@ -26,9 +26,21 @@ typedef struct {
     unsigned char strategy;
 } Session;
 
+typedef struct {
+    unsigned char key[16];
+    unsigned char text[256];
+} Verse;
+
+typedef struct {
+    size_t count;
+    Verse verses[176];
+} VerseView;
+
 extern int session_create(Session *);
 extern int session_list_sessions(Session *buf, size_t *len);
 extern int session_delete(Session *);
 extern char *const session_get_message(int error_code);
+
+extern int verse_find_all(const char *translation, VerseView *view);
 
 #endif /* session_h */

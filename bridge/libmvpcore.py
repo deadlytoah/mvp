@@ -13,7 +13,9 @@ arguments."""
 EXTFNS = [["session_create", [ctypes.c_void_p], ctypes.c_int],
           ["session_list_sessions", [ctypes.c_char_p, POINTER(ctypes.c_size_t)], ctypes.c_int],
           ["session_delete", [ctypes.c_void_p], ctypes.c_int],
-          ["session_get_message", [ctypes.c_int], ctypes.c_char_p]]
+          ["session_get_message", [ctypes.c_int], ctypes.c_char_p],
+          ["verse_find_all", [ctypes.c_char_p, ctypes.c_void_p], ctypes.c_int],
+]
 
 class Libmvpcore:
     """ Helps invoking functions exported by libmvpcore. """

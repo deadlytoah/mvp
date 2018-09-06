@@ -1,8 +1,9 @@
 use libc::*;
 use model;
+use model::strong;
 use model::strong::BookError;
 use model::strong::Range;
-use model::strong;
+use sdb;
 use std::ffi;
 use std::fmt::{self, Display, Formatter};
 use std::slice;
@@ -16,6 +17,7 @@ pub enum CapiError {
     Session(strong::SessionError),
     Utf8(str::Utf8Error),
     Nul(ffi::NulError),
+    Sdb(sdb::Error),
     BufferTooSmall,
 }
 
@@ -26,6 +28,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Session(ref e) => e.description(),
             CapiError::Utf8(ref e) => e.description(),
             CapiError::Nul(ref e) => e.description(),
+            CapiError::Sdb(ref e) => e.description(),
             CapiError::BufferTooSmall => "buffer is too small",
         }
     }
@@ -36,6 +39,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Session(ref e) => Some(e),
             CapiError::Utf8(ref e) => Some(e),
             CapiError::Nul(ref e) => Some(e),
+            CapiError::Sdb(ref e) => Some(e),
             CapiError::BufferTooSmall => None,
         }
     }
@@ -48,6 +52,7 @@ impl Display for CapiError {
             CapiError::Session(ref e) => write!(f, "session error: {}", e),
             CapiError::Utf8(ref e) => write!(f, "utf8 error: {}", e),
             CapiError::Nul(ref e) => write!(f, "nul character found in string: {}", e),
+            CapiError::Sdb(ref e) => write!(f, "error in database: {}", e),
             CapiError::BufferTooSmall => write!(f, "buffer is too small"),
         }
     }
@@ -77,6 +82,12 @@ impl From<ffi::NulError> for CapiError {
     }
 }
 
+impl From<sdb::Error> for CapiError {
+    fn from(err: sdb::Error) -> CapiError {
+        CapiError::Sdb(err)
+    }
+}
+
 #[repr(C)]
 pub enum SessionError {
     OK,
@@ -91,6 +102,7 @@ pub enum SessionError {
     Utf8Error,
     BookUnknown,
     NulError,
+    SdbError,
 }
 
 fn map_error_to_code(error: &CapiError) -> SessionError {
@@ -107,6 +119,7 @@ fn map_error_to_code(error: &CapiError) -> SessionError {
         CapiError::Utf8(_) => SessionError::Utf8Error,
         CapiError::Nul(_) => SessionError::NulError,
         CapiError::BufferTooSmall => SessionError::SessionBufferTooSmall,
+        CapiError::Sdb(_) => SessionError::SdbError,
     }
 }
 
@@ -123,6 +136,7 @@ static ERROR_MESSAGES: &'static [&'static str] = &[
     "utf-8 encoding error\0",
     "unknown book\0",
     "unexpected null character found in string\0",
+    "error in database\0",
 ];
 
 #[no_mangle]
