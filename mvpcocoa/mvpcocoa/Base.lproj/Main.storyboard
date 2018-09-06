@@ -3,6 +3,7 @@
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14113"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+        <capability name="stacking Non-gravity area distributions on NSStackView" minToolsVersion="7.0" minSystemVersion="10.11"/>
     </dependencies>
     <scenes>
         <!--Application-->
@@ -694,12 +695,111 @@
                         </connections>
                     </window>
                     <connections>
-                        <segue destination="XfG-lQ-9wD" kind="relationship" relationship="window.shadowedContentViewController" id="cq2-FE-JQM"/>
+                        <segue destination="ZDw-zW-tfv" kind="relationship" relationship="window.shadowedContentViewController" id="bmJ-m5-DaK"/>
                     </connections>
                 </windowController>
                 <customObject id="Oky-zY-oP4" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="75" y="250"/>
+        </scene>
+        <!--Speed Type Controller-->
+        <scene sceneID="gwW-Q3-e7L">
+            <objects>
+                <viewController id="ZDw-zW-tfv" customClass="SpeedTypeController" customModule="mvpcocoa" sceneMemberID="viewController">
+                    <view key="view" id="7pb-DU-bih">
+                        <rect key="frame" x="0.0" y="0.0" width="450" height="300"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <subviews>
+                            <scrollView horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="L03-FY-tpw">
+                                <rect key="frame" x="20" y="20" width="410" height="230"/>
+                                <clipView key="contentView" id="Av0-r7-PbT">
+                                    <rect key="frame" x="1" y="1" width="408" height="228"/>
+                                    <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                    <subviews>
+                                        <view fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="qOm-Hf-EL2" customClass="SpeedTypeView" customModule="mvpcocoa" customModuleProvider="target">
+                                            <rect key="frame" x="0.0" y="0.0" width="393" height="213"/>
+                                            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                        </view>
+                                    </subviews>
+                                </clipView>
+                                <scroller key="horizontalScroller" hidden="YES" verticalHuggingPriority="750" horizontal="YES" id="sUh-z1-dHv">
+                                    <rect key="frame" x="-100" y="-100" width="408" height="16"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                </scroller>
+                                <scroller key="verticalScroller" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="mbQ-Dm-UuB">
+                                    <rect key="frame" x="393" y="1" width="16" height="228"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                </scroller>
+                            </scrollView>
+                            <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gWs-gf-LXD">
+                                <rect key="frame" x="20" y="258" width="187" height="22"/>
+                                <subviews>
+                                    <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RoG-Cn-az0">
+                                        <rect key="frame" x="0.0" y="0.0" width="187" height="22"/>
+                                        <subviews>
+                                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Ynb-hC-xlH">
+                                                <rect key="frame" x="-2" y="0.0" width="191" height="22"/>
+                                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Session Name – Book 1" id="cEI-zz-ujZ">
+                                                    <font key="font" metaFont="system" size="18"/>
+                                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                                </textFieldCell>
+                                            </textField>
+                                        </subviews>
+                                        <visibilityPriorities>
+                                            <integer value="1000"/>
+                                        </visibilityPriorities>
+                                        <customSpacing>
+                                            <real value="3.4028234663852886e+38"/>
+                                        </customSpacing>
+                                    </stackView>
+                                </subviews>
+                                <visibilityPriorities>
+                                    <integer value="1000"/>
+                                </visibilityPriorities>
+                                <customSpacing>
+                                    <real value="3.4028234663852886e+38"/>
+                                </customSpacing>
+                            </stackView>
+                            <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="9B7-mj-x2V">
+                                <rect key="frame" x="340" y="256" width="92" height="24"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="88" id="o05-vh-f3r"/>
+                                </constraints>
+                                <sliderCell key="cell" state="on" alignment="left" maxValue="4" tickMarkPosition="above" numberOfTickMarks="5" allowsTickMarkValuesOnly="YES" sliderType="linear" id="pk2-AD-ptq"/>
+                            </slider>
+                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xpA-f5-OX7">
+                                <rect key="frame" x="277" y="260" width="59" height="17"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Difficulty" id="2wS-SL-VGh">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                        </subviews>
+                        <constraints>
+                            <constraint firstItem="9B7-mj-x2V" firstAttribute="leading" secondItem="xpA-f5-OX7" secondAttribute="trailing" constant="8" symbolic="YES" id="0Wq-1K-uOd"/>
+                            <constraint firstAttribute="trailing" secondItem="L03-FY-tpw" secondAttribute="trailing" constant="20" symbolic="YES" id="5bT-tD-g4b"/>
+                            <constraint firstAttribute="bottom" secondItem="L03-FY-tpw" secondAttribute="bottom" constant="20" symbolic="YES" id="F6N-xE-S9o"/>
+                            <constraint firstItem="9B7-mj-x2V" firstAttribute="trailing" secondItem="L03-FY-tpw" secondAttribute="trailing" id="NzZ-UK-XFU"/>
+                            <constraint firstItem="xpA-f5-OX7" firstAttribute="leading" secondItem="gWs-gf-LXD" secondAttribute="trailing" constant="72" id="SEm-qx-Ztf"/>
+                            <constraint firstItem="gWs-gf-LXD" firstAttribute="top" secondItem="7pb-DU-bih" secondAttribute="top" constant="20" symbolic="YES" id="bYt-KR-ZBT"/>
+                            <constraint firstItem="gWs-gf-LXD" firstAttribute="leading" secondItem="L03-FY-tpw" secondAttribute="leading" id="eHQ-zL-tPf"/>
+                            <constraint firstItem="gWs-gf-LXD" firstAttribute="top" secondItem="9B7-mj-x2V" secondAttribute="top" id="kVQ-UO-91e"/>
+                            <constraint firstItem="L03-FY-tpw" firstAttribute="leading" secondItem="7pb-DU-bih" secondAttribute="leading" constant="20" symbolic="YES" id="mKV-LI-cwe"/>
+                            <constraint firstItem="L03-FY-tpw" firstAttribute="top" secondItem="gWs-gf-LXD" secondAttribute="bottom" constant="8" symbolic="YES" id="oTd-Qa-Q1v"/>
+                            <constraint firstItem="xpA-f5-OX7" firstAttribute="centerY" secondItem="9B7-mj-x2V" secondAttribute="centerY" id="zNf-TV-eEe"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="difficultySlider" destination="9B7-mj-x2V" id="3wB-7Q-nAL"/>
+                        <outlet property="speedTypeView" destination="qOm-Hf-EL2" id="hni-bt-eQ1"/>
+                        <outlet property="titleLabel" destination="Ynb-hC-xlH" id="uwz-80-5On"/>
+                    </connections>
+                </viewController>
+                <customObject id="3fH-fI-64y" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="613" y="250"/>
         </scene>
         <!--Session Controller-->
         <scene sceneID="hIz-AP-VOD">
