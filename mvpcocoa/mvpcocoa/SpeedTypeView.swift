@@ -8,7 +8,7 @@
 
 import Cocoa
 
-class SpeedTypeView: NSView {
+class SpeedTypeView: NSTextView {
     var lines: [String] = []
 
     override func draw(_ dirtyRect: NSRect) {
