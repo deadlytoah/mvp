@@ -29,6 +29,7 @@ class SpeedTypeController: NSViewController {
         })
 
         if retval == 0 {
+            let textStorage = self.speedTypeView.textStorage
             withUnsafePointer(to: &verseView.verses.0, { verses in
                 for i in 0..<verseView.count {
                     var verse = verses[i]
@@ -38,7 +39,7 @@ class SpeedTypeController: NSViewController {
                     let text = withUnsafePointer(to: &verse.text.0, { ptr in
                         return String(cString: ptr)
                     })
-                    self.speedTypeView.lines.append(text)
+                    textStorage?.append(NSAttributedString(string: "\(text)\n"))
                 }
             })
         } else {
