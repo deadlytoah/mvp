@@ -434,7 +434,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         book = loc['book']
         chapter = str(loc['chapter'])
 
-        records = model.verse.find_all()
+        records = model.verse.find_by_book_and_chapter(book, int(chapter))
         sentences, _ = sentences_cons2(records, book, chapter)
 
         if len(sentences) > 0:
@@ -859,7 +859,7 @@ def _view_enter_verses():
     screen.switch_to(screen.DATA_ENTRY_INDEX)
 
 def _address_from_key(key):
-    records = model.verse.find_all()
+    records = model.verse.find_by_book_and_chapter(key.book, int(key.chapter))
     sentences, lookup = sentences_cons2(records, key.book, key.chapter)
     sentence = sentences_index_by_verseno(sentences, lookup, key.verse)
     return Address(sentences, lookup, (key.book, key.chapter, sentence))
@@ -875,7 +875,7 @@ def _debug_sentences():
     global window
     loc = window.canvas.session['range']['start']
     address = _address_from_key(Key(loc['book'], loc['chapter'], str(1)))
-    records = model.verse.find_all()
+    records = model.verse.find_by_book_and_chapter(address.book, int(address.chapter))
     (sentences, lookup) = sentences_cons2(records, address.book, address.chapter)
     info = DbgSentences()
     info.gui.label_source.setText('Sentences constructed from: '

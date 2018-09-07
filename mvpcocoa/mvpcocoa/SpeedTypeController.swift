@@ -21,7 +21,7 @@ class SpeedTypeController: NSViewController {
         super.viewDidAppear()
 
         var verseView = VerseView()
-        let retval = verse_find_all("esv", &verseView)
+        let retval = verse_find_by_book_and_chapter("esv", &verseView, "Phl", 1)
 
         if retval == 0 {
             withUnsafePointer(to: &verseView.verses.0, { verses in

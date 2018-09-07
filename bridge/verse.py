@@ -20,8 +20,26 @@ def find_all(translation):
     if ret == 0:
         for i in range(0, view.count):
             verse = view.verses[i]
-            key = ctypes.c_char_p(ctypes.addressof(verse.key)).value
-            text = ctypes.c_char_p(ctypes.addressof(verse.text)).value
+            key = ctypes.c_char_p(ctypes.addressof(verse.key)).value.decode()
+            text = ctypes.c_char_p(ctypes.addressof(verse.text)).value.decode()
+            records.append({'key': key, 'text': text, 'deleted': '0'})
+        return records
+    else:
+        return None
+
+def find_by_book_and_chapter(translation, book, chapter):
+    """Invokes verse_find_by_book_and_chapter() in the libmvpcore."""
+    view = VerseView()
+    ret = libmvpcore.verse_find_by_book_and_chapter(ctypes.c_char_p(bytes(translation, 'utf8')),
+                                                    ctypes.byref(view),
+                                                    ctypes.c_char_p(bytes(book, 'utf8')),
+                                                    ctypes.c_short(chapter))
+    records = []
+    if ret == 0:
+        for i in range(0, view.count):
+            verse = view.verses[i]
+            key = ctypes.c_char_p(ctypes.addressof(verse.key)).value.decode()
+            text = ctypes.c_char_p(ctypes.addressof(verse.text)).value.decode()
             records.append({'key': key, 'text': text, 'deleted': '0'})
         return records
     else:
