@@ -42,5 +42,9 @@ extern int session_delete(Session *);
 extern char *const session_get_message(int error_code);
 
 extern int verse_find_all(const char *translation, VerseView *view);
+extern int verse_find_by_book_and_chapter(const char *translation,
+                                          VerseView *view,
+                                          const char *book,
+                                          unsigned short chapter);
 
 #endif /* session_h */

@@ -38,6 +38,24 @@ pub unsafe fn verse_find_all(translation: *const c_char, view: *mut VerseView) -
     }
 }
 
+#[no_mangle]
+pub unsafe fn verse_find_by_book_and_chapter(
+    translation: *const c_char,
+    view: *mut VerseView,
+    book: *const c_char,
+    chapter: u16,
+) -> c_int {
+    let translation = CStr::from_ptr(translation);
+    let book = CStr::from_ptr(book);
+    match imp::verse_find_by_book_and_chapter(translation, &mut *view, book, chapter) {
+        Ok(()) => 0,
+        Err(e) => {
+            eprintln!("{:?}", e);
+            1
+        }
+    }
+}
+
 mod imp {
     use super::*;
     use std::fs;
@@ -80,6 +98,59 @@ mod imp {
                 verse.text[..text.len()].copy_from_slice(text);
 
                 view.push(verse);
+            }
+        }
+        Ok(())
+    }
+
+    pub fn verse_find_by_book_and_chapter(
+        translation: &CStr,
+        view: &mut VerseView,
+        book: &CStr,
+        chapter: u16,
+    ) -> Result<()> {
+        let mut dbpath = dirs::data_dir().expect("unable to get platform's data directory.");
+        dbpath.push("mvp-speedtype");
+        if !dbpath.exists() {
+            fs::create_dir(&dbpath)?;
+        }
+
+        let translation = translation.to_str()?;
+        dbpath.push(&(translation.to_owned() + DB_EXT));
+        let dbpath = dbpath.to_str().expect("failed to convert path to string");
+
+        let mut sdb = Sdb::open(&dbpath)?;
+        let verse_table = sdb
+            .tables_mut()
+            .iter_mut()
+            .filter(|table| !table.is_dropped())
+            .find(|table| table.name() == "verse")
+            .expect("verse table");
+        verse_table.create_manager()?;
+        let manager = verse_table.manager_mut().expect("manager");
+        manager.verify()?;
+        manager.service()?;
+        let records = manager.select_all()?;
+
+        let book = book.to_str()?;
+        for rec in records {
+            if rec["deleted"] == "0" {
+                let key = &rec["key"];
+                let text = &rec["text"];
+
+                let chapter = chapter.to_string();
+                let prefix = book.to_owned() + " " + &chapter + ":";
+                if key.starts_with(&prefix) {
+                    let mut verse: Verse = unsafe { mem::zeroed() };
+                    let key = key.as_bytes();
+                    assert!(key.len() <= verse.key.len());
+                    verse.key[..key.len()].copy_from_slice(key);
+                    let text = text.as_bytes();
+                    assert!(text.len() <= verse.text.len());
+                    verse.text[..text.len()].copy_from_slice(text);
+
+                    view.push(verse);
+                }
             }
         }
         Ok(())
