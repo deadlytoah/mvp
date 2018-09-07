@@ -1,17 +1,12 @@
 use capi::Result;
 use dirs;
 use libc::{c_char, c_int};
+use model::compat::Verse;
 use sdb::Sdb;
 use std::ffi::CStr;
 use std::mem;
 
 const DB_EXT: &str = ".sdb";
-
-#[repr(C)]
-pub struct Verse {
-    key: [u8; 16],
-    text: [u8; 256],
-}
 
 #[repr(C)]
 pub struct VerseView {

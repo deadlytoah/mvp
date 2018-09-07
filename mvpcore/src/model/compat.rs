@@ -1,6 +1,6 @@
 use capi::Result;
-use model::strong::Book;
 use model::strong;
+use model::strong::Book;
 use std::ffi::{CStr, CString};
 use std::str;
 
@@ -58,4 +58,10 @@ impl Location {
 
         Ok(())
     }
+}
+
+#[repr(C)]
+pub struct Verse {
+    pub key: [u8; 16],
+    pub text: [u8; 256],
 }
