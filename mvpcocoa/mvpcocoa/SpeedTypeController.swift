@@ -21,24 +21,15 @@ class SpeedTypeController: NSViewController {
         super.viewDidAppear()
 
         var verseView = VerseView()
-        let translation = "esv"
-        let retval = translation.withCString({translationPtr in
-            withUnsafeMutablePointer(to: &verseView, {viewPtr in
-                verse_find_all(translationPtr, viewPtr)
-            })
-        })
+        let retval = verse_find_all("esv", &verseView)
 
         if retval == 0 {
             let textStorage = self.speedTypeView.textStorage
             withUnsafePointer(to: &verseView.verses.0, { verses in
                 for i in 0..<verseView.count {
                     var verse = verses[i]
-                    _ = withUnsafePointer(to: &verse.key.0, { ptr in
-                        return String(cString: ptr)
-                    })
-                    let text = withUnsafePointer(to: &verse.text.0, { ptr in
-                        return String(cString: ptr)
-                    })
+                    _ = String(cString: &verse.key.0)
+                    let text = String(cString: &verse.text.0)
                     textStorage?.append(NSAttributedString(string: "\(text)\n"))
                 }
             })
