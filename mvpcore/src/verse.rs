@@ -133,26 +133,32 @@ mod imp {
         let records = manager.select_all()?;
 
         let book = book.to_str()?;
-        for rec in records {
-            if rec["deleted"] == "0" {
-                let key = &rec["key"];
-                let text = &rec["text"];
+        let chapter = chapter.to_string();
+        let prefix = book.to_owned() + " " + &chapter + ":";
 
-                let chapter = chapter.to_string();
-                let prefix = book.to_owned() + " " + &chapter + ":";
-                if key.starts_with(&prefix) {
-                    let mut verse: Verse = unsafe { mem::zeroed() };
-                    let key = key.as_bytes();
-                    assert!(key.len() <= verse.key.len());
-                    verse.key[..key.len()].copy_from_slice(key);
-                    let text = text.as_bytes();
-                    assert!(text.len() <= verse.text.len());
-                    verse.text[..text.len()].copy_from_slice(text);
+        let mut sortable: Vec<(&String, &String)> = records
+            .iter()
+            .filter(|rec| rec["deleted"] == "0")
+            .filter(|rec| rec["key"].starts_with(&prefix))
+            .map(|rec| (&rec["key"], &rec["text"]))
+            .collect();
+        sortable.sort_unstable_by_key(|rec| {
+            let key = rec.0;
+            let chapter_verse = key
+                .split_whitespace()
+                .skip(1)
+                .next()
+                .expect("chapter_verse");
+            let verse = chapter_verse.split(':').skip(1).next().expect("verse");
+            verse.parse::<u16>().expect("parse verse")
+        });
 
-                    view.push(verse);
-                }
-            }
+        for (key, text) in sortable.drain(..) {
+            view.verses[view.next].key[..key.len()].copy_from_slice(key.as_bytes());
+            view.verses[view.next].text[..text.len()].copy_from_slice(text.as_bytes());
+            view.next += 1;
         }
+
         Ok(())
     }
 }

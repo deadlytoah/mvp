@@ -188,13 +188,13 @@ def _peek():
 
 def _address_from_key(key):
     records = model.verse.find_by_book_and_chapter(key.book, int(key.chapter))
-    sentences, lookup = sentences_cons2(records, key.book, key.chapter)
+    sentences, lookup = sentences_cons2(records)
     sentence = sentences_index_by_verseno(sentences, lookup, key.verse)
     return Address(sentences, lookup, (key.book, key.chapter, sentence))
 
 def _display_by_address(address):
     records = model.verse.find_by_book_and_chapter(address.book, int(address.chapter))
-    sentences, lookup = sentences_cons2(records, address.book, address.chapter)
+    sentences, lookup = sentences_cons2(records)
     sentence = sentences[address.sentence]
     label = sentence_make_label(sentence, address.book, address.chapter)
 
@@ -232,7 +232,7 @@ def debug_layout_engine():
         address = window.stack[0]
 
         records = model.verse.find_by_book_and_chapter(address.book, int(address.chapter))
-        sentences, lookup = sentences_cons2(records, address.book, address.chapter)
+        sentences, lookup = sentences_cons2(records)
         sentence = sentences[address.sentence]
 
         text = sentence['text']
@@ -252,7 +252,7 @@ def debug_sentences():
         from dbgsentences import DbgSentences
         address = window.stack[0]
         records = model.verse.find_by_book_and_chapter(address.book, int(address.chapter))
-        (sentences, lookup) = sentences_cons2(records, address.book, address.chapter)
+        (sentences, lookup) = sentences_cons2(records)
         info = DbgSentences()
         info.gui.label_source.setText('Sentences constructed from: '
                                       + ' '.join([address.book, address.chapter]))
@@ -280,7 +280,7 @@ def debug_display_graph():
         address = window.stack[0]
 
         records = model.verse.find_by_book_and_chapter(address.book, int(address.chapter))
-        sentences, lookup = sentences_cons2(records, address.book, address.chapter)
+        sentences, lookup = sentences_cons2(records)
         sentence = sentences[address.sentence]
 
         text = sentence['text']
