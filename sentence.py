@@ -1,26 +1,10 @@
 import config
 from key import Key
 
-def sentences_cons2(records, book, chapter):
+def sentences_cons2(records):
     sentences = []
     lookup = []
-    chapter = str(chapter)
-    keyprefix = ' '.join([book, chapter])
-
-    matches = []
-    for rec in records:
-        key = Key.from_str(rec['key'])
-        if key.book == book and \
-           key.chapter == chapter and \
-           rec['deleted'] == '0':
-            matches.append({
-                'key': key,
-                'record': rec
-            })
-
-    verseseq = [match['record']['text']
-                for match in sorted(matches,
-                                    key=lambda m: int(m['key'].verse))]
+    verseseq = [rec['text'] for rec in records]
 
     # step 1 split verses into a queue of partial or whole verses.
     indiciesseq = [sorted(_find_all_delimiters(text, config.SENTENCE_DELIMITERS))
