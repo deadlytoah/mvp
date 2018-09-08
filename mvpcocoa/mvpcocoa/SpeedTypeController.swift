@@ -13,12 +13,22 @@ class SpeedTypeController: NSViewController {
     @IBOutlet weak var difficultySlider: NSSlider!
     @IBOutlet weak var speedTypeView: SpeedTypeView!
 
+    let font = NSFont(name: "Menlo", size: 18)
+    let guideColour = NSColor.gray
+    let lineSpacing = 10.0
+
     override func viewDidLoad() {
         super.viewDidLoad()
     }
 
     override func viewDidAppear() {
         super.viewDidAppear()
+
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = CGFloat(lineSpacing)
+        let attributes = [NSAttributedStringKey.font: self.font!,
+                          NSAttributedStringKey.foregroundColor: guideColour,
+                          NSAttributedStringKey.paragraphStyle: paragraphStyle]
 
         var verseView = VerseView()
         let retval = verse_find_by_book_and_chapter("esv", &verseView, "Phl", 1)
@@ -30,9 +40,11 @@ class SpeedTypeController: NSViewController {
                     var verse = verses[i]
                     _ = String(cString: &verse.key.0)
                     let text = String(cString: &verse.text.0)
-                    textStorage?.append(NSAttributedString(string: "\(text)\n"))
+                    textStorage?.append(NSAttributedString(string: "\(text)\n", attributes: attributes))
                 }
             })
+
+            self.speedTypeView.caret_position = 0
         } else {
             let alert = NSAlert()
             alert.alertStyle = .critical

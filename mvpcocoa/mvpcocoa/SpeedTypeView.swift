@@ -9,6 +9,16 @@
 import Cocoa
 
 class SpeedTypeView: NSTextView {
+    var caret_position: Int {
+        get {
+            let range = self.selectedRanges[0].rangeValue
+            return range.location + range.length
+        }
+        set {
+            self.selectedRange = NSRange(location: newValue, length: 0)
+        }
+    }
+
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
 

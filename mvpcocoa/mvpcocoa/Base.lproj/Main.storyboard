@@ -707,14 +707,14 @@
             <objects>
                 <viewController id="ZDw-zW-tfv" customClass="SpeedTypeController" customModule="mvpcocoa" sceneMemberID="viewController">
                     <view key="view" id="7pb-DU-bih">
-                        <rect key="frame" x="0.0" y="0.0" width="450" height="300"/>
+                        <rect key="frame" x="0.0" y="0.0" width="640" height="480"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gWs-gf-LXD">
-                                <rect key="frame" x="20" y="258" width="187" height="22"/>
+                                <rect key="frame" x="20" y="438" width="377" height="22"/>
                                 <subviews>
                                     <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="RoG-Cn-az0">
-                                        <rect key="frame" x="0.0" y="0.0" width="187" height="22"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="377" height="22"/>
                                         <subviews>
                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Ynb-hC-xlH">
                                                 <rect key="frame" x="-2" y="0.0" width="191" height="22"/>
@@ -733,6 +733,9 @@
                                         </customSpacing>
                                     </stackView>
                                 </subviews>
+                                <constraints>
+                                    <constraint firstAttribute="trailing" secondItem="RoG-Cn-az0" secondAttribute="trailing" id="PJu-s5-pkZ"/>
+                                </constraints>
                                 <visibilityPriorities>
                                     <integer value="1000"/>
                                 </visibilityPriorities>
@@ -741,14 +744,14 @@
                                 </customSpacing>
                             </stackView>
                             <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="9B7-mj-x2V">
-                                <rect key="frame" x="340" y="256" width="92" height="24"/>
+                                <rect key="frame" x="530" y="436" width="92" height="24"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="88" id="XzZ-Oq-0l7"/>
                                 </constraints>
                                 <sliderCell key="cell" state="on" alignment="left" maxValue="4" tickMarkPosition="above" numberOfTickMarks="5" allowsTickMarkValuesOnly="YES" sliderType="linear" id="pk2-AD-ptq"/>
                             </slider>
                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xpA-f5-OX7">
-                                <rect key="frame" x="277" y="260" width="59" height="17"/>
+                                <rect key="frame" x="467" y="440" width="59" height="17"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Difficulty" id="2wS-SL-VGh">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -756,26 +759,26 @@
                                 </textFieldCell>
                             </textField>
                             <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aK7-vI-haI">
-                                <rect key="frame" x="20" y="20" width="410" height="230"/>
+                                <rect key="frame" x="20" y="20" width="600" height="410"/>
                                 <subviews>
                                     <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="txV-gO-ICb">
-                                        <rect key="frame" x="0.0" y="0.0" width="410" height="230"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="600" height="410"/>
                                         <subviews>
                                             <stackView distribution="fill" orientation="vertical" alignment="leading" horizontalStackHuggingPriority="249.99998474121094" verticalStackHuggingPriority="249.99998474121094" detachesHiddenViews="YES" translatesAutoresizingMaskIntoConstraints="NO" id="UuL-g6-1Le">
-                                                <rect key="frame" x="0.0" y="0.0" width="410" height="230"/>
+                                                <rect key="frame" x="0.0" y="0.0" width="600" height="410"/>
                                                 <subviews>
                                                     <scrollView horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="E5J-k1-jLp">
-                                                        <rect key="frame" x="0.0" y="0.0" width="410" height="230"/>
+                                                        <rect key="frame" x="0.0" y="0.0" width="600" height="410"/>
                                                         <clipView key="contentView" id="dj1-J6-u5C">
-                                                            <rect key="frame" x="1" y="1" width="408" height="228"/>
+                                                            <rect key="frame" x="1" y="1" width="598" height="408"/>
                                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                             <subviews>
                                                                 <textView importsGraphics="NO" verticallyResizable="YES" usesFontPanel="YES" findStyle="panel" continuousSpellChecking="YES" allowsUndo="YES" usesRuler="YES" allowsNonContiguousLayout="YES" quoteSubstitution="YES" dashSubstitution="YES" spellingCorrection="YES" smartInsertDelete="YES" id="0mU-Jh-1hi" customClass="SpeedTypeView" customModule="mvpcocoa" customModuleProvider="target">
-                                                                    <rect key="frame" x="0.0" y="0.0" width="408" height="228"/>
+                                                                    <rect key="frame" x="0.0" y="0.0" width="598" height="408"/>
                                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                                                    <size key="minSize" width="408" height="228"/>
-                                                                    <size key="maxSize" width="463" height="10000000"/>
+                                                                    <size key="minSize" width="598" height="408"/>
+                                                                    <size key="maxSize" width="598" height="10000000"/>
                                                                     <color key="insertionPointColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                                                                 </textView>
                                                             </subviews>
@@ -786,7 +789,7 @@
                                                             <autoresizingMask key="autoresizingMask"/>
                                                         </scroller>
                                                         <scroller key="verticalScroller" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="7H2-X9-yXb">
-                                                            <rect key="frame" x="393" y="1" width="16" height="228"/>
+                                                            <rect key="frame" x="583" y="1" width="16" height="408"/>
                                                             <autoresizingMask key="autoresizingMask"/>
                                                         </scroller>
                                                     </scrollView>
@@ -837,7 +840,7 @@
                 </viewController>
                 <customObject id="3fH-fI-64y" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="613" y="250"/>
+            <point key="canvasLocation" x="745" y="243"/>
         </scene>
         <!--Session Controller-->
         <scene sceneID="hIz-AP-VOD">
