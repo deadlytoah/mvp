@@ -31,13 +31,22 @@ class SpeedTypeView: NSTextView {
     }
 
     // Override the NSView keydown func to read keycode of pressed key
-    override func keyDown(with theEvent: NSEvent) {
+    /*override func keyDown(with theEvent: NSEvent) {
         if theEvent.characters != nil {
             for ch in theEvent.characters! {
                 let caret = self.caret_position
                 self.textStorage?.mutableString.replaceCharacters(in: NSRange(location: caret, length: 1), with: String(ch))
                 self.textStorage?.addAttribute(NSAttributedStringKey.foregroundColor, value: NSColor.black, range: NSRange(location: caret, length: 1))
             }
+        }
+    }*/
+
+    override func insertText(_ string: Any, replacementRange: NSRange) {
+        let s: String = string as! String
+        for ch in s {
+            let caret = self.caret_position
+            self.textStorage?.mutableString.replaceCharacters(in: NSRange(location: caret, length: 1), with: String(ch))
+            self.textStorage?.addAttribute(NSAttributedStringKey.foregroundColor, value: NSColor.black, range: NSRange(location: caret, length: 1))
         }
     }
 }
