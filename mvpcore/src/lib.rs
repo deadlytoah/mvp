@@ -7,9 +7,11 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 
-mod model;
-mod verse;
 mod capi;
+mod model;
+mod speedtype;
+mod verse;
 
 pub use capi::*;
+pub use speedtype::state::*;
 pub use verse::*;
