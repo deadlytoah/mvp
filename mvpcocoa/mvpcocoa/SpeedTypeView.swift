@@ -24,4 +24,20 @@ class SpeedTypeView: NSTextView {
 
         // Drawing code here.
     }
+
+    // Allow view to receive keypress (remove the purr sound)
+    override var acceptsFirstResponder : Bool {
+        return true
+    }
+
+    // Override the NSView keydown func to read keycode of pressed key
+    override func keyDown(with theEvent: NSEvent) {
+        if theEvent.characters != nil {
+            for ch in theEvent.characters! {
+                let caret = self.caret_position
+                self.textStorage?.mutableString.replaceCharacters(in: NSRange(location: caret, length: 1), with: String(ch))
+                self.textStorage?.addAttribute(NSAttributedStringKey.foregroundColor, value: NSColor.black, range: NSRange(location: caret, length: 1))
+            }
+        }
+    }
 }
