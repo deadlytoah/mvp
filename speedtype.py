@@ -186,7 +186,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             'correct': False,
         }
 
-    def _init_word(self):
+    def _init_word(self, index):
         """Constructs a word.
 
         Constructs a word with its visibility state, reference to the
@@ -194,7 +194,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
         """
         return {
-            'id': None,
+            'id': index,
             'word': '',
             'visible': True,
             'touched': False,
@@ -253,7 +253,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         words = []
 
         for text in layout:
-            make_word = self._init_word()
+            word_index = len(words) + len(self.words)
+            make_word = self._init_word(word_index)
 
             for ch in text:
                 maybe_letter = self._init_char(ch)
@@ -262,13 +263,12 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 if config.WORD_DELIMITERS.find(ch) >= 0:
                     if len(make_word['word']) > 0:
                         words.append(make_word)
-                        make_word = self._init_word()
+                        word_index = len(words) + len(self.words)
+                        make_word = self._init_word(word_index)
                     else:
                         pass
                 else:
-                    word_index = len(words) + len(self.words)
-                    maybe_letter['word'] = word_index
-                    make_word['id'] = word_index
+                    maybe_letter['word'] = make_word['id']
                     make_word['word'] = make_word['word'] + ch
                     make_word['last_char'] = len(buf) - 1
 
