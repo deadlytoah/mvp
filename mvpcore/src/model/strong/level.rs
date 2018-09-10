@@ -1,3 +1,6 @@
+#[allow(unused)]
+const PUNCTUATIONS: &[char] = &['.', ',', ':', ';', '[', ']'];
+
 #[derive(Serialize, Deserialize)]
 pub enum Level {
     Level1,
@@ -17,7 +20,8 @@ impl From<u8> for Level {
     }
 }
 
-static PRONOUNS: &[&str] = &[
+#[allow(unused)]
+const PRONOUNS: &[&str] = &[
     "i",
     "we",
     "they",
@@ -55,7 +59,8 @@ static PRONOUNS: &[&str] = &[
     "whosoever",
 ];
 
-static ARTICLES: &[&str] = &[
+#[allow(unused)]
+const ARTICLES: &[&str] = &[
     "to",
     "for",
     "in",
@@ -86,8 +91,7 @@ static ARTICLES: &[&str] = &[
     "thus",
 ];
 
-static punctuations: &[char] = &['.', ',', ':', ';', '[', ']'];
-
+#[allow(unused)]
 #[derive(Clone)]
 #[repr(C)]
 enum Kind {
@@ -103,6 +107,7 @@ struct Word {
     pub kind: Kind,
 }
 
+#[allow(unused)]
 #[repr(C)]
 struct Permutation {
     pub words: Vec<Word>,

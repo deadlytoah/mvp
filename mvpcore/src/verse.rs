@@ -144,12 +144,8 @@ mod imp {
             .collect();
         sortable.sort_unstable_by_key(|rec| {
             let key = rec.0;
-            let chapter_verse = key
-                .split_whitespace()
-                .skip(1)
-                .next()
-                .expect("chapter_verse");
-            let verse = chapter_verse.split(':').skip(1).next().expect("verse");
+            let chapter_verse = key.split_whitespace().nth(1).expect("chapter_verse");
+            let verse = chapter_verse.split(':').nth(1).expect("verse");
             verse.parse::<u16>().expect("parse verse")
         });
 
