@@ -1,4 +1,6 @@
 #!/bin/sh
 
+export LD_LIBRARY_PATH=~/Code/target/debug
+
 cd `dirname $0`
 python3 `dirname $0`/mvp.py "$@"
