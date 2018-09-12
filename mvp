@@ -1,4 +1,4 @@
 #!/bin/sh
 
 cd `dirname $0`
-python3 `dirname $0`/mvp.py "$@"
+python3 `dirname $0`/mvp.py -T nkjv "$@"
