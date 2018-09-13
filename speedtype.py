@@ -468,25 +468,9 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             self.make_cliptable()
             self.update()
         else:
-            info = Qt.QMessageBox()
-            info.setWindowTitle("mvp")
-            info.setText("Text missing for " + ' '.join([book, chapter]))
-            info.setInformativeText("The text for the chosen bible verses " +
-                                    "are missing from the database.  Would " +
-                                    "you like to add it in the enter bible " +
-                                    "verses screen?")
-            info.setIcon(Qt.QMessageBox.Question)
-            info.addButton(Qt.QMessageBox.Ok)
-            info.addButton(Qt.QMessageBox.Cancel)
-            answer = info.exec_()
-
-            if answer == Qt.QMessageBox.Ok:
-                # Redirect user to the data entry screen.
-                _view_enter_verses()
-            else:
-                self.set_missing_text()
-                self.make_cliptable()
-                self.update()
+            self.set_missing_text()
+            self.make_cliptable()
+            self.update()
 
     @Qt.pyqtSlot()
     def persist_session(self):
