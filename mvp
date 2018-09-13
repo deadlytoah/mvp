@@ -1,4 +1,25 @@
 #!/bin/sh
 
 cd `dirname $0`
+
+# restore session file
+if [ -f session.hj.json ]; then
+    if `which trash > /dev/null 2>&1`; then
+        if [ -f session.json ]; then
+            trash session.json
+        fi
+    fi
+    cp session.hj.json session.json
+fi
+
 python3 `dirname $0`/mvp.py -T nkjv "$@"
+
+# backup the session file
+if [ -f session.json ]; then
+    if `which trash > /dev/null 2>&1`; then
+        if [ -f session.hj.json ]; then
+            trash session.hj.json
+        fi
+    fi
+    cp session.json session.hj.json
+fi
