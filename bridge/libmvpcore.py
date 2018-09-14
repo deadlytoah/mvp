@@ -16,6 +16,9 @@ EXTFNS = [["session_create", [ctypes.c_void_p], ctypes.c_int],
           ["session_get_message", [ctypes.c_int], ctypes.c_char_p],
           ["verse_find_all", [ctypes.c_char_p, ctypes.c_void_p], ctypes.c_int],
           ["verse_find_by_book_and_chapter", [ctypes.c_char_p, ctypes.c_void_p, ctypes.c_char_p, ctypes.c_short], ctypes.c_int],
+          ["speedtype_new", [POINTER(ctypes.c_void_p)], ctypes.c_int],
+          ["speedtype_delete", [POINTER(ctypes.c_void_p)], ctypes.c_int],
+          ["speedtype_process_line", [ctypes.c_void_p, ctypes.c_char_p], ctypes.c_int],
 ]
 
 class Libmvpcore:
