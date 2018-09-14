@@ -1,4 +1,6 @@
-use model::character::{Character, CharacterId};
+use model::speedtype::compat;
+use model::speedtype::strong::{Character, CharacterId};
+use std::ffi::CStr;
 
 pub type WordId = usize;
 
@@ -10,6 +12,23 @@ pub struct Word {
     pub touched: bool,
     pub behind: bool,
     pub characters: Vec<CharacterId>,
+}
+
+impl From<compat::Word> for Word {
+    fn from(from: compat::Word) -> Self {
+        let word = unsafe { CStr::from_ptr(from.word) };
+        let word = word.to_string_lossy();
+        let word = word.to_string();
+
+        Self {
+            id: from.id,
+            word,
+            visible: from.visible != 0,
+            touched: from.touched != 0,
+            behind: from.behind != 0,
+            characters: from.characters.into(),
+        }
+    }
 }
 
 impl Word {

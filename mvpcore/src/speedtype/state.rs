@@ -1,42 +1,25 @@
 use capi::Result;
 use libc;
-use model::character::Character;
-use model::word::{Word, WordId};
+use model::speedtype::compat;
+use model::speedtype::strong;
 use std::boxed::Box;
 use std::ffi::CStr;
 
 const WORD_DELIMITERS: &str = " .,:;?!";
 
-/// Represents the internal state of the SpeedType view.
-///
-/// This represents the internal and external elements of the
-/// SpeedType view.  It includes letters, words and sentences and
-/// their individual states.  It also includes the state of the caret.
-///
-/// It is rendered into the render structure.  The render structure is
-/// then used to paint or update the screen.
-///
-/// It is a comprehensive data structure useful for saving and
-/// restoring session.
-///
-/// Right now it is designed to be opaque to frontend components.  The
-/// render structure is what faces the frontends.
-#[derive(Debug, Default)]
-pub struct SpeedTypeState {
-    buffer: Vec<Character>,
-    words: Vec<Word>,
-    sentences: Vec<Vec<WordId>>,
-}
-
 /// Allocates memory for a SpeedTypeState and initialises it.
-pub unsafe fn speedtype_new(state: *mut *mut SpeedTypeState) -> libc::c_int {
-    *state = Box::into_raw(Box::new(SpeedTypeState::default()));
+#[no_mangle()]
+pub unsafe fn speedtype_new(state: *mut *mut compat::State) -> libc::c_int {
+    let s = strong::State::new();
+    *state = Box::into_raw(Box::new(s.into()));
     0
 }
 
 /// Frees memory for a SpeedTypeState and sets it to null.
-pub unsafe fn speedtype_delete(state: *mut *mut SpeedTypeState) -> libc::c_int {
-    Box::from_raw(*state);
+#[no_mangle()]
+pub unsafe fn speedtype_delete(state: *mut *mut compat::State) -> libc::c_int {
+    let s = Box::from_raw(*state);
+    let _: strong::State = (*s).into();
     *state = ::std::ptr::null_mut();
     0
 }
@@ -48,12 +31,19 @@ pub unsafe fn speedtype_delete(state: *mut *mut SpeedTypeState) -> libc::c_int {
 /// The list of words is used to show or hide words.
 #[no_mangle()]
 pub unsafe fn speedtype_process_line(
-    state: *mut SpeedTypeState,
+    state: *mut compat::State,
     line: *const libc::c_char,
 ) -> libc::c_int {
     let line = CStr::from_ptr(line);
-    match imp::process_line(&mut *state, line) {
-        Ok(()) => 0,
+    let mut s: compat::State = ::std::mem::uninitialized();
+    ::std::ptr::copy_nonoverlapping(state, &mut s, 1);
+    let mut s: strong::State = s.into();
+    match imp::process_line(&mut s, line) {
+        Ok(()) => {
+            let s: compat::State = s.into();
+            ::std::ptr::copy_nonoverlapping(&s, state, 1);
+            0
+        }
         Err(e) => {
             eprintln!("{:?}", e);
             1
@@ -63,6 +53,8 @@ pub unsafe fn speedtype_process_line(
 
 mod imp {
     use super::*;
+    use model::speedtype::strong::State as SpeedTypeState;
+    use model::speedtype::strong::{Character, Sentence, Word};
 
     pub fn process_line(state: &mut SpeedTypeState, line: &CStr) -> Result<()> {
         let base_char_id = state.buffer.len();
@@ -101,7 +93,7 @@ mod imp {
 
         state
             .sentences
-            .push(words.iter().map(|word| word.id).collect());
+            .push(Sentence(words.iter().map(|word| word.id).collect()));
         state.buffer.append(&mut buf);
         state.words.append(&mut words);
 
