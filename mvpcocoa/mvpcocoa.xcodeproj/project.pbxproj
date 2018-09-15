@@ -12,7 +12,6 @@
 		0F1A296A211182BB00D348B8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0F1A2969211182BB00D348B8 /* Assets.xcassets */; };
 		0F1A296D211182BB00D348B8 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0F1A296B211182BB00D348B8 /* Main.storyboard */; };
 		0F1A2979211182BB00D348B8 /* mvpcocoaUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F1A2978211182BB00D348B8 /* mvpcocoaUITests.swift */; };
-		0F3C50EE211DB0AD0040B010 /* SessionColViewItem.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0F3C50EC211DB0AD0040B010 /* SessionColViewItem.xib */; };
 		0F59D68921410FF40091C6FD /* SpeedTypeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F59D68821410FF40091C6FD /* SpeedTypeController.swift */; };
 		0F59D68B214111AA0091C6FD /* SpeedTypeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F59D68A214111AA0091C6FD /* SpeedTypeView.swift */; };
 		0FF57BC02138E13000C4136C /* libmvpcore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FF57BBF2138E13000C4136C /* libmvpcore.a */; };
@@ -39,7 +38,6 @@
 		0F1A2974211182BB00D348B8 /* mvpcocoaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = mvpcocoaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0F1A2978211182BB00D348B8 /* mvpcocoaUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mvpcocoaUITests.swift; sourceTree = "<group>"; };
 		0F1A297A211182BC00D348B8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		0F3C50EC211DB0AD0040B010 /* SessionColViewItem.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SessionColViewItem.xib; sourceTree = "<group>"; };
 		0F59D68821410FF40091C6FD /* SpeedTypeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedTypeController.swift; sourceTree = "<group>"; };
 		0F59D68A214111AA0091C6FD /* SpeedTypeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedTypeView.swift; sourceTree = "<group>"; };
 		0FB15544211962F900B888CE /* mvpcocoa-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "mvpcocoa-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -96,7 +94,6 @@
 				0F1A2967211182B900D348B8 /* SessionController.swift */,
 				0F59D68A214111AA0091C6FD /* SpeedTypeView.swift */,
 				0F59D68821410FF40091C6FD /* SpeedTypeController.swift */,
-				0F3C50EC211DB0AD0040B010 /* SessionColViewItem.xib */,
 				0F1A296E211182BB00D348B8 /* Info.plist */,
 				0F1A296F211182BB00D348B8 /* mvpcocoa.entitlements */,
 				0FB15544211962F900B888CE /* mvpcocoa-Bridging-Header.h */,
@@ -217,7 +214,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0F3C50EE211DB0AD0040B010 /* SessionColViewItem.xib in Resources */,
 				0F1A296A211182BB00D348B8 /* Assets.xcassets in Resources */,
 				0F1A296D211182BB00D348B8 /* Main.storyboard in Resources */,
 			);
