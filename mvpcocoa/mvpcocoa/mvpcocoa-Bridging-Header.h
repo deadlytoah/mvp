@@ -3,3 +3,4 @@
 //
 
 #import "session.h"
+#import "speedtype.h"
