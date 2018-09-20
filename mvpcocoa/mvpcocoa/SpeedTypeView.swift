@@ -8,13 +8,14 @@
 
 import Cocoa
 
-class SpeedTypeView: NSView {
-    var lines: [String] = []
-
+class SpeedTypeView: NSTextView {
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
 
         // Drawing code here.
-        NSString(string: lines[0]).draw(at: NSPoint(x: 0, y: 200), withAttributes: nil)
+    }
+
+    override func keyDown(with theEvent: NSEvent) {
+        nextResponder?.keyDown(with: theEvent)
     }
 }
