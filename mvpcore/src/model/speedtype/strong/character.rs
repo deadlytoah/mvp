@@ -9,6 +9,7 @@ pub struct Character {
     pub id: CharacterId,
     pub character: char,
     pub whitespace: bool,
+    pub newline: bool,
     pub word: Option<WordId>,
     pub visible: bool,
     pub typed: Option<char>,
@@ -22,6 +23,7 @@ impl Character {
             id,
             character,
             whitespace: character == ' ' || character == '\n',
+            newline: character == '\n',
             word: None,
             visible: true,
             typed: None,
@@ -36,6 +38,7 @@ impl From<compat::Character> for Character {
             id: from.id,
             character: char::from_u32(from.character).expect("Character::character"),
             whitespace: from.whitespace != 0,
+            newline: from.newline != 0,
             word: match from.has_word {
                 0 => None,
                 _ => Some(from.word),

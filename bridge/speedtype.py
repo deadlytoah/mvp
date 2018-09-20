@@ -7,6 +7,7 @@ class Character(ctypes.Structure):
     _fields_ = [('id', c_size_t),
                 ('character', c_uint32),
                 ('whitespace', c_uint32), # boolean
+                ('newline', c_uint32), # boolean
                 ('has_word', c_uint32), # boolean
                 ('word', c_size_t),
                 ('visible', c_uint32), # boolean
@@ -54,15 +55,10 @@ class SpeedtypeError(Exception):
 class State:
     """Embodies the state and methods of the speedtype module."""
     def __init__(self):
-        self._state = c_void_p()
-        retcode = libmvpcore.speedtype_new(byref(self._state))
-        if retcode != 0:
-            raise SpeedtypeError(retcode)
+        self._state = libmvpcore.speedtype_new()
 
     def __del__(self):
-        retcode = libmvpcore.speedtype_delete(byref(self._state))
-        if retcode != 0:
-            raise SpeedtypeError(retcode)
+        libmvpcore.speedtype_delete(self._state)
 
     def process_line(self, line):
         retcode = libmvpcore.speedtype_process_line(
@@ -73,7 +69,7 @@ class State:
         self._enable_idiomatic_access()
 
     def get_state(self):
-        return cast(self._state, POINTER(StateRaw)).contents
+        return ctypes.cast(self._state, POINTER(StateRaw)).contents
 
     def _enable_idiomatic_access(self):
         """Enables idiomatic access of the data structures.
@@ -102,6 +98,7 @@ class State:
             char['id'] = state.buffer_ptr[i].id
             char['char'] = chr(state.buffer_ptr[i].character)
             char['whitespace'] = state.buffer_ptr[i].whitespace != 0
+            char['newline'] = state.buffer_ptr[i].newline != 0
             char['word'] = word
             char['visible'] = state.buffer_ptr[i].visible != 0
             char['typed'] = typed
@@ -136,48 +133,6 @@ class State:
             for j in range(0, words_len):
                 words.append(words_ptr[j])
             sentences.append(words)
-        self._sentences = sentences
-
-    def _enable_idiomatic_access_old(self):
-        """Enables idiomatic access of the data structures."""
-        state = self.get_state()
-        buf = []
-        for i in range(0, state.buffer_len):
-            word = None
-            if state.buffer_ptr[i].has_word != 0:
-                word = state.buffer_ptr[i].word
-
-            typed = None
-            if state.buffer_ptr[i].has_typed != 0:
-                typed = state.buffer_ptr[i].typed
-
-            buf.append(state.buffer_ptr[i])
-            buf[-1].word = word
-            buf[-1].typed = typed
-        self._buf = buf
-
-        words = []
-        for i in range(0, state.words_len):
-            characters_len = state.words_ptr[i].characters_len
-            characters_ptr = state.words_ptr[i].characters_ptr
-            characters = []
-            for j in range(0, characters_len):
-                characters.append(characters_ptr[j])
-
-            words.append(state.words_ptr[i])
-            words[-1].characters = characters
-        self._words = words
-
-        sentences = []
-        for i in range(0, state.sentences_len):
-            words_len = state.sentences_ptr[i].words_len
-            words_ptr = state.sentences_ptr[i].words_ptr
-            words = []
-            for j in range(0, words_len):
-                words.append(words_ptr[j])
-
-            sentences.append(state.sentences_ptr[i])
-            sentences[-1].words = words
         self._sentences = sentences
 
     def buf(self):

@@ -12,6 +12,7 @@ class SpeedtypeChar {
     var id: CharId
     var character: Character
     var whitespace: Bool
+    var newline: Bool
     var word: WordId?
     var visible: Bool
     var typed: Character?
@@ -21,6 +22,7 @@ class SpeedtypeChar {
         self.id = raw.id
         self.character = Character.init(Unicode.Scalar(raw.character)!)
         self.whitespace = raw.whitespace != 0
+        self.newline = raw.newline != 0
         if raw.has_word == 0 {
             self.word = nil
         } else {

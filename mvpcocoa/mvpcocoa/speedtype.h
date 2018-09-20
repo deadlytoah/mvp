@@ -18,6 +18,7 @@ typedef struct {
     CharId id;
     uint32_t character;
     uint32_t whitespace;    // boolean
+    uint32_t newline;       // boolean
     uint32_t has_word;      // boolean
     WordId word;
     uint32_t visible;       // boolean
@@ -50,8 +51,8 @@ typedef struct {
     SpeedtypeSentenceRaw *sentences_ptr;
 } SpeedtypeStateRaw;
 
-extern int speedtype_new(SpeedtypeStateRaw**);
-extern int speedtype_delete(SpeedtypeStateRaw**);
-extern int speedtype_process_line(SpeedtypeStateRaw*, char*);
+extern SpeedtypeStateRaw *speedtype_new();
+extern void speedtype_delete(SpeedtypeStateRaw*);
+extern int speedtype_process_line(SpeedtypeStateRaw*, const char*);
 
 #endif /* speedtype_h */

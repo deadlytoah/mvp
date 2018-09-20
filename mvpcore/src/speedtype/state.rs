@@ -9,19 +9,19 @@ const WORD_DELIMITERS: &str = " .,:;?!";
 
 /// Allocates memory for a SpeedTypeState and initialises it.
 #[no_mangle()]
-pub unsafe fn speedtype_new(state: *mut *mut compat::State) -> libc::c_int {
-    let s = strong::State::new();
-    *state = Box::into_raw(Box::new(s.into()));
-    0
+pub unsafe fn speedtype_new() -> *mut compat::State {
+    let state = strong::State::new();
+    let state: Box<compat::State> = Box::new(state.into());
+    Box::into_raw(state)
 }
 
 /// Frees memory for a SpeedTypeState and sets it to null.
 #[no_mangle()]
-pub unsafe fn speedtype_delete(state: *mut *mut compat::State) -> libc::c_int {
-    let s = Box::from_raw(*state);
-    let _: strong::State = (*s).into();
-    *state = ::std::ptr::null_mut();
-    0
+pub unsafe fn speedtype_delete(state: *mut compat::State) {
+    // Buffer's do not free the resources automatically, so they need
+    // to be converted to Vec and then be dropped.
+    let state = Box::from_raw(state);
+    let _: strong::State = (*state).into();
 }
 
 /// Processes the given line of text.
