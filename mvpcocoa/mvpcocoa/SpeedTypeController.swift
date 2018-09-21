@@ -108,6 +108,7 @@ class SpeedTypeController: NSViewController {
     // Override the NSView keydown func to read keycode of pressed key
     override func keyDown(with theEvent: NSEvent) {
         self.interpretKeyEvents([theEvent])
+        self.speedTypeView.scrollRangeToVisible(NSRange(location: self.caret_position, length: 1))
     }
 
     override func insertText(_ string: Any) {
