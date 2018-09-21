@@ -25,6 +25,7 @@ typedef struct {
     uint32_t has_typed;     // boolean
     uint32_t typed;
     uint32_t correct;       // boolean
+    uint32_t rendered;       // boolean
 } SpeedtypeCharRaw;
 
 typedef struct {

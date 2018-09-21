@@ -14,6 +14,7 @@ class Character(ctypes.Structure):
                 ('has_typed', c_uint32), # boolean
                 ('typed', c_uint32),
                 ('correct', c_uint32), # boolean
+                ('rendered', c_uint32), # boolean
     ]
 
 class Word(ctypes.Structure):
@@ -103,6 +104,7 @@ class State:
             char['visible'] = state.buffer_ptr[i].visible != 0
             char['typed'] = typed
             char['correct'] = state.buffer_ptr[i].correct != 0
+            char['rendered'] = state.buffer_ptr[i].rendered != 0
             buf.append(char)
         self._buf = buf
 

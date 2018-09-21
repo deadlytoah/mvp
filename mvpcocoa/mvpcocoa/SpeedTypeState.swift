@@ -17,6 +17,7 @@ class SpeedtypeChar {
     var visible: Bool
     var typed: Character?
     var correct: Bool
+    var rendered: Bool
 
     init(raw: SpeedtypeCharRaw) {
         self.id = raw.id
@@ -35,6 +36,7 @@ class SpeedtypeChar {
             self.typed = Character.init(Unicode.Scalar(raw.typed)!)
         }
         self.correct = raw.correct != 0
+        self.rendered = raw.rendered != 0
     }
 }
 

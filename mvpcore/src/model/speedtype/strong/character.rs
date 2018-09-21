@@ -14,6 +14,7 @@ pub struct Character {
     pub visible: bool,
     pub typed: Option<char>,
     pub correct: bool,
+    pub rendered: bool,
 }
 
 impl Character {
@@ -28,6 +29,7 @@ impl Character {
             visible: true,
             typed: None,
             correct: false,
+            rendered: false,
         }
     }
 }
@@ -49,6 +51,7 @@ impl From<compat::Character> for Character {
                 _ => Some(char::from_u32(from.typed).expect("Character::typed")),
             },
             correct: from.correct != 0,
+            rendered: from.rendered != 0,
         }
     }
 }

@@ -50,6 +50,9 @@ class SpeedTypeController: NSViewController {
                     _ = String(cString: &verse.key.0)
                     let text = String(cString: &verse.text.0)
 
+                    let textStorage = self.speedTypeView.textStorage!
+                    textStorage.append(NSAttributedString(string: "\(text)\n"))
+
                     let retval = speedtype_process_line(state!, text)
                     if retval != 0 {
                         let alert = NSAlert()
@@ -83,8 +86,7 @@ class SpeedTypeController: NSViewController {
                           NSAttributedStringKey.foregroundColor: guideColour,
                           NSAttributedStringKey.paragraphStyle: paragraphStyle]
 
-        textStorage.setAttributedString(NSAttributedString(string: "", attributes: attributes))
-        for ch in self.state!.buffer {
+        for ch in self.state!.buffer.filter({ ch in !ch.rendered }) {
             var string = String(ch.character)
             if ch.typed != nil {
                 if ch.correct {
@@ -99,7 +101,8 @@ class SpeedTypeController: NSViewController {
             } else {
                 attributes[NSAttributedStringKey.foregroundColor] = self.guideColour
             }
-            textStorage.append(NSAttributedString(string: string, attributes: attributes))
+            textStorage.replaceCharacters(in: NSRange(location: ch.id, length: 1), with: NSAttributedString(string: string, attributes: attributes))
+            ch.rendered = true
         }
 
         self.caret_position = caret
@@ -119,6 +122,7 @@ class SpeedTypeController: NSViewController {
             let caret = self.caret_position
             buffer[caret].typed = ch
             buffer[caret].correct = buffer[caret].character == ch
+            buffer[caret].rendered = false
             self.caret_position = caret + 1
         }
         self.render()
@@ -130,6 +134,7 @@ class SpeedTypeController: NSViewController {
             let ch = self.state!.buffer[caret - 1]
             ch.correct = false
             ch.typed = nil
+            ch.rendered = false
 
             self.caret_position = caret - 1
             self.render()

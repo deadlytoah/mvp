@@ -76,6 +76,7 @@ pub struct Character {
     pub has_typed: libc::boolean_t,
     pub typed: libc::uint32_t,
     pub correct: libc::boolean_t,
+    pub rendered: libc::boolean_t,
 }
 
 impl From<strong::Character> for Character {
@@ -91,6 +92,7 @@ impl From<strong::Character> for Character {
             has_typed: Default::default(),
             typed: Default::default(),
             correct: from.correct as libc::boolean_t,
+            rendered: from.rendered as libc::boolean_t,
         };
 
         match from.word {
