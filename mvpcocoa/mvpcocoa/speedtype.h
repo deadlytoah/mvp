@@ -55,5 +55,6 @@ typedef struct {
 extern SpeedtypeStateRaw *speedtype_new();
 extern void speedtype_delete(SpeedtypeStateRaw*);
 extern int speedtype_process_line(SpeedtypeStateRaw*, const char*);
+extern void speedtype_apply_level(SpeedtypeStateRaw*, unsigned char);
 
 #endif /* speedtype_h */

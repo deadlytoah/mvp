@@ -19,6 +19,7 @@ EXTFNS = [["session_create", [ctypes.c_void_p], ctypes.c_int],
           ["speedtype_new", None, ctypes.c_void_p],
           ["speedtype_delete", [ctypes.c_void_p], None],
           ["speedtype_process_line", [ctypes.c_void_p, ctypes.c_char_p], ctypes.c_int],
+          ["speedtype_apply_level", [ctypes.c_void_p, ctypes.c_byte], None],
 ]
 
 class Libmvpcore:

@@ -748,7 +748,11 @@
                                 <constraints>
                                     <constraint firstAttribute="width" constant="88" id="XzZ-Oq-0l7"/>
                                 </constraints>
-                                <sliderCell key="cell" state="on" alignment="left" maxValue="4" tickMarkPosition="above" numberOfTickMarks="5" allowsTickMarkValuesOnly="YES" sliderType="linear" id="pk2-AD-ptq"/>
+                                <sliderCell key="cell" state="on" alignment="left" maxValue="4" tickMarkPosition="above" numberOfTickMarks="5" allowsTickMarkValuesOnly="YES" sliderType="linear" id="pk2-AD-ptq">
+                                    <connections>
+                                        <action selector="sliderMoved:" target="ZDw-zW-tfv" id="fxk-nG-YpZ"/>
+                                    </connections>
+                                </sliderCell>
                             </slider>
                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xpA-f5-OX7">
                                 <rect key="frame" x="467" y="440" width="59" height="17"/>
@@ -778,7 +782,7 @@
                                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                                                     <size key="minSize" width="598" height="408"/>
-                                                                    <size key="maxSize" width="598" height="10000000"/>
+                                                                    <size key="maxSize" width="600" height="10000000"/>
                                                                     <color key="insertionPointColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                                                                 </textView>
                                                             </subviews>

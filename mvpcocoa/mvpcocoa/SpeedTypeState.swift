@@ -9,96 +9,198 @@
 import Foundation
 
 class SpeedtypeChar {
-    var id: CharId
-    var character: Character
-    var whitespace: Bool
-    var newline: Bool
-    var word: WordId?
-    var visible: Bool
-    var typed: Character?
-    var correct: Bool
-    var rendered: Bool
+    var raw: UnsafeMutablePointer<SpeedtypeCharRaw>
 
-    init(raw: SpeedtypeCharRaw) {
-        self.id = raw.id
-        self.character = Character.init(Unicode.Scalar(raw.character)!)
-        self.whitespace = raw.whitespace != 0
-        self.newline = raw.newline != 0
-        if raw.has_word == 0 {
-            self.word = nil
-        } else {
-            self.word = raw.word
+    var id: CharId {
+        get {
+            return raw.pointee.id
         }
-        self.visible = raw.visible != 0
-        if raw.has_typed == 0 {
-            self.typed = nil
-        } else {
-            self.typed = Character.init(Unicode.Scalar(raw.typed)!)
+    }
+
+    var character: Character {
+        get {
+            return Character.init(Unicode.Scalar(raw.pointee.character)!)
         }
-        self.correct = raw.correct != 0
-        self.rendered = raw.rendered != 0
+    }
+
+    var whitespace: Bool {
+        get {
+            return raw.pointee.whitespace != 0
+        }
+    }
+
+    var newline: Bool {
+        get {
+            return raw.pointee.newline != 0
+        }
+    }
+
+    var word: WordId? {
+        get {
+            if raw.pointee.has_word == 0 {
+                return nil
+            } else {
+                return raw.pointee.word
+            }
+        }
+    }
+
+    var visible: Bool {
+        get {
+            return raw.pointee.visible != 0
+        }
+    }
+
+    var typed: Character? {
+        get {
+            if raw.pointee.has_typed == 0 {
+                return nil
+            } else {
+                return Character.init(Unicode.Scalar(raw.pointee.typed)!)
+            }
+        }
+        set {
+            if let typed = newValue {
+                raw.pointee.has_typed = 1
+                raw.pointee.typed = typed.unicodeScalars.first!.value
+            } else {
+                raw.pointee.has_typed = 0
+            }
+        }
+    }
+
+    var correct: Bool {
+        get {
+            return raw.pointee.correct != 0
+        }
+        set {
+            raw.pointee.correct = newValue ? 1 : 0
+        }
+    }
+
+    var rendered: Bool {
+        get {
+            return self.raw.pointee.rendered != 0
+        }
+        set {
+            self.raw.pointee.rendered = newValue ? 1 : 0
+        }
+    }
+
+    init(raw: UnsafeMutablePointer<SpeedtypeCharRaw>) {
+        self.raw = raw
     }
 }
 
 class SpeedtypeWord {
-    var id: WordId
-    var word: String
-    var visible: Bool
-    var touched: Bool
-    var behind: Bool
-    var chars: [CharId]
+    var raw: UnsafeMutablePointer<SpeedtypeWordRaw>
 
-    init(raw: SpeedtypeWordRaw) {
-        self.id = raw.id
-        self.word = String(cString: raw.word)
-        self.visible = raw.visible != 0
-        self.touched = raw.touched != 0
-        self.behind = raw.behind != 0
-        var chars: [CharId] = []
-        for i in 0..<raw.characters_len {
-            chars.append(raw.characters_ptr[i])
+    var id: WordId {
+        get {
+            return raw.pointee.id
         }
-        self.chars = chars
+    }
+
+    var word: String {
+        get {
+            return String(cString: raw.pointee.word)
+        }
+    }
+
+    var visible: Bool {
+        get {
+            return raw.pointee.visible != 0
+        }
+    }
+
+    var touched: Bool {
+        get {
+            return raw.pointee.touched != 0
+        }
+        set {
+            raw.pointee.touched = newValue ? 1 : 0
+        }
+    }
+
+    var behind: Bool {
+        get {
+            return raw.pointee.behind != 0
+        }
+        set {
+            raw.pointee.behind = newValue ? 1 : 0
+        }
+    }
+
+    var chars: [CharId] {
+        get {
+            var chars: [CharId] = []
+            for i in 0..<raw.pointee.characters_len {
+                chars.append(raw.pointee.characters_ptr[i])
+            }
+            return chars
+        }
+    }
+
+    init(raw: UnsafeMutablePointer<SpeedtypeWordRaw>) {
+        self.raw = raw
     }
 }
 
 class SpeedtypeSentence {
-    var words: [WordId]
+    let raw: UnsafeMutablePointer<SpeedtypeSentenceRaw>
 
-    init(raw: SpeedtypeSentenceRaw) {
-        var words: [WordId] = []
-        for i in 0..<raw.words_len {
-            words.append(raw.words_ptr[i])
+    var words: [WordId] {
+        get {
+            var words: [WordId] = []
+            for i in 0..<raw.pointee.words_len {
+                words.append(raw.pointee.words_ptr[i])
+            }
+            return words
         }
-        self.words = words
+    }
+
+    init(raw: UnsafeMutablePointer<SpeedtypeSentenceRaw>) {
+        self.raw = raw
     }
 }
 
 class SpeedtypeState {
-    var buffer: [SpeedtypeChar]
-    var words: [SpeedtypeWord]
-    var sentences: [SpeedtypeSentence]
+    var raw: UnsafeMutablePointer<SpeedtypeStateRaw>
 
-    init(raw: SpeedtypeStateRaw) {
-        var buffer: [SpeedtypeChar] = []
-        for i in 0..<raw.buffer_len {
-            let char = SpeedtypeChar(raw: raw.buffer_ptr[i])
-            buffer.append(char)
+    var buffer: [SpeedtypeChar] {
+        get {
+            var buffer: [SpeedtypeChar] = []
+            for i in 0..<raw.pointee.buffer_len {
+                let char = SpeedtypeChar(raw: raw.pointee.buffer_ptr.advanced(by: i))
+                buffer.append(char)
+            }
+            return buffer
         }
-        self.buffer = buffer
-        
-        var words: [SpeedtypeWord] = []
-        for i in 0..<raw.words_len {
-            let word = SpeedtypeWord(raw: raw.words_ptr[i])
-            words.append(word)
+    }
+
+    var words: [SpeedtypeWord] {
+        get {
+            var words: [SpeedtypeWord] = []
+            for i in 0..<raw.pointee.words_len {
+                let word = SpeedtypeWord(raw: raw.pointee.words_ptr.advanced(by: i))
+                words.append(word)
+            }
+            return words
         }
-        self.words = words
-        
-        var sentences: [SpeedtypeSentence] = []
-        for i in 0..<raw.sentences_len {
-            let sentence = SpeedtypeSentence(raw: raw.sentences_ptr[i])
-            sentences.append(sentence)
+    }
+
+    var sentences: [SpeedtypeSentence] {
+        get {
+            var sentences: [SpeedtypeSentence] = []
+            for i in 0..<raw.pointee.sentences_len {
+                let sentence = SpeedtypeSentence(raw: raw.pointee.sentences_ptr.advanced(by: i))
+                sentences.append(sentence)
+            }
+            return sentences
         }
-        self.sentences = sentences
+    }
+
+    init(raw: UnsafeMutablePointer<SpeedtypeStateRaw>) {
+        self.raw = raw
     }
 }

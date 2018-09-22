@@ -1,5 +1,6 @@
 extern crate dirs;
 extern crate libc;
+extern crate rand;
 //extern crate sqlite3;
 extern crate sdb;
 extern crate serde;
@@ -13,5 +14,6 @@ mod speedtype;
 mod verse;
 
 pub use capi::*;
+pub use model::speedtype::strong::speedtype_apply_level;
 pub use speedtype::state::*;
 pub use verse::*;

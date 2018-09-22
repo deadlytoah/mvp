@@ -1,5 +1,5 @@
 use dirs;
-use model::strong::level::Level;
+use model::speedtype::strong::Level;
 use model::strong::range::Range;
 use model::strong::strategy::Strategy;
 use serde_json;

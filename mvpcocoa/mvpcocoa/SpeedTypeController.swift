@@ -17,6 +17,7 @@ class SpeedTypeController: NSViewController {
     let guideColour = NSColor.gray
     let correctColour = NSColor.black
     let incorrectColour = NSColor.red
+    let underscoreColour = NSColor.lightGray
     let lineSpacing = 10.0
 
     var state: SpeedtypeState? = nil
@@ -28,6 +29,20 @@ class SpeedTypeController: NSViewController {
         }
         set {
             self.speedTypeView.selectedRange = NSRange(location: newValue, length: 0)
+        }
+    }
+
+    // Source of truth:  Changing this property propagates to
+    // the slider and the hidden words in the text.
+    var difficultyLevel: Int = 0 {
+        didSet {
+            if oldValue != difficultyLevel {
+                self.difficultySlider.integerValue = difficultyLevel
+                if let state = self.state {
+                    speedtype_apply_level(state.raw, UInt8(difficultyLevel))
+                    self.render()
+                }
+            }
         }
     }
 
@@ -63,11 +78,9 @@ class SpeedTypeController: NSViewController {
                 }
             })
 
-            self.state = SpeedtypeState(raw: state!.pointee)
-            self.caret_position = 0
+            self.state = SpeedtypeState(raw: state!)
             self.render()
-
-            speedtype_delete(state)
+            self.speedTypeView?.moveToBeginningOfDocument(self)
         } else {
             let alert = NSAlert()
             alert.alertStyle = .critical
@@ -76,9 +89,12 @@ class SpeedTypeController: NSViewController {
         }
     }
 
-    private func render() {
-        let caret = self.caret_position
+    @IBAction
+    func sliderMoved(_ sender: Any?) {
+        self.difficultyLevel = self.difficultySlider.integerValue
+    }
 
+    private func render() {
         let textStorage = self.speedTypeView.textStorage!
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = CGFloat(lineSpacing)
@@ -99,19 +115,24 @@ class SpeedTypeController: NSViewController {
                     }
                 }
             } else {
-                attributes[NSAttributedStringKey.foregroundColor] = self.guideColour
+                if ch.visible {
+                    attributes[NSAttributedStringKey.foregroundColor] = self.guideColour
+                } else if ch.whitespace {
+                    string = " "
+                    attributes[NSAttributedStringKey.foregroundColor] = self.speedTypeView.backgroundColor
+                } else {
+                    string = "_"
+                    attributes[NSAttributedStringKey.foregroundColor] = self.underscoreColour
+                }
             }
             textStorage.replaceCharacters(in: NSRange(location: ch.id, length: 1), with: NSAttributedString(string: string, attributes: attributes))
             ch.rendered = true
         }
-
-        self.caret_position = caret
     }
 
     // Override the NSView keydown func to read keycode of pressed key
     override func keyDown(with theEvent: NSEvent) {
         self.interpretKeyEvents([theEvent])
-        self.speedTypeView.scrollRangeToVisible(NSRange(location: self.caret_position, length: 1))
     }
 
     override func insertText(_ string: Any) {
@@ -122,8 +143,20 @@ class SpeedTypeController: NSViewController {
             let caret = self.caret_position
             buffer[caret].typed = ch
             buffer[caret].correct = buffer[caret].character == ch
+
+            if let word = buffer[caret].word {
+                let word = self.state!.words[word]
+                word.touched = true
+
+                // we are at the last letter, which means we are done
+                // with this word.
+                if caret == word.chars.last! {
+                    word.behind = true
+                }
+            }
+
             buffer[caret].rendered = false
-            self.caret_position = caret + 1
+            self.speedTypeView?.moveForward(self)
         }
         self.render()
     }
@@ -134,10 +167,14 @@ class SpeedTypeController: NSViewController {
             let ch = self.state!.buffer[caret - 1]
             ch.correct = false
             ch.typed = nil
-            ch.rendered = false
+            if let word = ch.word {
+                let word = self.state!.words[word]
+                word.behind = false
+            }
 
-            self.caret_position = caret - 1
+            ch.rendered = false
             self.render()
+            self.speedTypeView?.moveBackward(self)
         }
     }
 
