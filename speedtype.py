@@ -29,7 +29,7 @@ Level2 = {
 }
 
 Level3 = {
-    'hidden_words': 0.5,
+    'hidden_words': 0.4,
 }
 
 Level4 = {

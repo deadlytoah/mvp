@@ -19,7 +19,7 @@ impl Level {
         match self {
             Level::Level1 => 0.0,
             Level::Level2 => 0.2,
-            Level::Level3 => 0.5,
+            Level::Level3 => 0.4,
             Level::Level4 => 0.7,
             Level::Level5 => 1.0,
         }
