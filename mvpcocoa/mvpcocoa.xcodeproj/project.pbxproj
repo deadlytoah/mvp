@@ -430,8 +430,9 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
+					/Users/hcs/Code/target/release,
 				);
-				LIBRARY_SEARCH_PATHS = $HOME/Code/target/debug;
+				LIBRARY_SEARCH_PATHS = $HOME/Code/target/release;
 				PRODUCT_BUNDLE_IDENTIFIER = net.heesuk.mvpcocoa;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "mvpcocoa/mvpcocoa-Bridging-Header.h";
