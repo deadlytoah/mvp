@@ -18,4 +18,58 @@ class SpeedTypeView: NSTextView {
     override func keyDown(with theEvent: NSEvent) {
         nextResponder?.keyDown(with: theEvent)
     }
+
+    override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if let action = menuItem.action {
+            switch action.description {
+            case "cut:", "paste:", "pasteAsPlainText:", "delete:",
+                 "print:",
+                 "underline:",
+                 "outline:",
+                 "showGuessPanel:",
+                 "checkSpelling:",
+                 "toggleContinuousSpellChecking:",
+                 "toggleGrammarChecking:",
+                 "toggleAutomaticSpellingCorrection:",
+                 "replaceQuotesInSelection:",
+                 "replaceDashesInSelection:",
+                 "addLinksInSelection:",
+                 "replaceTextInSelection:",
+                 "orderFrontSubstitutionsPanel:",
+                 "toggleSmartInsertDelete:",
+                 "toggleAutomaticQuoteSubstitution:",
+                 "toggleAutomaticDashSubstitution:",
+                 "toggleAutomaticLinkDetection:",
+                 "toggleAutomaticDataDetection:",
+                 "toggleAutomaticTextReplacement:",
+                 "uppercaseWord:",
+                 "lowercaseWord:",
+                 "capitalizeWord:",
+                 "changeLayoutOrientation:",
+                 "makeBaseWritingDirectionNatural:",
+                 "makeBaseWritingDirectionLeftToRight:",
+                 "makeBaseWritingDirectionRightToLeft:",
+                 "makeTextWritingDirectionNatural:",
+                 "makeTextWritingDirectionLeftToRight:",
+                 "makeTextWritingDirectionRightToLeft:",
+                 "alignLeft:",
+                 "alignCenter:",
+                 "alignJustified:",
+                 "alignRight:",
+                 "toggleRuler:",
+                 "copyRuler:",
+                 "pasteRuler:",
+                 "copyFont:",
+                 "pasteFont:",
+                 "performFindPanelAction:",
+                 "centerSelectionInVisibleArea:"
+                :
+                return false
+            default:
+                return true
+            }
+        } else {
+            return true
+        }
+    }
 }

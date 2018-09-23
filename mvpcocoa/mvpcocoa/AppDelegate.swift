@@ -14,7 +14,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        // Insert code here to initialize your application
+        let userDefaults = UserDefaults.standard
+        userDefaults.set(true, forKey: "DisabledDictationMenuItem")
+        userDefaults.set(true, forKey: "DisabledCharacterPaletteMenuItem")
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
