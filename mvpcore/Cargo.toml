@@ -4,11 +4,14 @@ name = "mvpcore"
 version = "0.1.0"
 
 [dependencies]
-libc = "0.2.42"
-serde = "1.0.70"
-serde_derive = "1.0.70"
-serde_json = "1.0.24"
-sqlite3 = "0.24.0"
+dirs = "1.*"
+libc = "0.*"
+rand = "0.*"
+sdb = { path = "../sdb/" }
+serde = "1.*"
+serde_derive = "1.*"
+serde_json = "1.*"
+sqlite3 = "0.*"
 
 [lib]
-crate-type = ["staticlib"]
+crate-type = ["cdylib", "staticlib"]

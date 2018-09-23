@@ -18,6 +18,10 @@ class ErrorKind(Enum):
     RangeParseError = 5
     LevelUnknown = 6
     StrategyUnknown = 7
+    Utf8Error = 8
+    BookUnknown = 9
+    StringConvertError = 10
+    NulError = 11
 
 class Error(Exception):
     def __init__(self, msg):
@@ -51,6 +55,22 @@ class StrategyUnknown(Error):
     def __init__(self, msg):
         Error.__init__(self, msg)
 
+class Utf8Error(Error):
+    def __init__(self, msg):
+        Error.__init__(self, msg)
+
+class BookUnknown(Error):
+    def __init__(self, msg):
+        Error.__init__(self, msg)
+
+class StringConvertError(Error):
+    def __init__(self, msg):
+        Error.__init__(self, msg)
+
+class NulError(Error):
+    def __init__(self, msg):
+        Error.__init__(self, msg)
+
 _error_switcher = {
     ErrorKind.IOError: IOError,
     ErrorKind.SessionExists: SessionExists,
@@ -59,6 +79,10 @@ _error_switcher = {
     ErrorKind.RangeParseError: RangeParseError,
     ErrorKind.LevelUnknown: LevelUnknown,
     ErrorKind.StrategyUnknown: StrategyUnknown,
+    ErrorKind.Utf8Error: Utf8Error,
+    ErrorKind.BookUnknown: BookUnknown,
+    ErrorKind.StringConvertError: StringConvertError,
+    ErrorKind.NulError: NulError,
 }
 
 def _map_error(errorkind):
@@ -68,54 +92,30 @@ def _map_error(errorkind):
 # Data Structures
 ######################################################################
 
-class Location(ctypes.Structure):
-    """creates a struct to point to a location in the Bible"""
+class Session(ctypes.Structure):
+    """Represents a speed typing session.
 
+    The order of the fields and their types must match the
+    corresponding data structure in the core library.
+
+    """
+    _fields_ = [('name', ctypes.c_ubyte * 64),
+                ('range', Location * 2),
+                ('level', ctypes.c_ubyte),
+                ('strategy', ctypes.c_ubyte)]
+
+class Location(ctypes.Structure):
+    """creates a struct to point to a location in the Bible
+
+    The order of the fields and their types must match the
+    corresponding data structure in the core library.
+
+    """
     _fields_ = [('translation', ctypes.c_ubyte * 8),
                 ('book', ctypes.c_ubyte * 8),
                 ('chapter', ctypes.c_short),
                 ('sentence', ctypes.c_short),
                 ('verse', ctypes.c_short)]
-
-class Session:
-    def __init__(self, name):
-        """Initialises a new Session.
-
-        The new Session instance is not persisted in disk until
-        write() method is called.
-
-        """
-        self.handle = libmvpcore.session_new(ctypes.bytes(name, encoding='utf8'))
-
-    def __del__(self):
-        libmvpcore.session_destroy(self.handle)
-
-    def write(self):
-        res = libmvpcore.session_write(self.handle)
-        if res != 0:
-            raise _map_error(res)(get_message(res).value)
-
-    def delete(self):
-        res = libmvpcore.session_delete(self.handle)
-        if res != 0:
-            raise _map_error(res)(get_message(res).value)
-        else:
-            self.handle = None
-
-    def set_range(self, start, end):
-        res = libmvpcore.session_set_range(self.handle, start, end)
-        if res != 0:
-            raise _map_error(res)(get_message(res).value)
-
-    def set_level(self, level):
-        res = libmvpcore.session_set_level(self.handle, level)
-        if res != 0:
-            raise _map_error(res)(get_message(res).value)
-
-    def set_strategy(self, strategy):
-        res = libmvpcore.session_set_strategy(self.handle, strategy)
-        if res != 0:
-            raise _map_error(res)(get_message(res).value)
 
 def list_sessions():
     pass

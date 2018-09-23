@@ -1,4 +1,4 @@
-use book::Book;
+use model::strong::book::Book;
 
 #[derive(Serialize, Deserialize)]
 pub struct Location {

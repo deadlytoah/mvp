@@ -3,8 +3,8 @@
 
 import config
 import json
+import model
 from PyQt5 import uic
-from sdb import Sdb
 
 window = None
 
@@ -16,12 +16,5 @@ class DbgViewDb():
         global window
         window = self
 
-        with Sdb(config.translation + config.DB_EXT) as database:
-            self.verse_table = [table for table in database.get_tables()
-                            if table.name() == 'verse'][0]
-            self.verse_table.create_manager()
-            self.verse_table.verify()
-            self.verse_table.service()
-            records = self.verse_table.select_all()
-
+        records = model.verse.find_all()
         window.gui.textedit_database.setPlainText(json.dumps(records, indent = 4))

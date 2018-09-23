@@ -2,12 +2,12 @@
 """Displays the flash card of the Bible verses."""
 
 import config
+import model
 import screen
 from PyQt5 import Qt, QtCore, QtGui, QtWidgets
 from PyQt5 import uic
 from address import Address
 from key import Key
-from sdb import Sdb
 from sentence import sentence_make_label, sentences_cons2, sentences_index_by_verseno
 from graphlayout import GraphLayout
 
@@ -37,20 +37,13 @@ class FlashCardForm:
         self.gui.setCentralWidget(self.canvas)
         self.canvas.setFocus(True)
 
-        self.database = Sdb(config.translation + config.DB_EXT).__enter__()
-        self.verse_table = [table for table in self.database.get_tables()
-                            if table.name() == 'verse'][0]
-        self.verse_table.create_manager()
-        self.verse_table.verify()
-        self.verse_table.service()
-        records = self.verse_table.select_all()
-
         # Stack is used to help implementing input session.  The top
         # of the stack contains the currently display flash card, and
         # the very bottom is what we will revert to if the input
         # session fails.
         self.stack = []
 
+        records = model.verse.find_all()
         if len([r for r in records if r['deleted'] == '0']) == 0:
             self.canvas.set_empty_database()
         else:
@@ -171,7 +164,7 @@ def _peek():
     if key.verse == None:
         key.verse = '1'
 
-    records = window.verse_table.select_all()
+    records = model.verse.find_by_book_and_chapter(key.book, int(key.chapter))
     matches = []
     for rec in records:
         reckey = Key.from_str(rec['key'])
@@ -194,14 +187,14 @@ def _peek():
     window.canvas.update()
 
 def _address_from_key(key):
-    records = window.verse_table.select_all()
-    sentences, lookup = sentences_cons2(records, key.book, key.chapter)
+    records = model.verse.find_by_book_and_chapter(key.book, int(key.chapter))
+    sentences, lookup = sentences_cons2(records)
     sentence = sentences_index_by_verseno(sentences, lookup, key.verse)
     return Address(sentences, lookup, (key.book, key.chapter, sentence))
 
 def _display_by_address(address):
-    records = window.verse_table.select_all()
-    sentences, lookup = sentences_cons2(records, address.book, address.chapter)
+    records = model.verse.find_by_book_and_chapter(address.book, int(address.chapter))
+    sentences, lookup = sentences_cons2(records)
     sentence = sentences[address.sentence]
     label = sentence_make_label(sentence, address.book, address.chapter)
 
@@ -238,8 +231,8 @@ def debug_layout_engine():
 
         address = window.stack[0]
 
-        records = window.verse_table.select_all()
-        sentences, lookup = sentences_cons2(records, address.book, address.chapter)
+        records = model.verse.find_by_book_and_chapter(address.book, int(address.chapter))
+        sentences, lookup = sentences_cons2(records)
         sentence = sentences[address.sentence]
 
         text = sentence['text']
@@ -258,8 +251,8 @@ def debug_sentences():
     if len(window.stack) > 0:
         from dbgsentences import DbgSentences
         address = window.stack[0]
-        records = window.verse_table.select_all()
-        (sentences, lookup) = sentences_cons2(records, address.book, address.chapter)
+        records = model.verse.find_by_book_and_chapter(address.book, int(address.chapter))
+        (sentences, lookup) = sentences_cons2(records)
         info = DbgSentences()
         info.gui.label_source.setText('Sentences constructed from: '
                                       + ' '.join([address.book, address.chapter]))
@@ -286,8 +279,8 @@ def debug_display_graph():
     if len(window.stack) > 0:
         address = window.stack[0]
 
-        records = window.verse_table.select_all()
-        sentences, lookup = sentences_cons2(records, address.book, address.chapter)
+        records = model.verse.find_by_book_and_chapter(address.book, int(address.chapter))
+        sentences, lookup = sentences_cons2(records)
         sentence = sentences[address.sentence]
 
         text = sentence['text']

@@ -10,15 +10,17 @@ LIB_NAME = "libmvpcore.dylib"
 
 """Data structure defining functions and types of their
 arguments."""
-EXTFNS = [["session_new", [ctypes.c_char_p], ctypes.c_void_p],
-          ["session_destroy", [ctypes.c_void_p], None],
-          ["session_write", [ctypes.c_void_p], ctypes.c_int],
-          ["session_delete", [ctypes.c_void_p], ctypes.c_int],
-          ["session_set_range", [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p], ctypes.c_int],
-          ["session_set_level", [ctypes.c_void_p, ctypes.c_int], ctypes.c_int],
-          ["session_set_strategy", [ctypes.c_void_p, ctypes.c_int], ctypes.c_int],
+EXTFNS = [["session_create", [ctypes.c_void_p], ctypes.c_int],
           ["session_list_sessions", [ctypes.c_char_p, POINTER(ctypes.c_size_t)], ctypes.c_int],
-          ["session_get_message", [ctypes.c_int], ctypes.c_char_p]]
+          ["session_delete", [ctypes.c_void_p], ctypes.c_int],
+          ["session_get_message", [ctypes.c_int], ctypes.c_char_p],
+          ["verse_find_all", [ctypes.c_char_p, ctypes.c_void_p], ctypes.c_int],
+          ["verse_find_by_book_and_chapter", [ctypes.c_char_p, ctypes.c_void_p, ctypes.c_char_p, ctypes.c_short], ctypes.c_int],
+          ["speedtype_new", None, ctypes.c_void_p],
+          ["speedtype_delete", [ctypes.c_void_p], None],
+          ["speedtype_process_line", [ctypes.c_void_p, ctypes.c_char_p], ctypes.c_int],
+          ["speedtype_apply_level", [ctypes.c_void_p, ctypes.c_byte], None],
+]
 
 class Libmvpcore:
     """ Helps invoking functions exported by libmvpcore. """
@@ -30,7 +32,8 @@ class Libmvpcore:
         # Set up each external function exported by libste.
         for entry in EXTFNS:
             func = getattr(self.library, entry[0])
-            func.argtypes = entry[1]
+            if entry[1] is not None:
+                func.argtypes = entry[1]
             if entry[2] is not None:
                 func.restype = entry[2]
 

@@ -13,6 +13,9 @@ class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectio
 
     static let Title = "mvp — Sessions"
 
+    let BufferSize = 20
+    var sessions: Array<Session> = []
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -27,10 +30,10 @@ class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectio
         super.viewDidAppear()
         self.view.window?.title = SessionController.Title
 
-        var len = 4096
-        var buf = Array<Int8>(repeating: 0, count: len)
+        var len = BufferSize
+        self.sessions = Array<Session>(repeating: Session.init(), count: len)
 
-        buf.withUnsafeMutableBufferPointer { ptr in
+        self.sessions.withUnsafeMutableBufferPointer { ptr in
             let retcode = session_list_sessions(ptr.baseAddress!, UnsafeMutablePointer(&len))
             if retcode != 0 {
                 let alert = NSAlert()
@@ -39,16 +42,21 @@ class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectio
                 alert.beginSheetModal(for: self.view.window!)
             }
         }
+
+        self.sessions.removeLast(BufferSize - len)
     }
 
     func collectionView(_ collectionView: NSCollectionView, numberOfItemsInSection section: Int) -> Int {
-        // TODO implement this
-        return 20
+        return self.sessions.count
     }
 
     func collectionView(_ collectionView: NSCollectionView, itemForRepresentedObjectAt indexPath: IndexPath) -> NSCollectionViewItem {
-        // TODO implement this
-        return sessionView.makeItem(withIdentifier: NSUserInterfaceItemIdentifier(rawValue: "SessionColViewItem"), for: indexPath)
+        let item = sessionView.makeItem(withIdentifier: NSUserInterfaceItemIdentifier(rawValue: "SessionColViewItem"), for: indexPath)
+        withUnsafePointer(to: &self.sessions[indexPath[1]].name.0, { ptr in
+            let name = String(cString: ptr)
+            item.textField?.stringValue = name
+        })
+        return item
     }
 
     override var representedObject: Any? {

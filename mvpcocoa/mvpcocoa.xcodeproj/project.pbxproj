@@ -12,9 +12,11 @@
 		0F1A296A211182BB00D348B8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0F1A2969211182BB00D348B8 /* Assets.xcassets */; };
 		0F1A296D211182BB00D348B8 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0F1A296B211182BB00D348B8 /* Main.storyboard */; };
 		0F1A2979211182BB00D348B8 /* mvpcocoaUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F1A2978211182BB00D348B8 /* mvpcocoaUITests.swift */; };
-		0F3C50ED211DB0AD0040B010 /* SessionColViewItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3C50EB211DB0AD0040B010 /* SessionColViewItem.swift */; };
 		0F3C50EE211DB0AD0040B010 /* SessionColViewItem.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0F3C50EC211DB0AD0040B010 /* SessionColViewItem.xib */; };
-		0F94EEAF211BDA13005349E7 /* libmvpcore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FE76A412119FD1C00E36923 /* libmvpcore.a */; };
+		0F59D68921410FF40091C6FD /* SpeedTypeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F59D68821410FF40091C6FD /* SpeedTypeController.swift */; };
+		0F59D68B214111AA0091C6FD /* SpeedTypeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F59D68A214111AA0091C6FD /* SpeedTypeView.swift */; };
+		0FC9B6F5214C8D430041526F /* SpeedTypeState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FC9B6F4214C8D430041526F /* SpeedTypeState.swift */; };
+		0FF57BC02138E13000C4136C /* libmvpcore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FF57BBF2138E13000C4136C /* libmvpcore.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,13 +40,16 @@
 		0F1A2974211182BB00D348B8 /* mvpcocoaUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = mvpcocoaUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0F1A2978211182BB00D348B8 /* mvpcocoaUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mvpcocoaUITests.swift; sourceTree = "<group>"; };
 		0F1A297A211182BC00D348B8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		0F3C50EB211DB0AD0040B010 /* SessionColViewItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionColViewItem.swift; sourceTree = "<group>"; };
 		0F3C50EC211DB0AD0040B010 /* SessionColViewItem.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SessionColViewItem.xib; sourceTree = "<group>"; };
+		0F59D68821410FF40091C6FD /* SpeedTypeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedTypeController.swift; sourceTree = "<group>"; };
+		0F59D68A214111AA0091C6FD /* SpeedTypeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedTypeView.swift; sourceTree = "<group>"; };
 		0FB15544211962F900B888CE /* mvpcocoa-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "mvpcocoa-Bridging-Header.h"; sourceTree = "<group>"; };
 		0FB155472119633C00B888CE /* session.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = session.h; sourceTree = "<group>"; };
+		0FC9B6F3214C1A150041526F /* speedtype.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = speedtype.h; sourceTree = "<group>"; };
+		0FC9B6F4214C8D430041526F /* SpeedTypeState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedTypeState.swift; sourceTree = "<group>"; };
 		0FE76A3B2119FB8500E36923 /* mvpcore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = mvpcore; path = ../mvpcore; sourceTree = "<group>"; };
 		0FE76A3D2119FB8C00E36923 /* mvpcocoa.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = mvpcocoa.xcodeproj; sourceTree = "<group>"; };
-		0FE76A412119FD1C00E36923 /* libmvpcore.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmvpcore.a; path = ../mvpcore/target/debug/libmvpcore.a; sourceTree = "<group>"; };
+		0FF57BBF2138E13000C4136C /* libmvpcore.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmvpcore.a; path = ../../target/debug/libmvpcore.a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,7 +57,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0F94EEAF211BDA13005349E7 /* libmvpcore.a in Frameworks */,
+				0FF57BC02138E13000C4136C /* libmvpcore.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -89,15 +94,18 @@
 			isa = PBXGroup;
 			children = (
 				0F1A2965211182B900D348B8 /* AppDelegate.swift */,
-				0F1A2967211182B900D348B8 /* SessionController.swift */,
 				0F1A2969211182BB00D348B8 /* Assets.xcassets */,
 				0F1A296B211182BB00D348B8 /* Main.storyboard */,
+				0F1A2967211182B900D348B8 /* SessionController.swift */,
+				0F59D68A214111AA0091C6FD /* SpeedTypeView.swift */,
+				0F59D68821410FF40091C6FD /* SpeedTypeController.swift */,
 				0F3C50EC211DB0AD0040B010 /* SessionColViewItem.xib */,
-				0F3C50EB211DB0AD0040B010 /* SessionColViewItem.swift */,
 				0F1A296E211182BB00D348B8 /* Info.plist */,
 				0F1A296F211182BB00D348B8 /* mvpcocoa.entitlements */,
 				0FB15544211962F900B888CE /* mvpcocoa-Bridging-Header.h */,
 				0FB155472119633C00B888CE /* session.h */,
+				0FC9B6F3214C1A150041526F /* speedtype.h */,
+				0FC9B6F4214C8D430041526F /* SpeedTypeState.swift */,
 			);
 			path = mvpcocoa;
 			sourceTree = "<group>";
@@ -114,7 +122,7 @@
 		0FB1553F2119621300B888CE /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				0FE76A412119FD1C00E36923 /* libmvpcore.a */,
+				0FF57BBF2138E13000C4136C /* libmvpcore.a */,
 				0FE76A3D2119FB8C00E36923 /* mvpcocoa.xcodeproj */,
 				0FE76A3B2119FB8500E36923 /* mvpcore */,
 			);
@@ -234,9 +242,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0FC9B6F5214C8D430041526F /* SpeedTypeState.swift in Sources */,
+				0F59D68B214111AA0091C6FD /* SpeedTypeView.swift in Sources */,
+				0F59D68921410FF40091C6FD /* SpeedTypeController.swift in Sources */,
 				0F1A2968211182B900D348B8 /* SessionController.swift in Sources */,
 				0F1A2966211182B900D348B8 /* AppDelegate.swift in Sources */,
-				0F3C50ED211DB0AD0040B010 /* SessionColViewItem.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -397,8 +407,9 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
-					/Users/hcs/Code/mvp/mvpcore/target/debug,
+					/Users/hcs/Code/target/debug,
 				);
+				LIBRARY_SEARCH_PATHS = $HOME/Code/target/debug;
 				PRODUCT_BUNDLE_IDENTIFIER = net.heesuk.mvpcocoa;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "mvpcocoa/mvpcocoa-Bridging-Header.h";
@@ -419,7 +430,9 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
+					/Users/hcs/Code/target/release,
 				);
+				LIBRARY_SEARCH_PATHS = $HOME/Code/target/release;
 				PRODUCT_BUNDLE_IDENTIFIER = net.heesuk.mvpcocoa;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "mvpcocoa/mvpcocoa-Bridging-Header.h";

@@ -5,7 +5,9 @@ more words are hidden.
 
 """
 
+import bridge
 import config
+import model
 import os
 import screen
 import session
@@ -16,7 +18,6 @@ from caret import Caret
 from key import Key
 from random import randrange
 from sentence import sentences_cons2, sentences_index_by_verseno
-from sdb import Sdb
 from graphlayout import GraphLayout
 
 Level1 = {
@@ -28,7 +29,7 @@ Level2 = {
 }
 
 Level3 = {
-    'hidden_words': 0.5,
+    'hidden_words': 0.4,
 }
 
 Level4 = {
@@ -73,13 +74,6 @@ class SpeedTypeForm(UiMainWindow, QMainWindow):
         self.canvas.setFocus(True)
 
         self.title.setFont(QtGui.QFont(config.FONT_FAMILY, 20))
-
-        self.database = Sdb(config.translation + config.DB_EXT).__enter__()
-        self.verse_table = [table for table in self.database.get_tables()
-                            if table.name() == 'verse'][0]
-        self.verse_table.create_manager()
-        self.verse_table.verify()
-        self.verse_table.service()
 
     def _difficulty_level_changed(self, value):
         """called when user changes the difficulty level by manipulating the
@@ -138,16 +132,11 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
             'fontheight': fm.height(),
         }
 
-        # sequential storage of characters to display and their
-        # states. This includes correct or incorrect entries and which
-        # word each character belongs to.
-        self.buf = []
+        # The state of the application.
+        self.state = bridge.speedtype.State()
 
         # The caret.
         self.caret = None
-
-        # list of words and their states.
-        self.words = []
 
         # list of indices to words that belong to each sentence.
         self.sentences = []
@@ -176,54 +165,19 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         self.title = title
         window.title.setText(self.title)
 
-    def _init_char(self, ch):
-        """Constructs a character.
-
-        Constructs a character with its visibility state, whether user
-        typed it correctly and the incorrect letter if typed
-        incorrectly.
-
-        """
-        return {
-            'char': ch,
-            'whitespace': ch == ' ' or ch == '\n',
-            'word': None,
-            'visible': True,
-            'typed': None,
-            'correct': False,
-        }
-
-    def _init_word(self):
-        """Constructs a word.
-
-        Constructs a word with its visibility state, reference to the
-        last character of the word and whether it has been touched.
-
-        """
-        return {
-            'id': None,
-            'word': '',
-            'visible': True,
-            'touched': False,
-            'behind': False,
-            'last_char': None,
-        }
-
     def clear_text(self):
         """Clears the text"""
-        self.buf = []
-        self.words = []
+        del self.state
+        self.state = bridge.speedtype.State()
         self.caret.charpos = 0
 
     def set_text(self, text):
         """Sets the text to be displayed in the canvas."""
         self.clear_text()
+        self._process_text(text)
 
-        (self.buf, self.words) = self._process_text(text)
-        self.sentences = [[index for (index, _) in enumerate(self.words)]]
-
-        self.caret.buflen = len(self.buf)
-        self.caret.eobuf = len(self.buf) - 1
+        self.caret.buflen = len(self.state.buf())
+        self.caret.eobuf = len(self.state.buf()) - 1
         self._render()
 
     def append_sentence(self, sentence_text):
@@ -236,15 +190,10 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         long.  This method lets you feed one sentence at a time.
 
         """
-        (buf, words) = self._process_text(sentence_text)
+        self._process_text(sentence_text)
 
-        sentence = [len(self.words) + index for (index, _) in enumerate(words)]
-        self.sentences.append(sentence)
-        self.buf.extend(buf)
-        self.words.extend(words)
-
-        self.caret.buflen = len(self.buf)
-        self.caret.eobuf = len(self.buf) - 1
+        self.caret.buflen = len(self.state.buf())
+        self.caret.eobuf = len(self.state.buf()) - 1
         self._render()
 
     def _process_text(self, text):
@@ -255,38 +204,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         The list of words is used to show or hide words.
 
         """
-        layout = self.engine.layout(text)
-        buf = []
-        words = []
-
-        for text in layout:
-            make_word = self._init_word()
-
-            for ch in text:
-                maybe_letter = self._init_char(ch)
-                buf.append(maybe_letter)
-
-                if config.WORD_DELIMITERS.find(ch) >= 0:
-                    if len(make_word['word']) > 0:
-                        words.append(make_word)
-                        make_word = self._init_word()
-                    else:
-                        pass
-                else:
-                    word_index = len(words) + len(self.words)
-                    maybe_letter['word'] = word_index
-                    make_word['id'] = word_index
-                    make_word['word'] = make_word['word'] + ch
-                    make_word['last_char'] = len(buf) - 1
-
-            # the last word in the line
-            if len(make_word['word']) > 0:
-                words.append(make_word)
-
-            # end of line
-            buf.append(self._init_char('\n'))
-
-        return (buf, words)
+        for line in self.engine.layout(text):
+            self.state.process_line(line)
 
     def set_level(self, level):
         """Sets the difficulty level."""
@@ -303,8 +222,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         appropriate.
 
         """
-        for sentence in self.sentences:
-            words = [self.words[index] for index in sentence]
+        for sentence in self.state.sentences():
+            words = [self.state.words()[index] for index in sentence]
             self._apply_level_words(level, words)
 
     def _apply_level_words(self, level, words):
@@ -375,13 +294,13 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
     def _hide_word(self, word):
         """hides a specific word"""
         word['visible'] = False
-        for ch in [ch for ch in self.buf if ch['word'] == word['id']]:
+        for ch in [ch for ch in self.state.buf() if ch['word'] == word['id']]:
             ch['visible'] = False
 
     def _show_word(self, word):
         """shows a specific word"""
         word['visible'] = True
-        for ch in [ch for ch in self.buf if ch['word'] == word['id']]:
+        for ch in [ch for ch in self.state.buf() if ch['word'] == word['id']]:
             ch['visible'] = True
 
     def edit_session(self):
@@ -441,8 +360,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         book = loc['book']
         chapter = str(loc['chapter'])
 
-        records = window.verse_table.select_all()
-        sentences, _ = sentences_cons2(records, book, chapter)
+        records = model.verse.find_by_book_and_chapter(book, int(chapter))
+        sentences, _ = sentences_cons2(records)
 
         if len(sentences) > 0:
             label = self.session['name'] + ' ' + book + ' ' + chapter
@@ -459,8 +378,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
                 self.append_sentence(text)
 
             # The index is expected to match the id property.
-            assert([i for (i, w) in enumerate(self.words) if i == w['id']] ==
-                   [word['id'] for word in self.words])
+            assert([i for (i, w) in enumerate(self.state.words()) if i == w['id']] ==
+                   [word['id'] for word in self.state.words()])
 
             # adjust difficulty level according to the session property.
             level = int(self.session['level'])
@@ -482,11 +401,11 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
     @Qt.pyqtSlot()
     def persist_session(self):
         """Persists the session and user's progress."""
-        if self.buf is not None and self.words is not None:
+        if self.state.buf() is not None and self.state.words() is not None:
             self.session['progress'] = {
-                'buf': self.buf,
-                'words': self.words,
-                'sentences': self.sentences,
+                'buf': self.state.buf(),
+                'words': self.state.words(),
+                'sentences': self.state.sentences(),
                 'caret': self.caret.persist(),
                 'title': self.title,
             }
@@ -543,9 +462,9 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         if progress is None:
             self._start_session()
         else:
-            self.buf = progress['buf']
-            self.words = progress['words']
-            self.sentences = progress['sentences']
+            self.state.set_buf(progress['buf'])
+            self.state.set_words(progress['words'])
+            self.state.set_sentences(progress['sentences'])
             self.caret.restore(progress['caret'])
             self.set_title(progress['title'])
 
@@ -574,11 +493,11 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
     def keyPressEvent(self, event):
         if event.key() == Qt.Qt.Key_Backspace:
             if self.caret.backward():
-                ch = self.buf[self.caret.charpos]
+                ch = self.state.buf()[self.caret.charpos]
                 ch['typed'] = None
                 ch['correct'] = False
                 if ch['word'] is not None:
-                    word = self.words[ch['word']]
+                    word = self.state.words()[ch['word']]
                     word['behind'] = False
 
                 self.persist_timer.start()
@@ -605,7 +524,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
                 # we are at the last letter, which means we are done
                 # with this word.
-                if self.caret.charpos == word['last_char']:
+                if self.caret.charpos == word['characters'][-1]:
                     word['behind'] = True
 
             self.persist_timer.start()
@@ -687,7 +606,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         x = 0
         ct_info = []
 
-        for (i, ch) in enumerate(self.buf):
+        for (i, ch) in enumerate(self.state.buf()):
             if i == self.caret.charpos:
                 self.caret.pos = (x, y)
 
@@ -804,7 +723,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
 
     def _char_at_caret(self):
         """Returns the character at the caret"""
-        return self.buf[self.caret.charpos]
+        return self.state.buf()[self.caret.charpos]
 
     def _word_at_caret(self):
         """Returns the word at the caret
@@ -812,8 +731,8 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
         Returns the word at the caret, or None if there is none found.
 
         """
-        if self.buf[self.caret.charpos]['word'] is not None:
-            return self.words[self.buf[self.caret.charpos]['word']]
+        if self._char_at_caret()['word'] is not None:
+            return self.state.words()[self._char_at_caret()['word']]
         else:
             return None
 
@@ -824,7 +743,7 @@ class SpeedTypeCanvas(QtWidgets.QWidget):
     def _render_incorrect_char(self, char):
         """Handles the case where user typed the incorrect character"""
         index = char['word']
-        if index is not None and self.words[index]['visible'] == True:
+        if index is not None and self.state.words()[index]['visible'] == True:
             return (char['char'], config.COLOURS['incorrect'])
         else:
             return (char['typed'], config.COLOURS['incorrect'])
@@ -850,8 +769,8 @@ def _view_enter_verses():
     screen.switch_to(screen.DATA_ENTRY_INDEX)
 
 def _address_from_key(key):
-    records = window.verse_table.select_all()
-    sentences, lookup = sentences_cons2(records, key.book, key.chapter)
+    records = model.verse.find_by_book_and_chapter(key.book, int(key.chapter))
+    sentences, lookup = sentences_cons2(records)
     sentence = sentences_index_by_verseno(sentences, lookup, key.verse)
     return Address(sentences, lookup, (key.book, key.chapter, sentence))
 
@@ -866,8 +785,8 @@ def _debug_sentences():
     global window
     loc = window.canvas.session['range']['start']
     address = _address_from_key(Key(loc['book'], loc['chapter'], str(1)))
-    records = window.verse_table.select_all()
-    (sentences, lookup) = sentences_cons2(records, address.book, address.chapter)
+    records = model.verse.find_by_book_and_chapter(address.book, int(address.chapter))
+    (sentences, lookup) = sentences_cons2(records)
     info = DbgSentences()
     info.gui.label_source.setText('Sentences constructed from: '
                                   + ' '.join([address.book, str(address.chapter)]))
