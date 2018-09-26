@@ -36,6 +36,11 @@ typedef struct {
     Verse verses[176];
 } VerseView;
 
+typedef struct {
+    size_t index;
+    size_t length;
+} LayoutLine;
+
 extern int session_create(Session *);
 extern int session_list_sessions(Session *buf, size_t *len);
 extern int session_delete(Session *);
@@ -46,5 +51,9 @@ extern int verse_find_by_book_and_chapter(const char *translation,
                                           VerseView *view,
                                           const char *book,
                                           unsigned short chapter);
+
+extern int graphlayout_layout(const char *text,
+                              LayoutLine *indicies_ptr,
+                              size_t *indicies_len);
 
 #endif /* session_h */

@@ -59,16 +59,21 @@ class SpeedTypeController: NSViewController {
         if retval == 0 {
             let state = speedtype_new()
 
+            var verseList: [String] = []
             withUnsafePointer(to: &verseView.verses.0, { verses in
                 for i in 0..<verseView.count {
                     var verse = verses[i]
                     _ = String(cString: &verse.key.0)
-                    let text = String(cString: &verse.text.0)
+                    verseList.append(String(cString: &verse.text.0))
+                }
+            })
 
+            verseList.forEach({ verse in
+                for line in graphLayout(text: verse) {
                     let textStorage = self.speedTypeView.textStorage!
-                    textStorage.append(NSAttributedString(string: "\(text)\n"))
+                    textStorage.append(NSAttributedString(string: "\(line)\n"))
 
-                    let retval = speedtype_process_line(state!, text)
+                    let retval = speedtype_process_line(state!, line)
                     if retval != 0 {
                         let alert = NSAlert()
                         alert.alertStyle = .critical
