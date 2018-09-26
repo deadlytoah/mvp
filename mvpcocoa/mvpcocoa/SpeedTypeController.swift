@@ -39,8 +39,12 @@ class SpeedTypeController: NSViewController {
             if oldValue != difficultyLevel {
                 self.difficultySlider.integerValue = difficultyLevel
                 if let state = self.state {
+                    let caret = caret_position
                     speedtype_apply_level(state.raw, UInt8(difficultyLevel))
                     self.render()
+                    if caret != caret_position {
+                        caret_position = caret
+                    }
                 }
             }
         }
