@@ -52,10 +52,6 @@ class SpeedTypeController: NSViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-    }
-
-    override func viewDidAppear() {
-        super.viewDidAppear()
 
         var verseView = VerseView()
         let retval = verse_find_by_book_and_chapter("esv", &verseView, "Phil", 2)
