@@ -19,6 +19,8 @@ pub enum CapiError {
     Nul(ffi::NulError),
     Sdb(sdb::Error),
     Io(::std::io::Error),
+    HttpRequest(::reqwest::Error),
+    Regex(::regex::Error),
     BufferTooSmall,
 }
 
@@ -31,6 +33,8 @@ impl ::std::error::Error for CapiError {
             CapiError::Nul(ref e) => e.description(),
             CapiError::Sdb(ref e) => e.description(),
             CapiError::Io(ref e) => e.description(),
+            CapiError::HttpRequest(ref e) => e.description(),
+            CapiError::Regex(ref e) => e.description(),
             CapiError::BufferTooSmall => "buffer is too small",
         }
     }
@@ -43,6 +47,8 @@ impl ::std::error::Error for CapiError {
             CapiError::Nul(ref e) => Some(e),
             CapiError::Sdb(ref e) => Some(e),
             CapiError::Io(ref e) => Some(e),
+            CapiError::HttpRequest(ref e) => Some(e),
+            CapiError::Regex(ref e) => Some(e),
             CapiError::BufferTooSmall => None,
         }
     }
@@ -57,6 +63,8 @@ impl Display for CapiError {
             CapiError::Nul(ref e) => write!(f, "nul character found in string: {}", e),
             CapiError::Sdb(ref e) => write!(f, "error in database: {}", e),
             CapiError::Io(ref e) => write!(f, "IO error: {}", e),
+            CapiError::HttpRequest(ref e) => write!(f, "error making an HTTP request: {}", e),
+            CapiError::Regex(ref e) => write!(f, "Regex error: {}", e),
             CapiError::BufferTooSmall => write!(f, "buffer is too small"),
         }
     }
@@ -98,6 +106,18 @@ impl From<::std::io::Error> for CapiError {
     }
 }
 
+impl From<::reqwest::Error> for CapiError {
+    fn from(err: ::reqwest::Error) -> CapiError {
+        CapiError::HttpRequest(err)
+    }
+}
+
+impl From<::regex::Error> for CapiError {
+    fn from(err: ::regex::Error) -> CapiError {
+        CapiError::Regex(err)
+    }
+}
+
 #[repr(C)]
 pub enum SessionError {
     OK,
@@ -113,9 +133,11 @@ pub enum SessionError {
     BookUnknown,
     NulError,
     SdbError,
+    HttpRequestError,
+    RegexError,
 }
 
-fn map_error_to_code(error: &CapiError) -> SessionError {
+pub fn map_error_to_code(error: &CapiError) -> SessionError {
     match *error {
         CapiError::Book(ref e) => match *e {
             BookError::UnknownBook { .. } => SessionError::BookUnknown,
@@ -131,6 +153,8 @@ fn map_error_to_code(error: &CapiError) -> SessionError {
         CapiError::BufferTooSmall => SessionError::SessionBufferTooSmall,
         CapiError::Sdb(_) => SessionError::SdbError,
         CapiError::Io(_) => SessionError::IOError,
+        CapiError::HttpRequest(_) => SessionError::HttpRequestError,
+        CapiError::Regex(_) => SessionError::RegexError,
     }
 }
 
@@ -148,6 +172,8 @@ static ERROR_MESSAGES: &'static [&'static str] = &[
     "unknown book\0",
     "unexpected null character found in string\0",
     "error in database\0",
+    "error making an HTTP request\0",
+    "regex error\0",
 ];
 
 #[no_mangle]

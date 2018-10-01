@@ -1,4 +1,4 @@
-use capi::Result;
+use capi::{self, Result};
 use dirs;
 use libc::{c_char, c_int};
 use model::compat::Verse;
@@ -59,7 +59,7 @@ pub unsafe fn verse_find_all(translation: *const c_char, view: *mut VerseView) -
         Ok(()) => 0,
         Err(e) => {
             eprintln!("{:?}", e);
-            1
+            capi::map_error_to_code(&e) as c_int
         }
     }
 }
@@ -77,7 +77,7 @@ pub unsafe fn verse_find_by_book_and_chapter(
         Ok(()) => 0,
         Err(e) => {
             eprintln!("{:?}", e);
-            1
+            capi::map_error_to_code(&e) as c_int
         }
     }
 }
@@ -96,7 +96,7 @@ pub unsafe fn verse_fetch_by_book_and_chapter(
         Ok(()) => 0,
         Err(e) => {
             eprintln!("{:?}", e);
-            1
+            capi::map_error_to_code(&e) as c_int
         }
     }
 }
@@ -198,8 +198,8 @@ mod imp {
         book: &CStr,
         chapter: u16,
     ) -> Result<()> {
-        let translation = translation.to_string_lossy();
-        let book = book.to_string_lossy();
+        let translation = translation.to_str()?;
+        let book = book.to_str()?;
         let _ = strong::Book::from_short_name(&book)?;
         let source = SOURCES
             .iter()
@@ -210,15 +210,10 @@ mod imp {
         let form = reqwest::multipart::Form::new()
             .text("t", translation.to_string())
             .text("mvText", [book.to_string(), chapter.to_string()].join(" "));
-        let mut res = client
-            .post(source.form_url)
-            .multipart(form)
-            .send()
-            .expect("failed to post a http request");
-        let body = res.text().expect("failed to get http response body text");
+        let mut res = client.post(source.form_url).multipart(form).send()?;
+        let body = res.text()?;
 
-        let re_outer = Regex::new(r#"<div id="multiResults">\[.*:.*-([0-9]+) .*\](.*)</div>"#)
-            .expect("can't create regex");
+        let re_outer = Regex::new(r#"<div id="multiResults">\[.*:.*-([0-9]+) .*\](.*)</div>"#)?;
         let cap = re_outer.captures(&body).expect("capture failed");
         let count = cap[1].parse::<usize>().expect("int parse failed");
         let verses = &cap[2];
@@ -231,7 +226,7 @@ mod imp {
                 .map(|i| format!(" ({}) (.*)", 1 + i))
                 .collect::<Vec<_>>(),
         );
-        let re_inner = Regex::new(&pattern).expect("can't create regex");
+        let re_inner = Regex::new(&pattern)?;
         let cap = re_inner.captures(&verses).expect("capture failed");
         for i in 0..count {
             let (key, text) = (&cap[i * 2 + 1], &cap[i * 2 + 2]);
