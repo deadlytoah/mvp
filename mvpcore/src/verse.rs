@@ -6,8 +6,15 @@ use model::strong;
 use regex::Regex;
 use sdb::Sdb;
 use std::ffi::{CStr, CString};
+use std::fmt::{self, Display, Formatter};
 
 const DB_EXT: &str = ".sdb";
+
+static SOURCES: &[SourceDescription] = &[SourceDescription {
+    id: VerseSource::BlueLetterBible,
+    name: "Blue Letter Bible",
+    form_url: "https://www.blueletterbible.org/tools/MultiVerse.cfm",
+}];
 
 #[repr(C)]
 pub struct VerseView {
@@ -46,11 +53,64 @@ pub struct SourceDescription {
     form_url: &'static str,
 }
 
-static SOURCES: &[SourceDescription] = &[SourceDescription {
-    id: VerseSource::BlueLetterBible,
-    name: "Blue Letter Bible",
-    form_url: "https://www.blueletterbible.org/tools/MultiVerse.cfm",
-}];
+#[derive(Debug)]
+pub enum FetchError {
+    HttpRequest(::reqwest::Error),
+    Regex(::regex::Error),
+    RegexMismatch(String),
+    ParseInt(::std::num::ParseIntError),
+}
+
+impl ::std::error::Error for FetchError {
+    fn description(&self) -> &str {
+        match *self {
+            FetchError::HttpRequest(ref e) => e.description(),
+            FetchError::Regex(ref e) => e.description(),
+            FetchError::RegexMismatch(_) => "the text did not match the regex",
+            FetchError::ParseInt(ref e) => e.description(),
+        }
+    }
+
+    fn cause(&self) -> Option<&::std::error::Error> {
+        match *self {
+            FetchError::HttpRequest(ref e) => Some(e),
+            FetchError::Regex(ref e) => Some(e),
+            FetchError::RegexMismatch(_) => None,
+            FetchError::ParseInt(ref e) => Some(e),
+        }
+    }
+}
+
+impl Display for FetchError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match *self {
+            FetchError::HttpRequest(ref e) => write!(f, "error making an HTTP request: {}", e),
+            FetchError::Regex(ref e) => write!(f, "regex error: {}", e),
+            FetchError::RegexMismatch(ref s) => {
+                write!(f, "the text did not match the regex: [{}]", s)
+            }
+            FetchError::ParseInt(ref e) => write!(f, "parse integer error: {}", e),
+        }
+    }
+}
+
+impl From<reqwest::Error> for FetchError {
+    fn from(err: reqwest::Error) -> FetchError {
+        FetchError::HttpRequest(err)
+    }
+}
+
+impl From<regex::Error> for FetchError {
+    fn from(err: regex::Error) -> FetchError {
+        FetchError::Regex(err)
+    }
+}
+
+impl From<::std::num::ParseIntError> for FetchError {
+    fn from(err: ::std::num::ParseIntError) -> FetchError {
+        FetchError::ParseInt(err)
+    }
+}
 
 #[no_mangle]
 pub unsafe fn verse_find_all(translation: *const c_char, view: *mut VerseView) -> c_int {
@@ -96,7 +156,7 @@ pub unsafe fn verse_fetch_by_book_and_chapter(
         Ok(()) => 0,
         Err(e) => {
             eprintln!("{:?}", e);
-            capi::map_error_to_code(&e) as c_int
+            capi::map_error_to_code(&e.into()) as c_int
         }
     }
 }
@@ -197,13 +257,14 @@ mod imp {
         source: VerseSource,
         book: &CStr,
         chapter: u16,
-    ) -> Result<()> {
-        let translation = translation.to_str()?;
-        let book = book.to_str()?;
-        let _ = strong::Book::from_short_name(&book)?;
+    ) -> ::std::result::Result<(), FetchError> {
+        let translation = translation.to_str().expect("utf8 error");
+        let book = book.to_str().expect("utf8 error");
+        let _ = strong::Book::from_short_name(&book).expect("unknown book error");
         let source = SOURCES
             .iter()
             .find(|s| s.id == source)
+            // Panic as this is certainly a bug.
             .expect("source not found");
 
         let client = reqwest::Client::new();
@@ -214,8 +275,10 @@ mod imp {
         let body = res.text()?;
 
         let re_outer = Regex::new(r#"<div id="multiResults">\[.*:.*-([0-9]+) .*\](.*)</div>"#)?;
-        let cap = re_outer.captures(&body).expect("capture failed");
-        let count = cap[1].parse::<usize>().expect("int parse failed");
+        let cap = re_outer
+            .captures(&body)
+            .ok_or_else(|| FetchError::RegexMismatch(re_outer.to_string()))?;
+        let count = cap[1].parse::<usize>()?;
         let verses = &cap[2];
 
         // we can structurise our capture better if we know the number
@@ -227,7 +290,9 @@ mod imp {
                 .collect::<Vec<_>>(),
         );
         let re_inner = Regex::new(&pattern)?;
-        let cap = re_inner.captures(&verses).expect("capture failed");
+        let cap = re_inner
+            .captures(&verses)
+            .ok_or_else(|| FetchError::RegexMismatch(pattern))?;
         for i in 0..count {
             let (key, text) = (&cap[i * 2 + 1], &cap[i * 2 + 2]);
             view.push(key, text);

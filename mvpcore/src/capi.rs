@@ -21,6 +21,7 @@ pub enum CapiError {
     Io(::std::io::Error),
     HttpRequest(::reqwest::Error),
     Regex(::regex::Error),
+    Fetch(::verse::FetchError),
     BufferTooSmall,
 }
 
@@ -35,6 +36,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Io(ref e) => e.description(),
             CapiError::HttpRequest(ref e) => e.description(),
             CapiError::Regex(ref e) => e.description(),
+            CapiError::Fetch(ref e) => e.description(),
             CapiError::BufferTooSmall => "buffer is too small",
         }
     }
@@ -49,6 +51,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Io(ref e) => Some(e),
             CapiError::HttpRequest(ref e) => Some(e),
             CapiError::Regex(ref e) => Some(e),
+            CapiError::Fetch(ref e) => Some(e),
             CapiError::BufferTooSmall => None,
         }
     }
@@ -65,6 +68,7 @@ impl Display for CapiError {
             CapiError::Io(ref e) => write!(f, "IO error: {}", e),
             CapiError::HttpRequest(ref e) => write!(f, "error making an HTTP request: {}", e),
             CapiError::Regex(ref e) => write!(f, "Regex error: {}", e),
+            CapiError::Fetch(ref e) => write!(f, "error fetching verse: {}", e),
             CapiError::BufferTooSmall => write!(f, "buffer is too small"),
         }
     }
@@ -118,6 +122,12 @@ impl From<::regex::Error> for CapiError {
     }
 }
 
+impl From<::verse::FetchError> for CapiError {
+    fn from(err: ::verse::FetchError) -> CapiError {
+        CapiError::Fetch(err)
+    }
+}
+
 #[repr(C)]
 pub enum SessionError {
     OK,
@@ -135,6 +145,7 @@ pub enum SessionError {
     SdbError,
     HttpRequestError,
     RegexError,
+    FetchError,
 }
 
 pub fn map_error_to_code(error: &CapiError) -> SessionError {
@@ -155,6 +166,7 @@ pub fn map_error_to_code(error: &CapiError) -> SessionError {
         CapiError::Io(_) => SessionError::IOError,
         CapiError::HttpRequest(_) => SessionError::HttpRequestError,
         CapiError::Regex(_) => SessionError::RegexError,
+        CapiError::Fetch(_) => SessionError::FetchError,
     }
 }
 
@@ -174,6 +186,7 @@ static ERROR_MESSAGES: &'static [&'static str] = &[
     "error in database\0",
     "error making an HTTP request\0",
     "regex error\0",
+    "error fetching verses\0",
 ];
 
 #[no_mangle]
