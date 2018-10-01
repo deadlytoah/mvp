@@ -41,6 +41,10 @@ typedef struct {
     size_t length;
 } LayoutLine;
 
+typedef enum {
+    VerseSourceBlueLetterBible
+} VerseSource;
+
 extern int session_create(Session *);
 extern int session_list_sessions(Session *buf, size_t *len);
 extern int session_delete(Session *);
@@ -51,6 +55,11 @@ extern int verse_find_by_book_and_chapter(const char *translation,
                                           VerseView *view,
                                           const char *book,
                                           unsigned short chapter);
+extern int verse_fetch_by_book_and_chapter(const char *translation,
+                                           VerseView *view,
+                                           VerseSource source,
+                                           const char *book,
+                                           unsigned short chapter);
 
 extern int graphlayout_layout(const char *text,
                               LayoutLine *indicies_ptr,

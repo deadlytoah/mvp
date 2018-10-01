@@ -2,9 +2,10 @@ use capi::Result;
 use dirs;
 use libc::{c_char, c_int};
 use model::compat::Verse;
+use model::strong;
+use regex::Regex;
 use sdb::Sdb;
-use std::ffi::CStr;
-use std::mem;
+use std::ffi::{CStr, CString};
 
 const DB_EXT: &str = ".sdb";
 
@@ -15,9 +16,15 @@ pub struct VerseView {
 }
 
 impl VerseView {
-    pub fn push(&mut self, verse: Verse) {
+    pub fn push(&mut self, key: &str, text: &str) {
         assert!(self.next < self.verses.len());
-        self.verses[self.next] = verse;
+        let verse = &mut self.verses[self.next];
+        let key = CString::new(key).expect("nul error");
+        let key = key.as_bytes_with_nul();
+        let text = CString::new(text).expect("nul error");
+        let text = text.as_bytes_with_nul();
+        verse.key[..key.len()].copy_from_slice(key);
+        verse.text[..text.len()].copy_from_slice(text);
         self.next += 1;
     }
 
@@ -25,6 +32,25 @@ impl VerseView {
         self.next
     }
 }
+
+#[derive(Clone, Copy, PartialEq)]
+#[repr(C)]
+pub enum VerseSource {
+    BlueLetterBible,
+}
+
+pub struct SourceDescription {
+    id: VerseSource,
+    #[allow(dead_code)]
+    name: &'static str,
+    form_url: &'static str,
+}
+
+static SOURCES: &[SourceDescription] = &[SourceDescription {
+    id: VerseSource::BlueLetterBible,
+    name: "Blue Letter Bible",
+    form_url: "https://www.blueletterbible.org/tools/MultiVerse.cfm",
+}];
 
 #[no_mangle]
 pub unsafe fn verse_find_all(translation: *const c_char, view: *mut VerseView) -> c_int {
@@ -56,8 +82,28 @@ pub unsafe fn verse_find_by_book_and_chapter(
     }
 }
 
+#[no_mangle]
+pub unsafe fn verse_fetch_by_book_and_chapter(
+    translation: *const c_char,
+    view: *mut VerseView,
+    source: VerseSource,
+    book: *const c_char,
+    chapter: u16,
+) -> c_int {
+    let translation = CStr::from_ptr(translation);
+    let book = CStr::from_ptr(book);
+    match imp::verse_fetch_by_book_and_chapter(translation, &mut *view, source, &book, chapter) {
+        Ok(()) => 0,
+        Err(e) => {
+            eprintln!("{:?}", e);
+            1
+        }
+    }
+}
+
 mod imp {
     use super::*;
+    use reqwest;
     use std::fs;
 
     pub fn verse_find_all(translation: &CStr, view: &mut VerseView) -> Result<()> {
@@ -86,18 +132,7 @@ mod imp {
 
         for rec in records {
             if rec["deleted"] == "0" {
-                let key = &rec["key"];
-                let text = &rec["text"];
-
-                let mut verse: Verse = unsafe { mem::zeroed() };
-                let key = key.as_bytes();
-                assert!(key.len() <= verse.key.len());
-                verse.key[..key.len()].copy_from_slice(key);
-                let text = text.as_bytes();
-                assert!(text.len() <= verse.text.len());
-                verse.text[..text.len()].copy_from_slice(text);
-
-                view.push(verse);
+                view.push(&rec["key"], &rec["text"]);
             }
         }
         Ok(())
@@ -150,11 +185,58 @@ mod imp {
         });
 
         for (key, text) in sortable.drain(..) {
-            view.verses[view.next].key[..key.len()].copy_from_slice(key.as_bytes());
-            view.verses[view.next].text[..text.len()].copy_from_slice(text.as_bytes());
-            view.next += 1;
+            view.push(key, text);
         }
 
+        Ok(())
+    }
+
+    pub fn verse_fetch_by_book_and_chapter(
+        translation: &CStr,
+        view: &mut VerseView,
+        source: VerseSource,
+        book: &CStr,
+        chapter: u16,
+    ) -> Result<()> {
+        let translation = translation.to_string_lossy();
+        let book = book.to_string_lossy();
+        let _ = strong::Book::from_short_name(&book)?;
+        let source = SOURCES
+            .iter()
+            .find(|s| s.id == source)
+            .expect("source not found");
+
+        let client = reqwest::Client::new();
+        let form = reqwest::multipart::Form::new()
+            .text("t", translation.to_string())
+            .text("mvText", [book.to_string(), chapter.to_string()].join(" "));
+        let mut res = client
+            .post(source.form_url)
+            .multipart(form)
+            .send()
+            .expect("failed to post a http request");
+        let body = res.text().expect("failed to get http response body text");
+
+        let re_outer = Regex::new(r#"<div id="multiResults">\[.*:.*-([0-9]+) .*\](.*)</div>"#)
+            .expect("can't create regex");
+        let cap = re_outer.captures(&body).expect("capture failed");
+        let count = cap[1].parse::<usize>().expect("int parse failed");
+        let verses = &cap[2];
+
+        // we can structurise our capture better if we know the number
+        // of verses.
+        let mut pattern = String::new();
+        pattern.extend(
+            (0..count)
+                .map(|i| format!(" ({}) (.*)", 1 + i))
+                .collect::<Vec<_>>(),
+        );
+        let re_inner = Regex::new(&pattern).expect("can't create regex");
+        let cap = re_inner.captures(&verses).expect("capture failed");
+        for i in 0..count {
+            let (key, text) = (&cap[i * 2 + 1], &cap[i * 2 + 2]);
+            view.push(key, text);
+        }
         Ok(())
     }
 }

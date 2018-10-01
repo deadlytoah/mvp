@@ -58,9 +58,19 @@ class SpeedTypeController: NSViewController {
         super.viewDidAppear()
 
         var verseView = VerseView()
-        let retval = verse_find_by_book_and_chapter("esv", &verseView, "Phl", 1)
+        let retval = verse_find_by_book_and_chapter("esv", &verseView, "Phil", 2)
 
         if retval == 0 {
+            if verseView.count == 0 {
+                let retval = verse_fetch_by_book_and_chapter("esv", &verseView, VerseSourceBlueLetterBible, "Phil", 2)
+                if retval != 0 {
+                    // igonoring for now, because there is no other option.
+                    // But we will let user manually enter the verses in
+                    // the future.
+                    Swift.print("error fetching")
+                }
+            }
+
             let state = speedtype_new()
 
             var verseList: [String] = []
