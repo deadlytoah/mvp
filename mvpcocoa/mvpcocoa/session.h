@@ -45,10 +45,19 @@ typedef enum {
     VerseSourceBlueLetterBible
 } VerseSource;
 
-extern int session_create(Session *);
-extern int session_list_sessions(Session *buf, size_t *len);
-extern int session_delete(Session *);
+typedef struct {
+    unsigned char text[1024];
+} SentenceRaw;
+
+extern int session_create(SessionRaw *);
+extern int session_list_sessions(SessionRaw *buf, size_t *len);
+extern int session_delete(SessionRaw *);
 extern char *const session_get_message(int error_code);
+
+extern void sentences_from_verses(const char **verses_ptr,
+                                  size_t verses_len,
+                                  SentenceRaw *sentences_ptr,
+                                  size_t *sentences_len);
 
 extern int verse_find_all(const char *translation, VerseView *view);
 extern int verse_find_by_book_and_chapter(const char *translation,

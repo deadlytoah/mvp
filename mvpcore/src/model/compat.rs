@@ -2,6 +2,7 @@ use capi::Result;
 use model::strong;
 use model::strong::Book;
 use std::ffi::{CStr, CString};
+use std::mem;
 use std::str;
 
 #[derive(Deserialize, Serialize)]
@@ -64,4 +65,32 @@ impl Location {
 pub struct Verse {
     pub key: [u8; 16],
     pub text: [u8; 256],
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct Sentence {
+    text: [u8; 1024],
+}
+
+impl Sentence {
+    pub fn copy_from(&mut self, from: strong::Sentence) {
+        let text = CString::new(from.text).expect("nul in string");
+        let text = text.as_bytes_with_nul();
+        self.text[..text.len()].copy_from_slice(text);
+    }
+}
+
+impl From<strong::Sentence> for Sentence {
+    fn from(from: strong::Sentence) -> Self {
+        let mut sentence = Sentence {
+            text: unsafe { mem::zeroed() },
+        };
+
+        let text = CString::new(from.text).expect("nul in string");
+        let text = text.as_bytes_with_nul();
+        sentence.text[..text.len()].copy_from_slice(text);
+
+        sentence
+    }
 }

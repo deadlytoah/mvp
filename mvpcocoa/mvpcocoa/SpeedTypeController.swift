@@ -96,11 +96,13 @@ class SpeedTypeController: NSViewController {
 
     fileprivate func createTextLayout(verseList: [Verse]) -> [String] {
         var layout: [String] = []
-        verseList.forEach({ verse in
-            graphLayout(text: verse.text).forEach { line in
+        Sentence.sentencesFromVerses(verses: verseList.map { verse in
+            verse.text
+        }).forEach { sentence in
+            graphLayout(text: sentence.text).forEach { line in
                 layout.append(line)
             }
-        })
+        }
         return layout
     }
 

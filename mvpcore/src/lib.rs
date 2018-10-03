@@ -21,5 +21,6 @@ mod verse;
 pub use capi::*;
 pub use layout::graph::*;
 pub use model::speedtype::strong::speedtype_apply_level;
+pub use model::strong::sentences_from_verses;
 pub use speedtype::state::*;
 pub use verse::*;

@@ -17,6 +17,7 @@
 		0F59D68B214111AA0091C6FD /* SpeedTypeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F59D68A214111AA0091C6FD /* SpeedTypeView.swift */; };
 		0F8FD2B121624DD7007847E8 /* Verse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F8FD2B021624DD7007847E8 /* Verse.swift */; };
 		0FC9B6F5214C8D430041526F /* SpeedTypeState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FC9B6F4214C8D430041526F /* SpeedTypeState.swift */; };
+		0FDC3D1A2163B00E00FA0F1F /* Sentence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FDC3D192163B00E00FA0F1F /* Sentence.swift */; };
 		0FF4D89C215A6749009DB83F /* GraphLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF4D89B215A6749009DB83F /* GraphLayout.swift */; };
 		0FF57BC02138E13000C4136C /* libmvpcore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FF57BBF2138E13000C4136C /* libmvpcore.a */; };
 /* End PBXBuildFile section */
@@ -50,6 +51,7 @@
 		0FB155472119633C00B888CE /* session.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = session.h; sourceTree = "<group>"; };
 		0FC9B6F3214C1A150041526F /* speedtype.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = speedtype.h; sourceTree = "<group>"; };
 		0FC9B6F4214C8D430041526F /* SpeedTypeState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedTypeState.swift; sourceTree = "<group>"; };
+		0FDC3D192163B00E00FA0F1F /* Sentence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sentence.swift; sourceTree = "<group>"; };
 		0FE76A3B2119FB8500E36923 /* mvpcore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = mvpcore; path = ../mvpcore; sourceTree = "<group>"; };
 		0FE76A3D2119FB8C00E36923 /* mvpcocoa.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = mvpcocoa.xcodeproj; sourceTree = "<group>"; };
 		0FF4D89B215A6749009DB83F /* GraphLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphLayout.swift; sourceTree = "<group>"; };
@@ -109,6 +111,7 @@
 				0F1A296F211182BB00D348B8 /* mvpcocoa.entitlements */,
 				0FB15544211962F900B888CE /* mvpcocoa-Bridging-Header.h */,
 				0FB155472119633C00B888CE /* session.h */,
+				0FDC3D192163B00E00FA0F1F /* Sentence.swift */,
 				0FF4D89B215A6749009DB83F /* GraphLayout.swift */,
 				0FC9B6F3214C1A150041526F /* speedtype.h */,
 				0FC9B6F4214C8D430041526F /* SpeedTypeState.swift */,
@@ -254,6 +257,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0F8FD2B121624DD7007847E8 /* Verse.swift in Sources */,
+				0FDC3D1A2163B00E00FA0F1F /* Sentence.swift in Sources */,
 				0FF4D89C215A6749009DB83F /* GraphLayout.swift in Sources */,
 				0FC9B6F5214C8D430041526F /* SpeedTypeState.swift in Sources */,
 				0F59D68B214111AA0091C6FD /* SpeedTypeView.swift in Sources */,
