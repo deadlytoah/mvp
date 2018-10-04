@@ -17,14 +17,14 @@ typedef struct {
     unsigned short chapter;
     unsigned short sentence;
     unsigned short verse;
-} Location;
+} LocationRaw;
 
 typedef struct {
     unsigned char name[64];
-    Location range[2];
+    LocationRaw range[2];
     unsigned char level;
     unsigned char strategy;
-} Session;
+} SessionRaw;
 
 typedef struct {
     unsigned char key[16];

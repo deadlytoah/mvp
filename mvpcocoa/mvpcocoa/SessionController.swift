@@ -14,7 +14,7 @@ class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectio
     static let Title = "mvp — Sessions"
 
     let BufferSize = 20
-    var sessions: Array<Session> = []
+    var sessions = [SessionRaw]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -31,7 +31,7 @@ class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectio
         self.view.window?.title = SessionController.Title
 
         var len = BufferSize
-        self.sessions = Array<Session>(repeating: Session.init(), count: len)
+        self.sessions = Array(repeating: SessionRaw.init(), count: len)
 
         self.sessions.withUnsafeMutableBufferPointer { ptr in
             let retcode = session_list_sessions(ptr.baseAddress!, UnsafeMutablePointer(&len))

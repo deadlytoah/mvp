@@ -13,6 +13,7 @@
 		0F1A296D211182BB00D348B8 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 0F1A296B211182BB00D348B8 /* Main.storyboard */; };
 		0F1A2979211182BB00D348B8 /* mvpcocoaUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F1A2978211182BB00D348B8 /* mvpcocoaUITests.swift */; };
 		0F3C50EE211DB0AD0040B010 /* SessionColViewItem.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0F3C50EC211DB0AD0040B010 /* SessionColViewItem.xib */; };
+		0F3CEE852165A0ED00D417E7 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3CEE842165A0ED00D417E7 /* Session.swift */; };
 		0F59D68921410FF40091C6FD /* SpeedTypeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F59D68821410FF40091C6FD /* SpeedTypeController.swift */; };
 		0F59D68B214111AA0091C6FD /* SpeedTypeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F59D68A214111AA0091C6FD /* SpeedTypeView.swift */; };
 		0F8FD2B121624DD7007847E8 /* Verse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F8FD2B021624DD7007847E8 /* Verse.swift */; };
@@ -44,6 +45,7 @@
 		0F1A2978211182BB00D348B8 /* mvpcocoaUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mvpcocoaUITests.swift; sourceTree = "<group>"; };
 		0F1A297A211182BC00D348B8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		0F3C50EC211DB0AD0040B010 /* SessionColViewItem.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SessionColViewItem.xib; sourceTree = "<group>"; };
+		0F3CEE842165A0ED00D417E7 /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		0F59D68821410FF40091C6FD /* SpeedTypeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedTypeController.swift; sourceTree = "<group>"; };
 		0F59D68A214111AA0091C6FD /* SpeedTypeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedTypeView.swift; sourceTree = "<group>"; };
 		0F8FD2B021624DD7007847E8 /* Verse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Verse.swift; sourceTree = "<group>"; };
@@ -112,6 +114,7 @@
 				0FB15544211962F900B888CE /* mvpcocoa-Bridging-Header.h */,
 				0FB155472119633C00B888CE /* session.h */,
 				0FDC3D192163B00E00FA0F1F /* Sentence.swift */,
+				0F3CEE842165A0ED00D417E7 /* Session.swift */,
 				0FF4D89B215A6749009DB83F /* GraphLayout.swift */,
 				0FC9B6F3214C1A150041526F /* speedtype.h */,
 				0FC9B6F4214C8D430041526F /* SpeedTypeState.swift */,
@@ -264,6 +267,7 @@
 				0F59D68921410FF40091C6FD /* SpeedTypeController.swift in Sources */,
 				0F1A2968211182B900D348B8 /* SessionController.swift in Sources */,
 				0F1A2966211182B900D348B8 /* AppDelegate.swift in Sources */,
+				0F3CEE852165A0ED00D417E7 /* Session.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
