@@ -1,7 +1,6 @@
 use dirs;
 use model::speedtype::strong::Level;
-use model::strong::range::Range;
-use model::strong::strategy::Strategy;
+use model::strong::{Range, Strategy};
 use serde_json;
 use std::fmt::{self, Display, Formatter};
 use std::fs::{self, OpenOptions};

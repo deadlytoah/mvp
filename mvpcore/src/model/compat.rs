@@ -7,15 +7,6 @@ use std::str;
 
 #[derive(Deserialize, Serialize)]
 #[repr(C)]
-pub struct Session {
-    pub name: [u8; 32],
-    pub range: [Location; 2],
-    pub level: u8,
-    pub strategy: u8,
-}
-
-#[derive(Deserialize, Serialize)]
-#[repr(C)]
 pub struct Location {
     pub translation: [u8; 8],
     pub book: [u8; 8],

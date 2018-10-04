@@ -1,4 +1,5 @@
 use libc;
+use model::compat;
 use model::speedtype::strong;
 use std::ffi::CString;
 use std::mem;
@@ -173,4 +174,13 @@ impl From<strong::State> for State {
             sentences: sentences.into(),
         }
     }
+}
+
+#[derive(Deserialize, Serialize)]
+#[repr(C)]
+pub struct Session {
+    pub name: [u8; 32],
+    pub range: [compat::Location; 2],
+    pub level: u8,
+    pub strategy: u8,
 }

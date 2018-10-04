@@ -1,6 +1,5 @@
 use libc::*;
-use model;
-use model::strong;
+use model::speedtype::{compat, strong};
 use model::strong::BookError;
 use model::strong::Range;
 use sdb;
@@ -190,7 +189,7 @@ static ERROR_MESSAGES: &'static [&'static str] = &[
 ];
 
 #[no_mangle]
-pub unsafe fn session_create(sess: *const model::compat::Session) -> c_int {
+pub unsafe fn session_create(sess: *const compat::Session) -> c_int {
     match imp::session_create(&*sess) {
         Ok(()) => SessionError::OK as c_int,
         Err(ref e) => map_error_to_code(e) as c_int,
@@ -206,17 +205,17 @@ pub unsafe fn session_create(sess: *const model::compat::Session) -> c_int {
 ///
 /// buf and len must point to accessible memory addresses.
 ///
-/// Each session is stored as per model::compat::Session data
-/// structure.
+/// Each session is stored as per model::speedtype::compat::Session
+/// data structure.
 ///
 /// If buf is not large enough, returns SessionBufferTooSmall.  If
 /// there is an error loading the sessions, returns
 /// SessionDataCorrupt.  Otherwise returns OK and buf is filled with
 /// sessions.
 #[no_mangle]
-pub unsafe fn session_list_sessions(buf: *mut model::compat::Session, len: *mut size_t) -> c_int {
+pub unsafe fn session_list_sessions(buf: *mut compat::Session, len: *mut size_t) -> c_int {
     let size = *len;
-    let bufslice = slice::from_raw_parts_mut(buf as *mut model::compat::Session, size);
+    let bufslice = slice::from_raw_parts_mut(buf as *mut compat::Session, size);
 
     match imp::session_list_sessions(bufslice) {
         Ok(count) => {
@@ -229,7 +228,7 @@ pub unsafe fn session_list_sessions(buf: *mut model::compat::Session, len: *mut 
 
 /// Deletes the session from disk.
 #[no_mangle]
-pub unsafe fn session_delete(session: *mut model::compat::Session) -> c_int {
+pub unsafe fn session_delete(session: *mut compat::Session) -> c_int {
     match imp::session_delete(&*session) {
         Ok(_) => SessionError::OK as c_int,
         Err(e) => map_error_to_code(&e) as c_int,
@@ -243,7 +242,7 @@ pub fn session_get_message(error_code: c_int) -> *const c_char {
 
 mod imp {
     use super::*;
-    use model::compat::Session;
+    use model::speedtype::compat::Session;
     use std::ffi::{CStr, CString};
 
     pub fn session_create(sess: &Session) -> Result<()> {

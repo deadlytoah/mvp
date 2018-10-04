@@ -1,9 +1,11 @@
 pub mod character;
 mod level;
+mod session;
 pub mod word;
 
 pub use self::character::*;
 pub use self::level::*;
+pub use self::session::*;
 pub use self::word::*;
 
 use model::speedtype::compat;
