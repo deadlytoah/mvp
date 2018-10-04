@@ -774,14 +774,14 @@
                                                     <scrollView horizontalLineScroll="10" horizontalPageScroll="10" verticalLineScroll="10" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" translatesAutoresizingMaskIntoConstraints="NO" id="E5J-k1-jLp">
                                                         <rect key="frame" x="0.0" y="0.0" width="600" height="410"/>
                                                         <clipView key="contentView" id="dj1-J6-u5C">
-                                                            <rect key="frame" x="1" y="1" width="583" height="408"/>
+                                                            <rect key="frame" x="1" y="1" width="598" height="408"/>
                                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                             <subviews>
                                                                 <textView importsGraphics="NO" verticallyResizable="YES" findStyle="panel" allowsCharacterPickerTouchBarItem="NO" usesRuler="YES" allowsNonContiguousLayout="YES" quoteSubstitution="YES" dashSubstitution="YES" smartInsertDelete="YES" id="0mU-Jh-1hi" customClass="SpeedTypeView" customModule="mvpcocoa" customModuleProvider="target">
-                                                                    <rect key="frame" x="0.0" y="0.0" width="583" height="408"/>
+                                                                    <rect key="frame" x="0.0" y="0.0" width="598" height="408"/>
                                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                     <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                                                    <size key="minSize" width="583" height="408"/>
+                                                                    <size key="minSize" width="598" height="408"/>
                                                                     <size key="maxSize" width="600" height="10000000"/>
                                                                     <color key="insertionPointColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                                                                 </textView>
@@ -793,7 +793,7 @@
                                                             <autoresizingMask key="autoresizingMask"/>
                                                         </scroller>
                                                         <scroller key="verticalScroller" verticalHuggingPriority="750" doubleValue="1" horizontal="NO" id="7H2-X9-yXb">
-                                                            <rect key="frame" x="584" y="1" width="15" height="408"/>
+                                                            <rect key="frame" x="583" y="1" width="16" height="408"/>
                                                             <autoresizingMask key="autoresizingMask"/>
                                                         </scroller>
                                                     </scrollView>
@@ -847,16 +847,16 @@
             </objects>
             <point key="canvasLocation" x="745" y="243"/>
         </scene>
-        <!--View Controller-->
+        <!--Download Verses Controller-->
         <scene sceneID="lo0-Sg-t9W">
             <objects>
-                <viewController id="prb-rz-hOZ" sceneMemberID="viewController">
+                <viewController id="prb-rz-hOZ" customClass="DownloadVersesController" customModule="mvpcocoa" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" id="yAA-Vq-1wh">
-                        <rect key="frame" x="0.0" y="0.0" width="313" height="160"/>
+                        <rect key="frame" x="0.0" y="0.0" width="313" height="188"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4pu-IN-UtU">
-                                <rect key="frame" x="72" y="84" width="169" height="17"/>
+                                <rect key="frame" x="72" y="130" width="169" height="17"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="center" title="Downloading Bible Verses." id="vM4-2v-xdY">
                                     <font key="font" metaFont="titleBar"/>
                                     <color key="textColor" red="0.37055522200000002" green="0.37056469920000001" blue="0.37055957319999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
@@ -864,25 +864,48 @@
                                 </textFieldCell>
                             </textField>
                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="BDK-Tc-sUa">
-                                <rect key="frame" x="113" y="59" width="87" height="17"/>
+                                <rect key="frame" x="113" y="105" width="87" height="17"/>
                                 <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="center" title="Please wait…" id="tRf-oU-bAE">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" red="0.37055522200000002" green="0.37056469920000001" blue="0.37055957319999999" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                     <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
+                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="sK7-d2-ADe">
+                                <rect key="frame" x="71" y="33" width="170" height="32"/>
+                                <buttonCell key="cell" type="push" title="Enter Verses Yourself" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="xDt-pr-dVu">
+                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                    <string key="keyEquivalent" base64-UTF8="YES">
+Gw
+</string>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="enterVersesManually:" target="prb-rz-hOZ" id="sQD-dw-Eym"/>
+                                </connections>
+                            </button>
+                            <progressIndicator wantsLayer="YES" horizontalHuggingPriority="750" verticalHuggingPriority="750" maxValue="100" bezeled="NO" indeterminate="YES" controlSize="small" style="spinning" translatesAutoresizingMaskIntoConstraints="NO" id="OWk-td-lV3">
+                                <rect key="frame" x="148" y="81" width="16" height="16"/>
+                            </progressIndicator>
                         </subviews>
                         <constraints>
-                            <constraint firstItem="4pu-IN-UtU" firstAttribute="top" secondItem="yAA-Vq-1wh" secondAttribute="top" constant="59" id="H9a-tQ-VBB"/>
+                            <constraint firstItem="4pu-IN-UtU" firstAttribute="top" secondItem="yAA-Vq-1wh" secondAttribute="top" constant="41" id="H9a-tQ-VBB"/>
                             <constraint firstItem="4pu-IN-UtU" firstAttribute="centerX" secondItem="BDK-Tc-sUa" secondAttribute="centerX" id="PgW-VO-f4w"/>
                             <constraint firstItem="4pu-IN-UtU" firstAttribute="centerX" secondItem="yAA-Vq-1wh" secondAttribute="centerX" id="bI2-Bz-nWe"/>
+                            <constraint firstItem="sK7-d2-ADe" firstAttribute="top" secondItem="BDK-Tc-sUa" secondAttribute="bottom" constant="44" id="ePG-Kf-v9q"/>
+                            <constraint firstItem="OWk-td-lV3" firstAttribute="top" secondItem="BDK-Tc-sUa" secondAttribute="bottom" constant="8" symbolic="YES" id="fgQ-Q2-hyw"/>
+                            <constraint firstItem="OWk-td-lV3" firstAttribute="centerX" secondItem="BDK-Tc-sUa" secondAttribute="centerX" id="ob9-BS-i3U"/>
                             <constraint firstItem="BDK-Tc-sUa" firstAttribute="top" secondItem="4pu-IN-UtU" secondAttribute="bottom" constant="8" symbolic="YES" id="pJi-1L-JHx"/>
+                            <constraint firstItem="sK7-d2-ADe" firstAttribute="centerX" secondItem="BDK-Tc-sUa" secondAttribute="centerX" id="vgO-mI-ysV"/>
                         </constraints>
                     </view>
+                    <connections>
+                        <outlet property="spinningWheel" destination="OWk-td-lV3" id="LR6-qU-mMT"/>
+                    </connections>
                 </viewController>
                 <customObject id="RRo-er-76m" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="1336" y="243"/>
+            <point key="canvasLocation" x="1335.5" y="257"/>
         </scene>
         <!--Session Controller-->
         <scene sceneID="hIz-AP-VOD">

@@ -35,6 +35,18 @@ class Location {
         }
     }
 
+    init(book: String, chapter: UInt16, sentence: UInt16, verse: UInt16) {
+        self.raw = LocationRaw()
+        withUnsafeMutableBytes(of: &self.raw.book) { ptr in
+            book.utf8CString.withUnsafeBytes { cstr in
+                ptr.copyMemory(from: cstr)
+            }
+        }
+        self.raw.chapter = chapter
+        self.raw.sentence = sentence
+        self.raw.verse = verse
+    }
+
     init(raw: LocationRaw) {
         self.raw = raw
     }

@@ -63,6 +63,9 @@ class SpeedTypeController: NSViewController {
                 self.speedTypeView?.moveToBeginningOfDocument(self)
             } else {
                 self.state = nil
+                DispatchQueue.main.async {
+                    self.performSegue(withIdentifier: NSStoryboardSegue.Identifier("downloadVersesSegue"), sender: self)
+                }
             }
         } catch {
             let alert = NSAlert()
@@ -72,26 +75,20 @@ class SpeedTypeController: NSViewController {
         }
     }
 
-    override func viewDidAppear() {
-        super.viewDidAppear()
-
-        if state == nil {
-            do {
-                let verseList = try Verse.fetchVersesByBookAndChapter(translation: "esv", source: VerseSourceBlueLetterBible, book: "Phil", chapter: 2)
-                let layout = createTextLayout(verseList: verseList)
-                fillTextView(lines: layout)
-                self.state = initialiseState(lines: layout)
-                self.render()
-                self.speedTypeView?.moveToBeginningOfDocument(self)
-            } catch {
-                // We will let user manually enter the verses in
-                // the future.
-                let alert = NSAlert()
-                alert.alertStyle = .critical
-                alert.messageText = "Retrieving Bible verses failed with \(error)."
-                alert.beginSheetModal(for: self.view.window!)
-            }
+    override func prepare(for segue: NSStoryboardSegue, sender: Any?) {
+        if segue.identifier == NSStoryboardSegue.Identifier("downloadVersesSegue") {
+            let downloadVersesController = segue.destinationController as! DownloadVersesController
+            downloadVersesController.translation = "esv"
+            downloadVersesController.location = Location(book: "John", chapter: 1, sentence: 0, verse: 1)
         }
+    }
+    func versesDownloaded(verses: [Verse]) {
+        let layout = createTextLayout(verseList:verses)
+        fillTextView(lines: layout)
+        self.state = initialiseState(lines: layout)
+
+        self.render()
+        self.speedTypeView?.moveToBeginningOfDocument(self)
     }
 
     fileprivate func createTextLayout(verseList: [Verse]) -> [String] {
