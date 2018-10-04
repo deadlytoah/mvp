@@ -29,11 +29,11 @@ typedef struct {
 typedef struct {
     unsigned char key[16];
     unsigned char text[256];
-} Verse;
+} VerseRaw;
 
 typedef struct {
     size_t count;
-    Verse verses[176];
+    VerseRaw verses[176];
 } VerseView;
 
 typedef struct {

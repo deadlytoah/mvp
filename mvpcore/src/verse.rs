@@ -231,18 +231,25 @@ mod imp {
         let chapter = chapter.to_string();
         let prefix = book.to_owned() + " " + &chapter + ":";
 
-        let mut sortable: Vec<(&String, &String)> = records
+        let mut sortable: Vec<_> = records
             .iter()
             .filter(|rec| rec["deleted"] == "0")
             .filter(|rec| rec["key"].starts_with(&prefix))
-            .map(|rec| (&rec["key"], &rec["text"]))
+            .map(|rec| (rec["key"].as_str(), rec["text"].as_str()))
+            .map(|(key, text)| {
+                let chapter_verse = key
+                    .split_whitespace()
+                    .nth(1)
+                    .expect("missing chapter and verse number");
+                let verse_num = chapter_verse
+                    .split(':')
+                    .nth(1)
+                    .expect("missing verse number");
+                (verse_num, text)
+            })
             .collect();
-        sortable.sort_unstable_by_key(|rec| {
-            let key = rec.0;
-            let chapter_verse = key.split_whitespace().nth(1).expect("chapter_verse");
-            let verse = chapter_verse.split(':').nth(1).expect("verse");
-            verse.parse::<u16>().expect("parse verse")
-        });
+        sortable
+            .sort_unstable_by_key(|rec| rec.0.parse::<u16>().expect("failed parsing verse number"));
 
         for (key, text) in sortable.drain(..) {
             view.push(key, text);

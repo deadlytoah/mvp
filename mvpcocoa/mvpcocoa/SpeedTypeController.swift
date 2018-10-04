@@ -53,55 +53,75 @@ class SpeedTypeController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        var verseView = VerseView()
-        let retval = verse_find_by_book_and_chapter("esv", &verseView, "Phil", 2)
-
-        if retval == 0 {
-            if verseView.count == 0 {
-                let retval = verse_fetch_by_book_and_chapter("esv", &verseView, VerseSourceBlueLetterBible, "Phil", 2)
-                if retval != 0 {
-                    // igonoring for now, because there is no other option.
-                    // But we will let user manually enter the verses in
-                    // the future.
-                    Swift.print("error fetching")
-                }
+        do {
+            let verseList = try Verse.findVersesByBookAndChapter(translation: "esv", book: "Phil", chapter: 2)
+            if !verseList.isEmpty {
+                let layout = createTextLayout(verseList: verseList)
+                fillTextView(lines: layout)
+                self.state = initialiseState(lines: layout)
+                self.render()
+                self.speedTypeView?.moveToBeginningOfDocument(self)
+            } else {
+                self.state = nil
             }
-
-            let state = speedtype_new()
-
-            var verseList: [String] = []
-            withUnsafePointer(to: &verseView.verses.0, { verses in
-                for i in 0..<verseView.count {
-                    var verse = verses[i]
-                    _ = String(cString: &verse.key.0)
-                    verseList.append(String(cString: &verse.text.0))
-                }
-            })
-
-            verseList.forEach({ verse in
-                for line in graphLayout(text: verse) {
-                    let textStorage = self.speedTypeView.textStorage!
-                    textStorage.append(NSAttributedString(string: "\(line)\n"))
-
-                    let retval = speedtype_process_line(state!, line)
-                    if retval != 0 {
-                        let alert = NSAlert()
-                        alert.alertStyle = .critical
-                        alert.messageText = "Error processing line with code \(retval)."
-                        alert.beginSheetModal(for: self.view.window!)
-                    }
-                }
-            })
-
-            self.state = SpeedtypeState(raw: state!)
-            self.render()
-            self.speedTypeView?.moveToBeginningOfDocument(self)
-        } else {
+        } catch {
             let alert = NSAlert()
             alert.alertStyle = .critical
-            alert.messageText = "Retrieving Bible verses failed with code \(retval)."
+            alert.messageText = "Retrieving Bible verses failed with \(error)."
             alert.beginSheetModal(for: self.view.window!)
         }
+    }
+
+    override func viewDidAppear() {
+        super.viewDidAppear()
+
+        if state == nil {
+            do {
+                let verseList = try Verse.fetchVersesByBookAndChapter(translation: "esv", source: VerseSourceBlueLetterBible, book: "Phil", chapter: 2)
+                let layout = createTextLayout(verseList: verseList)
+                fillTextView(lines: layout)
+                self.state = initialiseState(lines: layout)
+                self.render()
+                self.speedTypeView?.moveToBeginningOfDocument(self)
+            } catch {
+                // We will let user manually enter the verses in
+                // the future.
+                let alert = NSAlert()
+                alert.alertStyle = .critical
+                alert.messageText = "Retrieving Bible verses failed with \(error)."
+                alert.beginSheetModal(for: self.view.window!)
+            }
+        }
+    }
+
+    fileprivate func createTextLayout(verseList: [Verse]) -> [String] {
+        var layout: [String] = []
+        verseList.forEach({ verse in
+            graphLayout(text: verse.text).forEach { line in
+                layout.append(line)
+            }
+        })
+        return layout
+    }
+
+    fileprivate func fillTextView(lines: [String]) {
+        lines.forEach { line in
+            self.speedTypeView?.textStorage?.append(NSAttributedString(string: "\(line)\n"))
+        }
+    }
+
+    fileprivate func initialiseState(lines: [String]) -> SpeedtypeState {
+        let state = speedtype_new()
+        lines.forEach { line in
+            let retval = speedtype_process_line(state!, line)
+            if retval != 0 {
+                let alert = NSAlert()
+                alert.alertStyle = .critical
+                alert.messageText = "Error processing line with code \(retval)."
+                alert.beginSheetModal(for: self.view.window!)
+            }
+        }
+        return SpeedtypeState(raw: state!)
     }
 
     @IBAction
