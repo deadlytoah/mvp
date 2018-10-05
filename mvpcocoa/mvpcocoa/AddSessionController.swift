@@ -21,9 +21,9 @@ class AddSessionController: NSViewController {
     }
 
     @IBAction func performOk(_ sender: Any) {
-        let start = Location(book: book.stringValue, chapter: UInt16(chapter.integerValue), sentence: 0, verse: 1)
-        let end = Location(book: book.stringValue, chapter: UInt16(chapter.integerValue), sentence: 1, verse: 2)
-        let session = Session(name: name.stringValue, translation: "esv", range: (start, end), level: Level(raw: UInt8(level.integerValue)), strategy: Strategy(raw: UInt8(strategy.integerValue)))
+        let start = Location(translation: "esv", book: book.stringValue, chapter: UInt16(chapter.integerValue), sentence: 0, verse: 1)
+        let end = Location(translation: "esv", book: book.stringValue, chapter: UInt16(chapter.integerValue), sentence: 1, verse: 2)
+        let session = Session(name: name.stringValue, range: (start, end), level: Level(raw: UInt8(level.integerValue)), strategy: Strategy(raw: UInt8(strategy.integerValue)))
 
         do {
             try session.create()

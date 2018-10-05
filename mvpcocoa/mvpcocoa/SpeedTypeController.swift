@@ -85,7 +85,7 @@ class SpeedTypeController: NSViewController {
         if segue.identifier == NSStoryboardSegue.Identifier("downloadVersesSegue") {
             let downloadVersesController = segue.destinationController as! DownloadVersesController
             downloadVersesController.translation = "esv"
-            downloadVersesController.location = Location(book: "John", chapter: 1, sentence: 0, verse: 1)
+            downloadVersesController.location = Location(translation: "esv", book: "John", chapter: 1, sentence: 0, verse: 1)
         }
     }
     func versesDownloaded(verses: [Verse]) {

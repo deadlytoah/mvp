@@ -11,6 +11,12 @@ import Foundation
 class Location {
     var raw: LocationRaw
 
+    var translation: String {
+        get {
+            return String(cString: &raw.translation.0)
+        }
+    }
+
     var book: String {
         get {
             return String(cString: &raw.book.0)
@@ -35,8 +41,13 @@ class Location {
         }
     }
 
-    init(book: String, chapter: UInt16, sentence: UInt16, verse: UInt16) {
+    init(translation: String, book: String, chapter: UInt16, sentence: UInt16, verse: UInt16) {
         self.raw = LocationRaw()
+        withUnsafeMutableBytes(of: &self.raw.translation) { ptr in
+            translation.utf8CString.withUnsafeBytes { cstr in
+                ptr.copyMemory(from: cstr)
+            }
+        }
         withUnsafeMutableBytes(of: &self.raw.book) { ptr in
             book.utf8CString.withUnsafeBytes { cstr in
                 ptr.copyMemory(from: cstr)
@@ -130,13 +141,6 @@ enum SessionError: Error {
 
 class Session {
     var raw: SessionRaw?
-    var translation_: String
-
-    var translation: String {
-        get {
-            return translation_
-        }
-    }
 
     var name: String {
         get {
@@ -165,10 +169,9 @@ class Session {
 
     init(raw: SessionRaw) {
         self.raw = raw
-        self.translation_ = String(cString: &self.raw!.range.0.translation.0)
     }
 
-    init(name: String, translation: String, range: (Location, Location), level: Level, strategy: Strategy) {
+    init(name: String, range: (Location, Location), level: Level, strategy: Strategy) {
         self.raw = SessionRaw()
         withUnsafeMutableBytes(of: &self.raw!.name) { ptr in
             name.utf8CString.withUnsafeBytes { cstr in
@@ -178,7 +181,6 @@ class Session {
         self.raw!.range = (range.0.raw, range.1.raw)
         self.raw!.level = level.toByte()
         self.raw!.strategy = strategy.toByte()
-        self.translation_ = translation
     }
 
     func create() throws {
