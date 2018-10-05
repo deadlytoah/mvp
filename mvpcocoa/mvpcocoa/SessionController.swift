@@ -46,6 +46,22 @@ class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectio
         return item
     }
 
+    func collectionView(_ collectionView: NSCollectionView, didSelectItemsAt indexPaths: Set<IndexPath>) {
+        assert(indexPaths.count == 1)
+        let item = collectionView.item(at: indexPaths.first!)!
+        let box = item.view as! NSBox
+        box.isTransparent = false
+        item.textField!.textColor = NSColor.alternateSelectedControlTextColor
+    }
+
+    func collectionView(_ collectionView: NSCollectionView, didDeselectItemsAt indexPaths: Set<IndexPath>) {
+        assert(indexPaths.count == 1)
+        let item = collectionView.item(at: indexPaths.first!)!
+        let box = item.view as! NSBox
+        box.isTransparent = true
+        item.textField!.textColor = NSColor.controlTextColor
+    }
+
     override var representedObject: Any? {
         didSet {
         // Update the view, if already loaded.

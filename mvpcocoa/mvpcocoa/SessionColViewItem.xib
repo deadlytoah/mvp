@@ -2,41 +2,43 @@
 <document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="14113" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="14113"/>
+        <capability name="box content view" minToolsVersion="7.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="SessionColViewItem" customModule="mvpcocoa" customModuleProvider="target">
-            <connections>
-                <outlet property="view" destination="Hz6-mo-xeY" id="0bl-1N-x8E"/>
-            </connections>
-        </customObject>
+        <customObject id="-2" userLabel="File's Owner" customClass="SessionColViewItem" customModule="mvpcocoa" customModuleProvider="target"/>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customObject id="TrC-mj-fhI" customClass="NSCollectionViewItem">
             <connections>
-                <outlet property="textField" destination="3jC-kl-xQY" id="qg5-ZS-pR5"/>
-                <outlet property="view" destination="Hz6-mo-xeY" id="DL4-xm-IWD"/>
+                <outlet property="textField" destination="QMo-SU-IP2" id="Aak-L1-3Tg"/>
+                <outlet property="view" destination="aQk-gZ-4AU" id="SlJ-YT-IA3"/>
             </connections>
         </customObject>
-        <customView id="Hz6-mo-xeY">
-            <rect key="frame" x="0.0" y="0.0" width="120" height="30"/>
+        <box boxType="custom" title="Box" transparent="YES" id="aQk-gZ-4AU">
+            <rect key="frame" x="0.0" y="0.0" width="171" height="110"/>
             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-            <subviews>
-                <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3jC-kl-xQY">
-                    <rect key="frame" x="-2" y="6" width="124" height="17"/>
-                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" id="7cF-LJ-K4X">
-                        <font key="font" metaFont="system"/>
-                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
-                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    </textFieldCell>
-                </textField>
-            </subviews>
-            <constraints>
-                <constraint firstItem="3jC-kl-xQY" firstAttribute="top" secondItem="Hz6-mo-xeY" secondAttribute="top" constant="7" id="bnn-gw-G0K"/>
-                <constraint firstItem="3jC-kl-xQY" firstAttribute="leading" secondItem="Hz6-mo-xeY" secondAttribute="leading" id="twl-0a-wit"/>
-                <constraint firstAttribute="trailing" secondItem="3jC-kl-xQY" secondAttribute="trailing" id="udZ-hu-Czc"/>
-            </constraints>
-            <point key="canvasLocation" x="-41" y="48"/>
-        </customView>
+            <view key="contentView" id="MSO-8N-3aw">
+                <rect key="frame" x="1" y="1" width="169" height="108"/>
+                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                <subviews>
+                    <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="QMo-SU-IP2">
+                        <rect key="frame" x="66" y="46" width="37" height="17"/>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="Label" id="Eam-4m-Uaj">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="QMo-SU-IP2" firstAttribute="centerX" secondItem="MSO-8N-3aw" secondAttribute="centerX" id="Ere-2T-LXt"/>
+                    <constraint firstItem="QMo-SU-IP2" firstAttribute="centerY" secondItem="MSO-8N-3aw" secondAttribute="centerY" id="SbH-yo-Kdq"/>
+                </constraints>
+            </view>
+            <color key="borderColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
+            <color key="fillColor" name="alternateSelectedControlColor" catalog="System" colorSpace="catalog"/>
+            <point key="canvasLocation" x="-66.5" y="0.0"/>
+        </box>
     </objects>
 </document>
