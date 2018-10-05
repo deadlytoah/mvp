@@ -13,8 +13,7 @@ class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectio
 
     static let Title = "mvp — Sessions"
 
-    let BufferSize = 20
-    var sessions = [SessionRaw]()
+    var sessions = [Session]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,26 +23,17 @@ class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectio
         sessionView.register(itemNib, forItemWithIdentifier: NSUserInterfaceItemIdentifier(rawValue: "SessionColViewItem"))
         sessionView.delegate = self
         sessionView.dataSource = self
-    }
 
-    override func viewDidAppear() {
-        super.viewDidAppear()
         self.view.window?.title = SessionController.Title
 
-        var len = BufferSize
-        self.sessions = Array(repeating: SessionRaw.init(), count: len)
-
-        self.sessions.withUnsafeMutableBufferPointer { ptr in
-            let retcode = session_list_sessions(ptr.baseAddress!, UnsafeMutablePointer(&len))
-            if retcode != 0 {
-                let alert = NSAlert()
-                alert.alertStyle = .critical
-                alert.messageText = String(cString: session_get_message(retcode))
-                alert.beginSheetModal(for: self.view.window!)
-            }
+        do {
+            self.sessions = try Session.listSessions()
+        } catch {
+            let alert = NSAlert()
+            alert.alertStyle = .critical
+            alert.messageText = "Error getting the list of sessions (\(error) error)"
+            alert.beginSheetModal(for: self.view.window!)
         }
-
-        self.sessions.removeLast(BufferSize - len)
     }
 
     func collectionView(_ collectionView: NSCollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -52,10 +42,7 @@ class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectio
 
     func collectionView(_ collectionView: NSCollectionView, itemForRepresentedObjectAt indexPath: IndexPath) -> NSCollectionViewItem {
         let item = sessionView.makeItem(withIdentifier: NSUserInterfaceItemIdentifier(rawValue: "SessionColViewItem"), for: indexPath)
-        withUnsafePointer(to: &self.sessions[indexPath[1]].name.0, { ptr in
-            let name = String(cString: ptr)
-            item.textField?.stringValue = name
-        })
+        item.textField!.stringValue = self.sessions[indexPath[1]].name
         return item
     }
 

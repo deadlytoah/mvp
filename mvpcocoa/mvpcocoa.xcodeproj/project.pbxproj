@@ -15,6 +15,7 @@
 		0F3C50EE211DB0AD0040B010 /* SessionColViewItem.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0F3C50EC211DB0AD0040B010 /* SessionColViewItem.xib */; };
 		0F3CEE852165A0ED00D417E7 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3CEE842165A0ED00D417E7 /* Session.swift */; };
 		0F3CEE87216603AB00D417E7 /* DownloadVersesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3CEE86216603AB00D417E7 /* DownloadVersesController.swift */; };
+		0F3CEE9721665B8200D417E7 /* AddSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3CEE9621665B8200D417E7 /* AddSessionController.swift */; };
 		0F59D68921410FF40091C6FD /* SpeedTypeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F59D68821410FF40091C6FD /* SpeedTypeController.swift */; };
 		0F59D68B214111AA0091C6FD /* SpeedTypeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F59D68A214111AA0091C6FD /* SpeedTypeView.swift */; };
 		0F8FD2B121624DD7007847E8 /* Verse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F8FD2B021624DD7007847E8 /* Verse.swift */; };
@@ -48,6 +49,7 @@
 		0F3C50EC211DB0AD0040B010 /* SessionColViewItem.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SessionColViewItem.xib; sourceTree = "<group>"; };
 		0F3CEE842165A0ED00D417E7 /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		0F3CEE86216603AB00D417E7 /* DownloadVersesController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadVersesController.swift; sourceTree = "<group>"; };
+		0F3CEE9621665B8200D417E7 /* AddSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddSessionController.swift; sourceTree = "<group>"; };
 		0F59D68821410FF40091C6FD /* SpeedTypeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedTypeController.swift; sourceTree = "<group>"; };
 		0F59D68A214111AA0091C6FD /* SpeedTypeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedTypeView.swift; sourceTree = "<group>"; };
 		0F8FD2B021624DD7007847E8 /* Verse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Verse.swift; sourceTree = "<group>"; };
@@ -106,6 +108,7 @@
 				0F1A2965211182B900D348B8 /* AppDelegate.swift */,
 				0F1A2969211182BB00D348B8 /* Assets.xcassets */,
 				0F1A296B211182BB00D348B8 /* Main.storyboard */,
+				0F3CEE9621665B8200D417E7 /* AddSessionController.swift */,
 				0F3CEE86216603AB00D417E7 /* DownloadVersesController.swift */,
 				0F1A2967211182B900D348B8 /* SessionController.swift */,
 				0F59D68A214111AA0091C6FD /* SpeedTypeView.swift */,
@@ -270,6 +273,7 @@
 				0F59D68B214111AA0091C6FD /* SpeedTypeView.swift in Sources */,
 				0F59D68921410FF40091C6FD /* SpeedTypeController.swift in Sources */,
 				0F1A2968211182B900D348B8 /* SessionController.swift in Sources */,
+				0F3CEE9721665B8200D417E7 /* AddSessionController.swift in Sources */,
 				0F1A2966211182B900D348B8 /* AppDelegate.swift in Sources */,
 				0F3CEE852165A0ED00D417E7 /* Session.swift in Sources */,
 			);

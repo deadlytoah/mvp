@@ -99,7 +99,7 @@ class Session(ctypes.Structure):
     corresponding data structure in the core library.
 
     """
-    _fields_ = [('name', ctypes.c_ubyte * 64),
+    _fields_ = [('name', ctypes.c_ubyte * 32),
                 ('range', Location * 2),
                 ('level', ctypes.c_ubyte),
                 ('strategy', ctypes.c_ubyte)]

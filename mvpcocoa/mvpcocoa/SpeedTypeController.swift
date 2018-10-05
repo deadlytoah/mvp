@@ -53,6 +53,11 @@ class SpeedTypeController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        DispatchQueue.main.async {
+            self.performSegue(withIdentifier: NSStoryboardSegue.Identifier("sessionSegue"), sender: self)
+        }
+
+/*
         do {
             let verseList = try Verse.findVersesByBookAndChapter(translation: "esv", book: "Phil", chapter: 2)
             if !verseList.isEmpty {
@@ -73,6 +78,7 @@ class SpeedTypeController: NSViewController {
             alert.messageText = "Retrieving Bible verses failed with \(error)."
             alert.beginSheetModal(for: self.view.window!)
         }
+ */
     }
 
     override func prepare(for segue: NSStoryboardSegue, sender: Any?) {

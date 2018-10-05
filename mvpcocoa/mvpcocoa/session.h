@@ -20,7 +20,7 @@ typedef struct {
 } LocationRaw;
 
 typedef struct {
-    unsigned char name[64];
+    unsigned char name[32];
     LocationRaw range[2];
     unsigned char level;
     unsigned char strategy;

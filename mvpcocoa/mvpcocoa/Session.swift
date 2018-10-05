@@ -168,6 +168,19 @@ class Session {
         self.translation_ = String(cString: &self.raw!.range.0.translation.0)
     }
 
+    init(name: String, translation: String, range: (Location, Location), level: Level, strategy: Strategy) {
+        self.raw = SessionRaw()
+        withUnsafeMutableBytes(of: &self.raw!.name) { ptr in
+            name.utf8CString.withUnsafeBytes { cstr in
+                ptr.copyMemory(from: cstr)
+            }
+        }
+        self.raw!.range = (range.0.raw, range.1.raw)
+        self.raw!.level = level.toByte()
+        self.raw!.strategy = strategy.toByte()
+        self.translation_ = translation
+    }
+
     func create() throws {
         let ret = session_create(&self.raw!)
         switch ret {
