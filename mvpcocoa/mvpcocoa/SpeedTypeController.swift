@@ -20,6 +20,7 @@ class SpeedTypeController: NSViewController {
     let underscoreColour = NSColor.lightGray
     let lineSpacing = 10.0
 
+    var session: Session? = nil
     var state: SpeedtypeState? = nil
 
     var caret_position: Int {
@@ -56,10 +57,20 @@ class SpeedTypeController: NSViewController {
         DispatchQueue.main.async {
             self.performSegue(withIdentifier: NSStoryboardSegue.Identifier("sessionSegue"), sender: self)
         }
+    }
 
-/*
+    override func prepare(for segue: NSStoryboardSegue, sender: Any?) {
+        if segue.identifier == NSStoryboardSegue.Identifier("downloadVersesSegue") {
+            let downloadVersesController = segue.destinationController as! DownloadVersesController
+            downloadVersesController.representedObject = session
+        }
+    }
+
+    func beginSession(session: Session) {
+        self.session = session
+
         do {
-            let verseList = try Verse.findVersesByBookAndChapter(translation: "esv", book: "Phil", chapter: 2)
+            let verseList = try Verse.findVersesByBookAndChapter(translation: session.range.0.translation, book: session.range.0.book, chapter: session.range.0.chapter)
             if !verseList.isEmpty {
                 let layout = createTextLayout(verseList: verseList)
                 fillTextView(lines: layout)
@@ -78,16 +89,8 @@ class SpeedTypeController: NSViewController {
             alert.messageText = "Retrieving Bible verses failed with \(error)."
             alert.beginSheetModal(for: self.view.window!)
         }
- */
     }
 
-    override func prepare(for segue: NSStoryboardSegue, sender: Any?) {
-        if segue.identifier == NSStoryboardSegue.Identifier("downloadVersesSegue") {
-            let downloadVersesController = segue.destinationController as! DownloadVersesController
-            downloadVersesController.translation = "esv"
-            downloadVersesController.location = Location(translation: "esv", book: "John", chapter: 1, sentence: 0, verse: 1)
-        }
-    }
     func versesDownloaded(verses: [Verse]) {
         let layout = createTextLayout(verseList:verses)
         fillTextView(lines: layout)

@@ -10,6 +10,8 @@ import Cocoa
 
 class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectionViewDataSource {
     @IBOutlet weak var sessionView: NSCollectionView!
+    @IBOutlet weak var openButton: NSButtonCell!
+    @IBOutlet weak var deleteButton: NSButton!
 
     static let Title = "mvp — Sessions"
 
@@ -52,6 +54,9 @@ class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectio
         let box = item.view as! NSBox
         box.isTransparent = false
         item.textField!.textColor = NSColor.alternateSelectedControlTextColor
+
+        openButton.isEnabled = true
+        deleteButton.isEnabled = true
     }
 
     func collectionView(_ collectionView: NSCollectionView, didDeselectItemsAt indexPaths: Set<IndexPath>) {
@@ -60,6 +65,25 @@ class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectio
         let box = item.view as! NSBox
         box.isTransparent = true
         item.textField!.textColor = NSColor.controlTextColor
+
+        openButton.isEnabled = false
+        deleteButton.isEnabled = false
+    }
+
+    @IBAction func performOpen(_ sender: Any) {
+        let indexPaths = sessionView!.selectionIndexPaths
+        assert(indexPaths.count == 1)
+        let session = self.sessions[indexPaths.first!.item]
+        let speedTypeController = self.presenting as! SpeedTypeController
+        speedTypeController.beginSession(session: session)
+
+        self.dismiss(self)
+    }
+
+    func sessionSelected(session: Session) {
+        let speedTypeController = self.presenting as! SpeedTypeController
+        speedTypeController.beginSession(session: session)
+        self.dismiss(self)
     }
 
     override var representedObject: Any? {

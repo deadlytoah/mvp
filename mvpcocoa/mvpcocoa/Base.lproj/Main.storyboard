@@ -962,14 +962,17 @@ Gw
                             </button>
                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Vxe-uT-3QW">
                                 <rect key="frame" x="132" y="13" width="73" height="32"/>
-                                <buttonCell key="cell" type="push" title="Open" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="PQl-Md-yNH">
+                                <buttonCell key="cell" type="push" title="Open" bezelStyle="rounded" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="PQl-Md-yNH">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
+                                <connections>
+                                    <action selector="performOpen:" target="XfG-lQ-9wD" id="SVv-0l-ecP"/>
+                                </connections>
                             </button>
                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="aFJ-Dt-iYC">
                                 <rect key="frame" x="205" y="13" width="80" height="32"/>
-                                <buttonCell key="cell" type="push" title="Delete" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="aAn-tt-ViC">
+                                <buttonCell key="cell" type="push" title="Delete" bezelStyle="rounded" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="aAn-tt-ViC">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                     <font key="font" metaFont="system"/>
                                 </buttonCell>
@@ -991,6 +994,8 @@ Gw
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="deleteButton" destination="aFJ-Dt-iYC" id="jXv-jP-FIG"/>
+                        <outlet property="openButton" destination="PQl-Md-yNH" id="bfz-Vl-ZOE"/>
                         <outlet property="sessionView" destination="PPd-D2-yM9" id="W34-kH-Esh"/>
                     </connections>
                 </viewController>

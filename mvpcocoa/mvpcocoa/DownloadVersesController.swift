@@ -12,9 +12,6 @@ class DownloadVersesController: NSViewController {
 
     @IBOutlet weak var spinningWheel: NSProgressIndicator!
 
-    var translation: String? = nil
-    var location: Location? = nil
-
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -25,7 +22,8 @@ class DownloadVersesController: NSViewController {
 
         DispatchQueue.global(qos: .background).async {
             do {
-                let verses = try Verse.fetchVersesByBookAndChapter(translation: self.translation!, source: VerseSourceBlueLetterBible, book: self.location!.book, chapter: self.location!.chapter)
+                let session = self.representedObject as! Session
+                let verses = try Verse.fetchVersesByBookAndChapter(translation: session.range.0.translation, source: VerseSourceBlueLetterBible, book: session.range.0.book, chapter: session.range.0.chapter)
 
                 DispatchQueue.main.async {
                     let speedTypeController = self.presenting! as! SpeedTypeController
