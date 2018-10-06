@@ -26,9 +26,10 @@ class DownloadVersesController: NSViewController {
                 let verses = try Verse.fetchVersesByBookAndChapter(translation: session.range.0.translation, source: VerseSourceBlueLetterBible, book: session.range.0.book, chapter: session.range.0.chapter)
 
                 DispatchQueue.main.async {
-                    let speedTypeController = self.presenting! as! SpeedTypeController
-                    speedTypeController.versesDownloaded(verses: verses)
-                    self.dismiss(self)
+                    if let speedTypeController = self.presenting as? SpeedTypeController {
+                        speedTypeController.versesDownloaded(verses: verses)
+                        self.dismiss(self)
+                    }
                 }
             } catch {
                 DispatchQueue.main.async {
