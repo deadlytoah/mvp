@@ -4,7 +4,7 @@ import ctypes
 class Verse(ctypes.Structure):
     """Represents a verse in the Bible."""
     _fields_ = [('key', ctypes.c_ubyte * 16),
-                ('text', ctypes.c_ubyte * 256)]
+                ('text', ctypes.c_ubyte * 496)]
 
 class VerseView(ctypes.Structure):
     """Represents a view of one or more verses in the Bible."""

@@ -28,7 +28,7 @@ typedef struct {
 
 typedef struct {
     unsigned char key[16];
-    unsigned char text[256];
+    unsigned char text[496];
 } VerseRaw;
 
 typedef struct {

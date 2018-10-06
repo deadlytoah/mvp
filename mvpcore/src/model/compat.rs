@@ -55,7 +55,7 @@ impl Location {
 #[repr(C)]
 pub struct Verse {
     pub key: [u8; 16],
-    pub text: [u8; 256],
+    pub text: [u8; 496],
 }
 
 #[derive(Copy, Clone)]
