@@ -69,6 +69,10 @@ extern int verse_fetch_by_book_and_chapter(const char *translation,
                                            VerseSource source,
                                            const char *book,
                                            unsigned short chapter);
+extern int verse_insert(const char *translation,
+                        const VerseView *view,
+                        const char *book,
+                        unsigned short chapter);
 
 extern int graphlayout_layout(const char *text,
                               LayoutLine *indicies_ptr,

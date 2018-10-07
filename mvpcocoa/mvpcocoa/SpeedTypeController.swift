@@ -92,6 +92,15 @@ class SpeedTypeController: NSViewController {
     }
 
     func versesDownloaded(verses: [Verse]) {
+        do {
+            try Verse.insertVersesForBookAndChapter(translation: session!.range.0.translation, book: session!.range.0.book, chapter: session!.range.0.chapter, verses: verses)
+        } catch {
+            let alert = NSAlert()
+            alert.alertStyle = .critical
+            alert.messageText = "Inserting Bible verses failed with \(error)."
+            alert.beginSheetModal(for: self.view.window!)
+        }
+
         let layout = createTextLayout(verseList:verses)
         fillTextView(lines: layout)
         self.state = initialiseState(lines: layout)

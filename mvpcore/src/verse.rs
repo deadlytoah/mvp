@@ -4,6 +4,7 @@ use libc::{c_char, c_int};
 use model::compat::Verse;
 use model::strong;
 use regex::Regex;
+use sdb::tables::Record;
 use sdb::Sdb;
 use std::ffi::{CStr, CString};
 use std::fmt::{self, Display, Formatter};
@@ -161,6 +162,24 @@ pub unsafe fn verse_fetch_by_book_and_chapter(
     }
 }
 
+#[no_mangle]
+pub unsafe fn verse_insert(
+    translation: *const c_char,
+    view: *const VerseView,
+    book: *const c_char,
+    chapter: u16,
+) -> c_int {
+    let translation = CStr::from_ptr(translation);
+    let book = CStr::from_ptr(book);
+    match imp::verse_insert(translation, &*view, &book, chapter) {
+        Ok(()) => 0,
+        Err(e) => {
+            eprintln!("{:?}", e);
+            capi::map_error_to_code(&e) as c_int
+        }
+    }
+}
+
 mod imp {
     use super::*;
     use reqwest;
@@ -304,6 +323,57 @@ mod imp {
             let (key, text) = (&cap[i * 2 + 1], &cap[i * 2 + 2]);
             view.push(key, text);
         }
+        Ok(())
+    }
+
+    pub fn verse_insert(
+        translation: &CStr,
+        view: &VerseView,
+        book: &CStr,
+        chapter: u16,
+    ) -> Result<()> {
+        let mut dbpath = dirs::data_dir().expect("unable to get platform's data directory.");
+        dbpath.push("mvp-speedtype");
+        if !dbpath.exists() {
+            fs::create_dir(&dbpath)?;
+        }
+
+        let translation = translation.to_str()?;
+        dbpath.push(&(translation.to_owned() + DB_EXT));
+        let dbpath = dbpath.to_str().expect("failed to convert path to string");
+
+        let mut sdb = Sdb::open(&dbpath)?;
+        let verse_table = sdb
+            .tables_mut()
+            .iter_mut()
+            .filter(|table| !table.is_dropped())
+            .find(|table| table.name() == "verse")
+            .expect("verse table");
+        verse_table.create_manager()?;
+        let manager = verse_table.manager_mut().expect("manager");
+        manager.verify()?;
+        manager.service()?;
+
+        let key_prefix = [book.to_str().expect("utf8 error"), &chapter.to_string()].join(" ");
+
+        for i in 0..view.next {
+            let mut rec = Record::new();
+            let verse = &view.verses[i];
+
+            let key = unsafe { CStr::from_ptr(verse.key.as_ptr() as *const i8) };
+            let key = key.to_str().expect("utf8 error");
+            let key = [&key_prefix, key].join(":");
+            rec.insert("key".into(), key);
+
+            let text = unsafe { CStr::from_ptr(verse.text.as_ptr() as *const i8) };
+            let text = text.to_str().expect("utf8 error");
+            rec.insert("text".into(), text.into());
+
+            rec.insert("deleted".into(), "0".into());
+
+            manager.insert(rec)?;
+        }
+
         Ok(())
     }
 }
