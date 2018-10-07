@@ -297,6 +297,7 @@ mod imp {
 #[cfg(test)]
 mod test {
     use super::*;
+    use model;
     use std::ffi::CStr;
 
     #[test]
@@ -304,7 +305,7 @@ mod test {
         let res = create_test_session().0;
         assert!(res == SessionError::OK as c_int || res == SessionError::SessionExists as c_int);
 
-        let mut buf: [model::compat::Session; 20] = unsafe { ::std::mem::zeroed() };
+        let mut buf: [model::speedtype::compat::Session; 20] = unsafe { ::std::mem::zeroed() };
         let mut len: usize = 20;
         {
             let bufref = &mut buf;
@@ -340,7 +341,7 @@ mod test {
         let res = unsafe { session_delete(&mut session) };
         assert_eq!(res, 0);
 
-        let mut buf: [model::compat::Session; 20] = unsafe { ::std::mem::zeroed() };
+        let mut buf: [model::speedtype::compat::Session; 20] = unsafe { ::std::mem::zeroed() };
         let mut len: usize = 20;
         {
             let bufref = &mut buf;
@@ -357,7 +358,7 @@ mod test {
         assert!(none);
     }
 
-    fn create_test_session() -> (c_int, model::compat::Session) {
+    fn create_test_session() -> (c_int, model::speedtype::compat::Session) {
         let start = model::compat::Location {
             translation: [b'E', b'S', b'V', 0, 0, 0, 0, 0],
             book: [b'P', b'h', b'i', b'l', 0, 0, 0, 0],
@@ -373,7 +374,7 @@ mod test {
             verse: 1,
         };
 
-        let mut session = model::compat::Session {
+        let mut session = model::speedtype::compat::Session {
             name: unsafe { ::std::mem::zeroed() },
             range: [start, end],
             level: 0,
