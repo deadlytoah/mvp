@@ -58,7 +58,7 @@ pub struct SourceDescription {
 pub enum FetchError {
     HttpRequest(::reqwest::Error),
     Regex(::regex::Error),
-    RegexMismatch(String),
+    RegexMismatch(String, String),
     ParseInt(::std::num::ParseIntError),
 }
 
@@ -67,7 +67,7 @@ impl ::std::error::Error for FetchError {
         match *self {
             FetchError::HttpRequest(ref e) => e.description(),
             FetchError::Regex(ref e) => e.description(),
-            FetchError::RegexMismatch(_) => "the text did not match the regex",
+            FetchError::RegexMismatch(_, _) => "the text did not match the regex",
             FetchError::ParseInt(ref e) => e.description(),
         }
     }
@@ -76,7 +76,7 @@ impl ::std::error::Error for FetchError {
         match *self {
             FetchError::HttpRequest(ref e) => Some(e),
             FetchError::Regex(ref e) => Some(e),
-            FetchError::RegexMismatch(_) => None,
+            FetchError::RegexMismatch(_, _) => None,
             FetchError::ParseInt(ref e) => Some(e),
         }
     }
@@ -87,9 +87,11 @@ impl Display for FetchError {
         match *self {
             FetchError::HttpRequest(ref e) => write!(f, "error making an HTTP request: {}", e),
             FetchError::Regex(ref e) => write!(f, "regex error: {}", e),
-            FetchError::RegexMismatch(ref s) => {
-                write!(f, "the text did not match the regex: [{}]", s)
-            }
+            FetchError::RegexMismatch(ref expr, ref text) => write!(
+                f,
+                "the text did not match the regex: [{}] against: [{}]",
+                expr, text
+            ),
             FetchError::ParseInt(ref e) => write!(f, "parse integer error: {}", e),
         }
     }
@@ -312,10 +314,10 @@ mod imp {
         let mut res = client.post(source.form_url).multipart(form).send()?;
         let body = res.text()?;
 
-        let re_outer = Regex::new(r#"<div id="multiResults">\[.*:.*-([0-9]+) .*\](.*)</div>"#)?;
+        let re_outer = Regex::new(r#"<div id="multiResults">\[.*:.*-([0-9]+) .*?\](.*)</div>"#)?;
         let cap = re_outer
             .captures(&body)
-            .ok_or_else(|| FetchError::RegexMismatch(re_outer.to_string()))?;
+            .ok_or_else(|| FetchError::RegexMismatch(re_outer.to_string(), body.clone()))?;
         let count = cap[1].parse::<usize>()?;
         let verses = &cap[2];
 
@@ -330,7 +332,7 @@ mod imp {
         let re_inner = Regex::new(&pattern)?;
         let cap = re_inner
             .captures(&verses)
-            .ok_or_else(|| FetchError::RegexMismatch(pattern))?;
+            .ok_or_else(|| FetchError::RegexMismatch(pattern, verses.into()))?;
         for i in 0..count {
             let (key, text) = (&cap[i * 2 + 1], &cap[i * 2 + 2]);
             view.push(key, text);
