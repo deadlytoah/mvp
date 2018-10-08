@@ -10,6 +10,7 @@ import Cocoa
 
 class AddSessionController: NSViewController {
 
+    @IBOutlet weak var translation: NSTextField!
     @IBOutlet weak var name: NSTextField!
     @IBOutlet weak var book: NSTextField!
     @IBOutlet weak var chapter: NSTextField!
@@ -21,8 +22,8 @@ class AddSessionController: NSViewController {
     }
 
     @IBAction func performOk(_ sender: Any) {
-        let start = Location(translation: "esv", book: book.stringValue, chapter: UInt16(chapter.integerValue), sentence: 0, verse: 1)
-        let end = Location(translation: "esv", book: book.stringValue, chapter: UInt16(chapter.integerValue), sentence: 1, verse: 2)
+        let start = Location(translation: translation.stringValue, book: book.stringValue, chapter: UInt16(chapter.integerValue), sentence: 0, verse: 1)
+        let end = Location(translation: translation.stringValue, book: book.stringValue, chapter: UInt16(chapter.integerValue), sentence: 1, verse: 2)
         let session = Session(name: name.stringValue, range: (start, end), level: Level(raw: UInt8(level.integerValue)), strategy: Strategy(raw: UInt8(strategy.integerValue)))
 
         do {
