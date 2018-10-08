@@ -180,6 +180,18 @@ pub unsafe fn verse_insert(
     }
 }
 
+#[no_mangle]
+pub unsafe fn cache_create(translation: *const c_char) -> c_int {
+    let translation = CStr::from_ptr(translation);
+    match imp::cache_create(translation) {
+        Ok(()) => 0,
+        Err(e) => {
+            eprintln!("{:?}", e);
+            capi::map_error_to_code(&e) as c_int
+        }
+    }
+}
+
 mod imp {
     use super::*;
     use reqwest;
@@ -373,6 +385,24 @@ mod imp {
 
             manager.insert(rec)?;
         }
+
+        Ok(())
+    }
+
+    pub fn cache_create(translation: &CStr) -> Result<()> {
+        let mut dbpath = dirs::data_dir().expect("unable to get platform's data directory.");
+        dbpath.push("mvp-speedtype");
+        if !dbpath.exists() {
+            fs::create_dir(&dbpath)?;
+        }
+
+        let translation = translation.to_str()?;
+        dbpath.push(&(translation.to_owned() + DB_EXT));
+        let dbpath = dbpath.to_str().expect("failed to convert path to string");
+        Sdb::create(&dbpath)?;
+
+        let mut sdb = Sdb::open(&dbpath)?;
+        sdb.create_table("verse.mjson")?;
 
         Ok(())
     }

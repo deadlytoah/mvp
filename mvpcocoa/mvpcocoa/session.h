@@ -74,6 +74,8 @@ extern int verse_insert(const char *translation,
                         const char *book,
                         unsigned short chapter);
 
+extern int cache_create(const char *translation);
+
 extern int graphlayout_layout(const char *text,
                               LayoutLine *indicies_ptr,
                               size_t *indicies_len);

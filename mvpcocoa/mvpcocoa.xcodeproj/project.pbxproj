@@ -23,6 +23,7 @@
 		0FDC3D1A2163B00E00FA0F1F /* Sentence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FDC3D192163B00E00FA0F1F /* Sentence.swift */; };
 		0FF4D89C215A6749009DB83F /* GraphLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF4D89B215A6749009DB83F /* GraphLayout.swift */; };
 		0FF57BC02138E13000C4136C /* libmvpcore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0FF57BBF2138E13000C4136C /* libmvpcore.a */; };
+		0FF789C2216AFF6A0056A09B /* ToolsMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FF789C1216AFF6A0056A09B /* ToolsMenu.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,6 +63,7 @@
 		0FE76A3D2119FB8C00E36923 /* mvpcocoa.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = mvpcocoa.xcodeproj; sourceTree = "<group>"; };
 		0FF4D89B215A6749009DB83F /* GraphLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GraphLayout.swift; sourceTree = "<group>"; };
 		0FF57BBF2138E13000C4136C /* libmvpcore.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmvpcore.a; path = ../../target/debug/libmvpcore.a; sourceTree = "<group>"; };
+		0FF789C1216AFF6A0056A09B /* ToolsMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolsMenu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -113,6 +115,7 @@
 				0F1A2967211182B900D348B8 /* SessionController.swift */,
 				0F59D68A214111AA0091C6FD /* SpeedTypeView.swift */,
 				0F59D68821410FF40091C6FD /* SpeedTypeController.swift */,
+				0FF789C1216AFF6A0056A09B /* ToolsMenu.swift */,
 				0F3C50EC211DB0AD0040B010 /* SessionColViewItem.xib */,
 				0F8FD2B021624DD7007847E8 /* Verse.swift */,
 				0F1A296E211182BB00D348B8 /* Info.plist */,
@@ -273,6 +276,7 @@
 				0F59D68B214111AA0091C6FD /* SpeedTypeView.swift in Sources */,
 				0F59D68921410FF40091C6FD /* SpeedTypeController.swift in Sources */,
 				0F1A2968211182B900D348B8 /* SessionController.swift in Sources */,
+				0FF789C2216AFF6A0056A09B /* ToolsMenu.swift in Sources */,
 				0F3CEE9721665B8200D417E7 /* AddSessionController.swift in Sources */,
 				0F1A2966211182B900D348B8 /* AppDelegate.swift in Sources */,
 				0F3CEE852165A0ED00D417E7 /* Session.swift in Sources */,

@@ -632,6 +632,19 @@
                                     </items>
                                 </menu>
                             </menuItem>
+                            <menuItem title="Tools" id="oNC-Cj-4wW">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <menu key="submenu" title="Tools" id="ZMd-AL-dbC">
+                                    <items>
+                                        <menuItem title="Create Cache Database…" id="45X-l9-qg0">
+                                            <modifierMask key="keyEquivalentModifierMask"/>
+                                            <connections>
+                                                <action selector="createCacheDatabase:" target="Ady-hI-5gd" id="Xul-jp-2zE"/>
+                                            </connections>
+                                        </menuItem>
+                                    </items>
+                                </menu>
+                            </menuItem>
                             <menuItem title="Window" id="aUF-d1-5bR">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Window" systemMenu="window" id="Td7-aD-5lo">
