@@ -193,22 +193,25 @@ class SpeedTypeController: NSViewController {
 
         for ch in s {
             let caret = self.caret_position
-            buffer[caret].typed = ch
-            buffer[caret].correct = buffer[caret].character == ch
 
-            if let word = buffer[caret].word {
-                let word = self.state!.words[word]
-                word.touched = true
-
-                // we are at the last letter, which means we are done
-                // with this word.
-                if caret == word.chars.last! {
-                    word.behind = true
+            if caret < buffer.count {
+                buffer[caret].typed = ch
+                buffer[caret].correct = buffer[caret].character == ch
+                
+                if let word = buffer[caret].word {
+                    let word = self.state!.words[word]
+                    word.touched = true
+                    
+                    // we are at the last letter, which means we are done
+                    // with this word.
+                    if caret == word.chars.last! {
+                        word.behind = true
+                    }
                 }
+                
+                buffer[caret].rendered = false
+                self.speedTypeView?.moveForward(self)
             }
-
-            buffer[caret].rendered = false
-            self.speedTypeView?.moveForward(self)
         }
         self.render()
     }
