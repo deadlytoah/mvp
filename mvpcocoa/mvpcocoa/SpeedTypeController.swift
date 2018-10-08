@@ -55,8 +55,13 @@ class SpeedTypeController: NSViewController {
         super.viewDidLoad()
 
         DispatchQueue.main.async {
-            self.performSegue(withIdentifier: NSStoryboardSegue.Identifier("sessionSegue"), sender: self)
+            self.openSession(self)
         }
+    }
+
+    @IBAction
+    func openSession(_ sender: Any) {
+        self.performSegue(withIdentifier: NSStoryboardSegue.Identifier("sessionSegue"), sender: self)
     }
 
     override func prepare(for segue: NSStoryboardSegue, sender: Any?) {
