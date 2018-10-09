@@ -13,7 +13,7 @@ class SpeedTypeController: NSViewController {
     @IBOutlet weak var difficultySlider: NSSlider!
     @IBOutlet weak var speedTypeView: SpeedTypeView!
 
-    let font = NSFont(name: "Courier New", size: 18)
+    let defaultFont = NSFont(name: "Courier New", size: 18)
     let guideColour = NSColor.gray
     let correctColour = NSColor.black
     let incorrectColour = NSColor.red
@@ -60,6 +60,7 @@ class SpeedTypeController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        self.speedTypeView.font = self.defaultFont
         DispatchQueue.main.async {
             self.openSession(self)
         }
@@ -161,7 +162,7 @@ class SpeedTypeController: NSViewController {
         let textStorage = self.speedTypeView.textStorage!
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = CGFloat(lineSpacing)
-        var attributes = [NSAttributedStringKey.font: self.font!,
+        var attributes = [NSAttributedStringKey.font: self.speedTypeView.font!,
                           NSAttributedStringKey.foregroundColor: guideColour,
                           NSAttributedStringKey.paragraphStyle: paragraphStyle]
 

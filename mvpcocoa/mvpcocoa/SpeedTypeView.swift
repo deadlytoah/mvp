@@ -19,6 +19,11 @@ class SpeedTypeView: NSTextView {
         nextResponder?.keyDown(with: theEvent)
     }
 
+    override func changeFont(_ sender: Any?) {
+        let fontManager = sender as! NSFontManager
+        self.font = fontManager.convert(self.font!)
+    }
+
     override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         if let action = menuItem.action {
             switch action.description {
