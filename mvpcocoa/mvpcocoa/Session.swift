@@ -64,16 +64,16 @@ class Location {
 }
 
 enum Level {
-    case Easier
+    case Easiest
     case Easy
     case Normal
     case Hard
-    case Harder
+    case Hardest
 
     init(raw: UInt8) {
         switch raw {
         case 0:
-            self = Level.Easier
+            self = Level.Easiest
         case 1:
             self = Level.Easy
         case 2:
@@ -81,7 +81,7 @@ enum Level {
         case 3:
             self = Level.Hard
         case 4:
-            self = Level.Harder
+            self = Level.Hardest
         default:
             fatalError("unknown difficulty level \(raw)")
         }
@@ -89,7 +89,7 @@ enum Level {
 
     func toByte() -> UInt8 {
         switch self {
-        case Level.Easier:
+        case Level.Easiest:
             return 0
         case Level.Easy:
             return 1
@@ -97,7 +97,7 @@ enum Level {
             return 2
         case Level.Hard:
             return 3
-        case Level.Harder:
+        case Level.Hardest:
             return 4
         }
     }
@@ -160,7 +160,11 @@ class Session {
         get {
             return Level(raw: raw!.level)
         }
+        set {
+            self.raw!.level = newValue.toByte()
+        }
     }
+
     var strategy: Strategy {
         get {
             return Strategy(raw: raw!.strategy)

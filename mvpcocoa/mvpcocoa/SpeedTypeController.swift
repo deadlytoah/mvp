@@ -21,7 +21,12 @@ class SpeedTypeController: NSViewController {
     let lineSpacing = 10.0
 
     var session: Session? = nil
-    var state: SpeedtypeState? = nil
+
+    var state: SpeedtypeState? = nil {
+        didSet {
+            self.difficultyLevel = Int(session!.level.toByte())
+        }
+    }
 
     var caret_position: Int {
         get {
@@ -42,6 +47,7 @@ class SpeedTypeController: NSViewController {
                 if let state = self.state {
                     let caret = caret_position
                     speedtype_apply_level(state.raw, UInt8(difficultyLevel))
+                    self.session!.level = Level(raw: UInt8(difficultyLevel))
                     self.render()
                     if caret != caret_position {
                         caret_position = caret
@@ -152,6 +158,8 @@ class SpeedTypeController: NSViewController {
     }
 
     private func render() {
+        self.titleLabel.stringValue = "\(self.session!.name) – \(self.session!.level) difficulty"
+
         let textStorage = self.speedTypeView.textStorage!
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = CGFloat(lineSpacing)
