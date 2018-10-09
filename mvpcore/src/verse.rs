@@ -4,8 +4,12 @@ use libc::{c_char, c_int};
 use model::compat::Verse;
 use model::strong;
 use regex::Regex;
+#[cfg(feature = "cache_uses_sdb")]
 use sdb::tables::Record;
+#[cfg(feature = "cache_uses_sdb")]
 use sdb::Sdb;
+#[cfg(feature = "cache_uses_sqlite")]
+use sqlite3;
 use std::ffi::{CStr, CString};
 use std::fmt::{self, Display, Formatter};
 
@@ -199,6 +203,7 @@ mod imp {
     use reqwest;
     use std::fs;
 
+    #[cfg(feature = "cache_uses_sdb")]
     pub fn verse_find_all(translation: &CStr, view: &mut VerseView) -> Result<()> {
         let mut dbpath = dirs::data_dir().expect("unable to get platform's data directory.");
         dbpath.push("mvp-speedtype");
@@ -231,6 +236,7 @@ mod imp {
         Ok(())
     }
 
+    #[cfg(feature = "cache_uses_sdb")]
     pub fn verse_find_by_book_and_chapter(
         translation: &CStr,
         view: &mut VerseView,
@@ -340,6 +346,7 @@ mod imp {
         Ok(())
     }
 
+    #[cfg(feature = "cache_uses_sdb")]
     pub fn verse_insert(
         translation: &CStr,
         view: &VerseView,
@@ -391,6 +398,7 @@ mod imp {
         Ok(())
     }
 
+    #[cfg(feature = "cache_uses_sdb")]
     pub fn cache_create(translation: &CStr) -> Result<()> {
         let mut dbpath = dirs::data_dir().expect("unable to get platform's data directory.");
         dbpath.push("mvp-speedtype");
@@ -405,6 +413,27 @@ mod imp {
 
         let mut sdb = Sdb::open(&dbpath)?;
         sdb.create_table("verse.mjson")?;
+
+        Ok(())
+    }
+
+    #[cfg(feature = "cache_uses_sqlite")]
+    pub fn cache_create(translation: &CStr) -> Result<()> {
+        let mut dbpath = dirs::data_dir().expect("unable to get platform's data directory.");
+        dbpath.push("mvp-speedtype");
+        if !dbpath.exists() {
+            fs::create_dir(&dbpath)?;
+        }
+
+        let translation = translation.to_str()?;
+        dbpath.push(&(translation.to_owned() + DB_EXT));
+
+        let connection = sqlite3::open(&dbpath)?;
+        connection.execute(
+            "CREATE TABLE VERSE (KEY TEXT PRIMARY KEY, \
+             TEXT TEXT, \
+             DELETED INTEGER)",
+        )?;
 
         Ok(())
     }

@@ -13,10 +13,19 @@ reqwest = "0.9.2"
 serde = "1.*"
 serde_derive = "1.*"
 serde_json = "1.*"
-sqlite3 = "0.*"
 
 [dependencies.sdb]
+optional = true
 path = "../sdb/"
+
+[dependencies.sqlite3]
+optional = true
+version = "0.24.0"
+
+[features]
+default = ["cache_uses_sdb"]
+cache_uses_sdb = ["sdb"]
+cache_uses_sqlite = ["sqlite3"]
 
 [lib]
 crate-type = [

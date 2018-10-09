@@ -2,7 +2,6 @@ use libc::*;
 use model::speedtype::{compat, strong};
 use model::strong::BookError;
 use model::strong::Range;
-use sdb;
 use std::ffi;
 use std::fmt::{self, Display, Formatter};
 use std::slice;
@@ -16,7 +15,10 @@ pub enum CapiError {
     Session(strong::SessionError),
     Utf8(str::Utf8Error),
     Nul(ffi::NulError),
-    Sdb(sdb::Error),
+    #[cfg(feature = "cache_uses_sdb")]
+    Database(::sdb::Error),
+    #[cfg(feature = "cache_uses_sqlite")]
+    Database(::sqlite3::Error),
     Io(::std::io::Error),
     HttpRequest(::reqwest::Error),
     Regex(::regex::Error),
@@ -31,7 +33,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Session(ref e) => e.description(),
             CapiError::Utf8(ref e) => e.description(),
             CapiError::Nul(ref e) => e.description(),
-            CapiError::Sdb(ref e) => e.description(),
+            CapiError::Database(ref e) => e.description(),
             CapiError::Io(ref e) => e.description(),
             CapiError::HttpRequest(ref e) => e.description(),
             CapiError::Regex(ref e) => e.description(),
@@ -46,7 +48,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Session(ref e) => Some(e),
             CapiError::Utf8(ref e) => Some(e),
             CapiError::Nul(ref e) => Some(e),
-            CapiError::Sdb(ref e) => Some(e),
+            CapiError::Database(ref e) => Some(e),
             CapiError::Io(ref e) => Some(e),
             CapiError::HttpRequest(ref e) => Some(e),
             CapiError::Regex(ref e) => Some(e),
@@ -63,7 +65,7 @@ impl Display for CapiError {
             CapiError::Session(ref e) => write!(f, "session error: {}", e),
             CapiError::Utf8(ref e) => write!(f, "utf8 error: {}", e),
             CapiError::Nul(ref e) => write!(f, "nul character found in string: {}", e),
-            CapiError::Sdb(ref e) => write!(f, "error in database: {}", e),
+            CapiError::Database(ref e) => write!(f, "database error: {}", e),
             CapiError::Io(ref e) => write!(f, "IO error: {}", e),
             CapiError::HttpRequest(ref e) => write!(f, "error making an HTTP request: {}", e),
             CapiError::Regex(ref e) => write!(f, "Regex error: {}", e),
@@ -97,9 +99,17 @@ impl From<ffi::NulError> for CapiError {
     }
 }
 
-impl From<sdb::Error> for CapiError {
-    fn from(err: sdb::Error) -> CapiError {
-        CapiError::Sdb(err)
+#[cfg(feature = "cache_uses_sdb")]
+impl From<::sdb::Error> for CapiError {
+    fn from(err: ::sdb::Error) -> CapiError {
+        CapiError::Database(err)
+    }
+}
+
+#[cfg(feature = "cache_uses_sqlite")]
+impl From<::sqlite3::Error> for CapiError {
+    fn from(err: ::sqlite3::Error) -> CapiError {
+        CapiError::Database(err)
     }
 }
 
@@ -141,7 +151,7 @@ pub enum SessionError {
     Utf8Error,
     BookUnknown,
     NulError,
-    SdbError,
+    DatabaseError,
     HttpRequestError,
     RegexError,
     FetchError,
@@ -161,7 +171,7 @@ pub fn map_error_to_code(error: &CapiError) -> SessionError {
         CapiError::Utf8(_) => SessionError::Utf8Error,
         CapiError::Nul(_) => SessionError::NulError,
         CapiError::BufferTooSmall => SessionError::SessionBufferTooSmall,
-        CapiError::Sdb(_) => SessionError::SdbError,
+        CapiError::Database(_) => SessionError::DatabaseError,
         CapiError::Io(_) => SessionError::IOError,
         CapiError::HttpRequest(_) => SessionError::HttpRequestError,
         CapiError::Regex(_) => SessionError::RegexError,
@@ -182,7 +192,7 @@ static ERROR_MESSAGES: &'static [&'static str] = &[
     "utf-8 encoding error\0",
     "unknown book\0",
     "unexpected null character found in string\0",
-    "error in database\0",
+    "database error\0",
     "error making an HTTP request\0",
     "regex error\0",
     "error fetching verses\0",
