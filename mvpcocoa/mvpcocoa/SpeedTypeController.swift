@@ -133,9 +133,7 @@ class SpeedTypeController: NSViewController {
     }
 
     fileprivate func fillTextView(lines: [String]) {
-        lines.forEach { line in
-            self.speedTypeView?.textStorage?.append(NSAttributedString(string: "\(line)\n"))
-        }
+        self.speedTypeView!.string = lines.joined(separator: "\n") + "\n"
     }
 
     fileprivate func initialiseState(lines: [String]) -> SpeedtypeState {
