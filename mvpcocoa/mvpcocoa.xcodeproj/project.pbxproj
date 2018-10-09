@@ -443,6 +443,7 @@
 					/Users/hcs/Code/target/debug,
 				);
 				LIBRARY_SEARCH_PATHS = $HOME/Code/target/debug;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_BUNDLE_IDENTIFIER = net.heesuk.mvpcocoa;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "mvpcocoa/mvpcocoa-Bridging-Header.h";
@@ -466,6 +467,7 @@
 					/Users/hcs/Code/target/release,
 				);
 				LIBRARY_SEARCH_PATHS = $HOME/Code/target/release;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				PRODUCT_BUNDLE_IDENTIFIER = net.heesuk.mvpcocoa;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "mvpcocoa/mvpcocoa-Bridging-Header.h";
