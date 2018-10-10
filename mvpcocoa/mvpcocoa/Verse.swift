@@ -8,13 +8,6 @@
 
 import Foundation
 
-enum FindVersesError: Error {
-    case io
-    case utf8
-    case database
-    case fetch
-}
-
 class Verse {
     let id: Int32
     let text: String
@@ -57,16 +50,7 @@ class Verse {
             })
             return verseList
         } else {
-            switch retval {
-            case 1:
-                throw FindVersesError.io
-            case 9:
-                throw FindVersesError.utf8
-            case 12:
-                throw FindVersesError.database
-            default:
-                fatalError("unhandled error code \(retval)")
-            }
+            throw CoreLibError.init(rawValue: retval)!
         }
     }
 
@@ -84,12 +68,7 @@ class Verse {
             })
             return verseList
         } else {
-            switch retval {
-            case 15:
-                throw FindVersesError.fetch
-            default:
-                fatalError("unhandled error code \(retval)")
-            }
+            throw CoreLibError.init(rawValue: retval)!
         }
     }
 
@@ -106,22 +85,8 @@ class Verse {
         let ret = verse_insert(translation, &verseView, book, chapter)
         switch ret {
         case 0: break // success
-        case 1:
-            throw SessionError.io
-        case 2:
-            throw SessionError.sessionExists
-        case 3:
-            throw SessionError.sessionDataCorrupt
-        case 5:
-            throw SessionError.sessionTooMany
-        case 9:
-            throw SessionError.utf8
-        case 10:
-            throw SessionError.bookUnknown
-        case 11:
-            throw SessionError.nul
         default:
-            fatalError("unhandled error code \(ret)")
+            throw CoreLibError.init(rawValue: ret)!
         }
     }
 }

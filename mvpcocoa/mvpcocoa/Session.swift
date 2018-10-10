@@ -128,17 +128,6 @@ enum Strategy {
     }
 }
 
-enum SessionError: Error {
-    case io
-    case sessionDataCorrupt
-    case sessionTooMany
-    case sessionExists
-    case bufferTooSmall
-    case utf8
-    case bookUnknown
-    case nul
-}
-
 class Session {
     var raw: SessionRaw?
 
@@ -191,22 +180,8 @@ class Session {
         let ret = session_create(&self.raw!)
         switch ret {
         case 0: break // success
-        case 1:
-            throw SessionError.io
-        case 2:
-            throw SessionError.sessionExists
-        case 3:
-            throw SessionError.sessionDataCorrupt
-        case 5:
-            throw SessionError.sessionTooMany
-        case 9:
-            throw SessionError.utf8
-        case 10:
-            throw SessionError.bookUnknown
-        case 11:
-            throw SessionError.nul
         default:
-            fatalError("unhandled error code \(ret)")
+            throw CoreLibError.init(rawValue: ret)!
         }
     }
 
@@ -215,22 +190,8 @@ class Session {
         self.raw = nil
         switch ret {
         case 0: break // success
-        case 1:
-            throw SessionError.io
-        case 2:
-            throw SessionError.sessionExists
-        case 3:
-            throw SessionError.sessionDataCorrupt
-        case 5:
-            throw SessionError.sessionTooMany
-        case 9:
-            throw SessionError.utf8
-        case 10:
-            throw SessionError.bookUnknown
-        case 11:
-            throw SessionError.nul
         default:
-            fatalError("unhandled error code \(ret)")
+            throw CoreLibError.init(rawValue: ret)!
         }
     }
 
@@ -239,25 +200,10 @@ class Session {
         var sessionsBuffer = Array(repeating: SessionRaw(), count: sessionsLen)
         try sessionsBuffer.withUnsafeMutableBufferPointer { sessionsPtr in
             let ret = session_list_sessions(sessionsPtr.baseAddress!, &sessionsLen)
-            if ret != 0 {
-                switch ret {
-                case 1:
-                    throw SessionError.io
-                case 2:
-                    throw SessionError.sessionExists
-                case 3:
-                    throw SessionError.sessionDataCorrupt
-                case 4:
-                    throw SessionError.bufferTooSmall
-                case 5:
-                    throw SessionError.sessionTooMany
-                case 9:
-                    throw SessionError.utf8
-                case 11:
-                    throw SessionError.nul
-                default:
-                    fatalError("unhandled error code \(ret)")
-                }
+            switch ret {
+            case 0: break // success
+            default:
+                throw CoreLibError.init(rawValue: ret)!
             }
         }
 

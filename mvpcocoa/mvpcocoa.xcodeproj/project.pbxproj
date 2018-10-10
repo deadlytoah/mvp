@@ -16,6 +16,7 @@
 		0F3CEE852165A0ED00D417E7 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3CEE842165A0ED00D417E7 /* Session.swift */; };
 		0F3CEE87216603AB00D417E7 /* DownloadVersesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3CEE86216603AB00D417E7 /* DownloadVersesController.swift */; };
 		0F3CEE9721665B8200D417E7 /* AddSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F3CEE9621665B8200D417E7 /* AddSessionController.swift */; };
+		0F51743D216DA81700021F42 /* Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F51743C216DA81700021F42 /* Error.swift */; };
 		0F59D68921410FF40091C6FD /* SpeedTypeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F59D68821410FF40091C6FD /* SpeedTypeController.swift */; };
 		0F59D68B214111AA0091C6FD /* SpeedTypeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F59D68A214111AA0091C6FD /* SpeedTypeView.swift */; };
 		0F8FD2B121624DD7007847E8 /* Verse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F8FD2B021624DD7007847E8 /* Verse.swift */; };
@@ -51,6 +52,7 @@
 		0F3CEE842165A0ED00D417E7 /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
 		0F3CEE86216603AB00D417E7 /* DownloadVersesController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadVersesController.swift; sourceTree = "<group>"; };
 		0F3CEE9621665B8200D417E7 /* AddSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddSessionController.swift; sourceTree = "<group>"; };
+		0F51743C216DA81700021F42 /* Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Error.swift; sourceTree = "<group>"; };
 		0F59D68821410FF40091C6FD /* SpeedTypeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedTypeController.swift; sourceTree = "<group>"; };
 		0F59D68A214111AA0091C6FD /* SpeedTypeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedTypeView.swift; sourceTree = "<group>"; };
 		0F8FD2B021624DD7007847E8 /* Verse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Verse.swift; sourceTree = "<group>"; };
@@ -126,6 +128,7 @@
 				0F3CEE842165A0ED00D417E7 /* Session.swift */,
 				0FF4D89B215A6749009DB83F /* GraphLayout.swift */,
 				0FC9B6F3214C1A150041526F /* speedtype.h */,
+				0F51743C216DA81700021F42 /* Error.swift */,
 				0FC9B6F4214C8D430041526F /* SpeedTypeState.swift */,
 			);
 			path = mvpcocoa;
@@ -271,6 +274,7 @@
 				0F8FD2B121624DD7007847E8 /* Verse.swift in Sources */,
 				0FDC3D1A2163B00E00FA0F1F /* Sentence.swift in Sources */,
 				0FF4D89C215A6749009DB83F /* GraphLayout.swift in Sources */,
+				0F51743D216DA81700021F42 /* Error.swift in Sources */,
 				0F3CEE87216603AB00D417E7 /* DownloadVersesController.swift in Sources */,
 				0FC9B6F5214C8D430041526F /* SpeedTypeState.swift in Sources */,
 				0F59D68B214111AA0091C6FD /* SpeedTypeView.swift in Sources */,
