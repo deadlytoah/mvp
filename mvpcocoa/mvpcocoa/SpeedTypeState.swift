@@ -203,4 +203,23 @@ class SpeedTypeState {
     init(raw: UnsafeMutablePointer<SpeedTypeStateRaw>) {
         self.raw = raw
     }
+
+    init() {
+        self.raw = speedtype_new()
+    }
+
+    deinit {
+        speedtype_delete(self.raw)
+    }
+
+    func processLine(_ line: String) throws {
+        let ret = speedtype_process_line(self.raw, line)
+        if ret != 0 {
+            throw CoreLibError(rawValue: ret)!
+        }
+    }
+
+    func applyLevel(_ level: UInt8) {
+        speedtype_apply_level(self.raw, level)
+    }
 }

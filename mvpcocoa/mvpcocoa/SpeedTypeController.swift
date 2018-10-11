@@ -46,7 +46,7 @@ class SpeedTypeController: NSViewController {
                 self.difficultySlider.integerValue = difficultyLevel
                 if let state = self.state {
                     let caret = caret_position
-                    speedtype_apply_level(state.raw, UInt8(difficultyLevel))
+                    state.applyLevel(UInt8(difficultyLevel))
                     self.session!.level = Level(raw: UInt8(difficultyLevel))
                     self.render()
                     if caret != caret_position {
@@ -138,17 +138,19 @@ class SpeedTypeController: NSViewController {
     }
 
     fileprivate func initialiseState(lines: [String]) -> SpeedTypeState {
-        let state = speedtype_new()
+        let state = SpeedTypeState()
         lines.forEach { line in
-            let retval = speedtype_process_line(state!, line)
-            if retval != 0 {
+            do {
+                try state.processLine(line)
+            } catch {
                 let alert = NSAlert()
                 alert.alertStyle = .critical
-                alert.messageText = "Error processing line with code \(retval)."
+                alert.messageText = "Error processing line with code \(error)."
                 alert.beginSheetModal(for: self.view.window!)
+                return
             }
         }
-        return SpeedTypeState(raw: state!)
+        return state
     }
 
     @IBAction
