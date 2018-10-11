@@ -57,6 +57,8 @@ class SpeedTypeController: NSViewController {
         }
     }
 
+    var persistTimer: Timer? = nil
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -102,6 +104,27 @@ class SpeedTypeController: NSViewController {
             alert.beginSheetModal(for: self.view.window!)
         }
     }
+
+    @objc
+    private func persistSession() {
+        do {
+            try self.session!.delete()
+
+            do {
+                try self.session!.create()
+            } catch {
+                let alert = NSAlert()
+                alert.alertStyle = .critical
+                alert.messageText = "Failed saving session with \(error).  The old session has been deleted."
+                alert.beginSheetModal(for: self.view.window!)
+            }
+        } catch {
+            let alert = NSAlert()
+            alert.alertStyle = .critical
+            alert.messageText = "Failed saving session with \(error)."
+            alert.beginSheetModal(for: self.view.window!)
+        }
+   }
 
     func versesDownloaded(verses: [Verse]) {
         do {
@@ -199,6 +222,13 @@ class SpeedTypeController: NSViewController {
     // Override the NSView keydown func to read keycode of pressed key
     override func keyDown(with theEvent: NSEvent) {
         self.interpretKeyEvents([theEvent])
+
+        if let timer = self.persistTimer {
+            timer.invalidate()
+            self.persistTimer = nil
+        }
+
+        self.persistTimer = Timer.scheduledTimer(timeInterval: TimeInterval(0.300), target: self, selector: #selector(SpeedTypeController.persistSession), userInfo: nil, repeats: false)
     }
 
     override func insertText(_ string: Any) {

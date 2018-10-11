@@ -4,7 +4,7 @@ use std::ffi::CStr;
 
 pub type WordId = usize;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Word {
     pub id: WordId,
     pub word: String,

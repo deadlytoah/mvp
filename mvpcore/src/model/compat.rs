@@ -34,7 +34,10 @@ impl Location {
         })
     }
 
-    pub fn copy_from_strong_typed(&mut self, loc: &strong::Location) -> Result<()> {
+    pub fn copy_from_strong_typed(
+        &mut self,
+        loc: &strong::Location,
+    ) -> ::std::result::Result<(), ::std::ffi::NulError> {
         self.chapter = loc.chapter;
         self.sentence = loc.sentence;
         self.verse = loc.verse;

@@ -1,5 +1,5 @@
 use dirs;
-use model::speedtype::strong::Level;
+use model::speedtype::strong::{Level, State};
 use model::strong::{Range, Strategy};
 use serde_json;
 use std::fmt::{self, Display, Formatter};
@@ -70,6 +70,8 @@ pub struct Session {
     pub range: Range,
     pub level: Level,
     pub strategy: Strategy,
+
+    pub state: Option<State>,
 }
 
 impl Session {
@@ -145,6 +147,7 @@ impl Default for Session {
             range: Default::default(),
             level: Level::Level1,
             strategy: Strategy::Simple,
+            state: None,
         }
     }
 }

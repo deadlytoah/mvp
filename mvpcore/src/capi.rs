@@ -253,7 +253,8 @@ pub fn session_get_message(error_code: c_int) -> *const c_char {
 mod imp {
     use super::*;
     use model::speedtype::compat::Session;
-    use std::ffi::{CStr, CString};
+    use std::ffi::CStr;
+    use std::mem;
 
     pub fn session_create(sess: &Session) -> Result<()> {
         let name = unsafe { CStr::from_ptr(sess.name.as_ptr() as *const i8) };
@@ -277,17 +278,7 @@ mod imp {
             Err(CapiError::BufferTooSmall)
         } else {
             for (i, session) in sessions.into_iter().enumerate() {
-                let buf = &mut seq[i];
-
-                let name = CString::new(session.name)?;
-                let name = name.as_bytes_with_nul();
-                buf.name[..name.len()].copy_from_slice(name);
-
-                buf.range[0].copy_from_strong_typed(&session.range.start)?;
-                buf.range[1].copy_from_strong_typed(&session.range.end)?;
-
-                buf.level = session.level as u8;
-                buf.strategy = session.strategy as u8;
+                let _ = mem::replace(&mut seq[i], session.into());
             }
 
             Ok(session_count)
@@ -389,6 +380,8 @@ mod test {
             range: [start, end],
             level: 0,
             strategy: 0,
+            has_state: 0,
+            state: ::std::ptr::null_mut(),
         };
 
         session.name[0..4].copy_from_slice(&[b't', b'e', b's', b't']);

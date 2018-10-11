@@ -4,7 +4,7 @@ use std::char;
 
 pub type CharacterId = usize;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Character {
     pub id: CharacterId,
     pub character: char,

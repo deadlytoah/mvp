@@ -128,6 +128,24 @@ class Session {
         }
     }
 
+    var state: SpeedTypeState? {
+        get {
+            if raw!.has_state != 0 {
+                return SpeedTypeState(raw: &raw!.state)
+            } else {
+                return nil
+            }
+        }
+
+        set {
+            if let newState = newValue {
+                self.raw!.has_state = 1
+                // hmmmm  what if this gets dropped at the target?????
+                self.raw!.state = newState.raw.pointee
+            }
+        }
+    }
+
     init(raw: SessionRaw) {
         self.raw = raw
     }
@@ -142,6 +160,7 @@ class Session {
         self.raw!.range = (range.0.raw, range.1.raw)
         self.raw!.level = level.rawValue
         self.raw!.strategy = strategy.toByte()
+        self.raw!.has_state = 0
     }
 
     func create() throws {
