@@ -219,7 +219,7 @@ class SpeedTypeState {
         }
     }
 
-    func applyLevel(_ level: UInt8) {
-        speedtype_apply_level(self.raw, level)
+    func applyLevel(_ level: Level) {
+        speedtype_apply_level(self.raw, level.rawValue)
     }
 }

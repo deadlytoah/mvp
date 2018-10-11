@@ -24,7 +24,7 @@ class SpeedTypeController: NSViewController {
 
     var state: SpeedTypeState? = nil {
         didSet {
-            self.difficultyLevel = Int(session!.level.toByte())
+            self.difficultyLevel = session!.level
         }
     }
 
@@ -40,14 +40,14 @@ class SpeedTypeController: NSViewController {
 
     // Source of truth:  Changing this property propagates to
     // the slider and the hidden words in the text.
-    var difficultyLevel: Int = 0 {
+    var difficultyLevel: Level = Level.Easiest {
         didSet {
             if oldValue != difficultyLevel {
-                self.difficultySlider.integerValue = difficultyLevel
+                self.difficultySlider.integerValue = Int(difficultyLevel.rawValue)
                 if let state = self.state {
                     let caret = caret_position
-                    state.applyLevel(UInt8(difficultyLevel))
-                    self.session!.level = Level(raw: UInt8(difficultyLevel))
+                    state.applyLevel(difficultyLevel)
+                    self.session!.level = difficultyLevel
                     self.render()
                     if caret != caret_position {
                         caret_position = caret
@@ -155,7 +155,7 @@ class SpeedTypeController: NSViewController {
 
     @IBAction
     func sliderMoved(_ sender: Any?) {
-        self.difficultyLevel = self.difficultySlider.integerValue
+        self.difficultyLevel = Level(rawValue: UInt8(self.difficultySlider.integerValue))!
     }
 
     private func render() {
