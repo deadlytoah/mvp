@@ -97,7 +97,7 @@ enum Strategy {
 }
 
 class Session {
-    // Is nil after the session is deleted.
+    // Always owns the contents of the raw object.
     var raw: SessionRaw
 
     var name: String {
@@ -132,16 +132,35 @@ class Session {
     var state: SpeedTypeState? {
         get {
             if raw.has_state != 0 {
-                return SpeedTypeState(raw: raw.state)
+                return SpeedTypeState(ref: raw.state)
             } else {
                 return nil
             }
         }
+    }
 
+    var stateMove: SpeedTypeState? {
+        get {
+            if raw.has_state != 0 {
+                let newState = raw.state!
+                raw.has_state = 0
+                raw.state = nil
+                return SpeedTypeState(owned: newState)
+            } else {
+                return nil
+            }
+        }
         set {
+            if self.raw.has_state != 0 {
+                // keep it simple and don't allow self-assignment
+                assert(self.raw.state != newValue?.raw)
+                speedtype_delete(self.raw.state)
+            }
+
             if let newState = newValue {
                 self.raw.has_state = 1
                 self.raw.state = newState.raw
+                newState.owned = false
             } else {
                 self.raw.has_state = 0
                 self.raw.state = nil

@@ -85,8 +85,8 @@ class SpeedTypeController: NSViewController {
         self.session = session
 
         // Move the state out of the session object to prevent double-free.
-        self.state = self.session!.state
-        self.session!.state = nil
+        self.state = self.session!.stateMove
+        self.session!.stateMove = nil
 
         let text = String(self.state!.buffer.map { c in
             c.character
@@ -127,7 +127,7 @@ class SpeedTypeController: NSViewController {
             assert(self.session!.state == nil) // no double-free
             try self.session!.delete()
 
-            self.session!.state = self.state
+            self.session!.stateMove = self.state
             self.state = nil
 
             do {
@@ -139,8 +139,8 @@ class SpeedTypeController: NSViewController {
                 alert.beginSheetModal(for: self.view.window!)
             }
 
-            self.state = self.session!.state
-            self.session!.state = nil
+            self.state = self.session!.stateMove
+            self.session!.stateMove = nil
         } catch {
             let alert = NSAlert()
             alert.alertStyle = .critical

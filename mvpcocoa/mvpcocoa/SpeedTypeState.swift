@@ -167,6 +167,8 @@ class SpeedTypeSentence {
 class SpeedTypeState {
     var raw: UnsafeMutablePointer<SpeedTypeStateRaw>
 
+    var owned: Bool = false
+
     var buffer: [SpeedTypeChar] {
         get {
             var buffer: [SpeedTypeChar] = []
@@ -200,16 +202,25 @@ class SpeedTypeState {
         }
     }
 
-    init(raw: UnsafeMutablePointer<SpeedTypeStateRaw>) {
+    init(owned raw: UnsafeMutablePointer<SpeedTypeStateRaw>) {
         self.raw = raw
+        self.owned = true
+    }
+
+    init(ref raw: UnsafeMutablePointer<SpeedTypeStateRaw>) {
+        self.raw = raw
+        self.owned = false
     }
 
     init() {
         self.raw = speedtype_new()
+        self.owned = true
     }
 
     deinit {
-        speedtype_delete(self.raw)
+        if self.owned {
+            speedtype_delete(self.raw)
+        }
     }
 
     func processLine(_ line: String) throws {
