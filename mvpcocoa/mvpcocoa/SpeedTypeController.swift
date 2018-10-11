@@ -139,7 +139,7 @@ class SpeedTypeController: NSViewController {
 
     fileprivate func initialiseState(lines: [String]) -> SpeedTypeState {
         let state = SpeedTypeState()
-        lines.forEach { line in
+        for line in lines {
             do {
                 try state.processLine(line)
             } catch {
@@ -147,7 +147,7 @@ class SpeedTypeController: NSViewController {
                 alert.alertStyle = .critical
                 alert.messageText = "Error processing line with code \(error)."
                 alert.beginSheetModal(for: self.view.window!)
-                return
+                break
             }
         }
         return state
