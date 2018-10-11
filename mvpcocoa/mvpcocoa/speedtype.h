@@ -26,7 +26,7 @@ typedef struct {
     uint32_t typed;
     uint32_t correct;       // boolean
     uint32_t rendered;       // boolean
-} SpeedtypeCharRaw;
+} SpeedTypeCharRaw;
 
 typedef struct {
     WordId id;
@@ -36,25 +36,25 @@ typedef struct {
     uint32_t behind;
     size_t characters_len;
     CharId *characters_ptr;
-} SpeedtypeWordRaw;
+} SpeedTypeWordRaw;
 
 typedef struct {
     size_t words_len;
     WordId *words_ptr;
-} SpeedtypeSentenceRaw;
+} SpeedTypeSentenceRaw;
 
 typedef struct {
     size_t buffer_len;
-    SpeedtypeCharRaw *buffer_ptr;
+    SpeedTypeCharRaw *buffer_ptr;
     size_t words_len;
-    SpeedtypeWordRaw *words_ptr;
+    SpeedTypeWordRaw *words_ptr;
     size_t sentences_len;
-    SpeedtypeSentenceRaw *sentences_ptr;
-} SpeedtypeStateRaw;
+    SpeedTypeSentenceRaw *sentences_ptr;
+} SpeedTypeStateRaw;
 
-extern SpeedtypeStateRaw *speedtype_new();
-extern void speedtype_delete(SpeedtypeStateRaw*);
-extern int speedtype_process_line(SpeedtypeStateRaw*, const char*);
-extern void speedtype_apply_level(SpeedtypeStateRaw*, unsigned char);
+extern SpeedTypeStateRaw *speedtype_new();
+extern void speedtype_delete(SpeedTypeStateRaw*);
+extern int speedtype_process_line(SpeedTypeStateRaw*, const char*);
+extern void speedtype_apply_level(SpeedTypeStateRaw*, unsigned char);
 
 #endif /* speedtype_h */

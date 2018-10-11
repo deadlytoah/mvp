@@ -22,7 +22,7 @@ class SpeedTypeController: NSViewController {
 
     var session: Session? = nil
 
-    var state: SpeedtypeState? = nil {
+    var state: SpeedTypeState? = nil {
         didSet {
             self.difficultyLevel = Int(session!.level.toByte())
         }
@@ -137,7 +137,7 @@ class SpeedTypeController: NSViewController {
         self.speedTypeView!.string = lines.joined(separator: "\n") + "\n"
     }
 
-    fileprivate func initialiseState(lines: [String]) -> SpeedtypeState {
+    fileprivate func initialiseState(lines: [String]) -> SpeedTypeState {
         let state = speedtype_new()
         lines.forEach { line in
             let retval = speedtype_process_line(state!, line)
@@ -148,7 +148,7 @@ class SpeedTypeController: NSViewController {
                 alert.beginSheetModal(for: self.view.window!)
             }
         }
-        return SpeedtypeState(raw: state!)
+        return SpeedTypeState(raw: state!)
     }
 
     @IBAction
