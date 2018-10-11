@@ -25,7 +25,7 @@ typedef struct {
     unsigned char level;
     unsigned char strategy;
     uint32_t has_state;
-    SpeedTypeStateRaw state;
+    SpeedTypeStateRaw *state;
 } SessionRaw;
 
 typedef struct {

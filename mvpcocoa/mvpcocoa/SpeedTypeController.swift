@@ -22,6 +22,7 @@ class SpeedTypeController: NSViewController {
 
     var session: Session? = nil
 
+    // SpeedTypeController has the ownership of the state object.
     var state: SpeedTypeState? = nil {
         didSet {
             self.difficultyLevel = session!.level
@@ -80,6 +81,21 @@ class SpeedTypeController: NSViewController {
         }
     }
 
+    func continueSession(session: Session) {
+        self.session = session
+
+        // Move the state out of the session object to prevent double-free.
+        self.state = self.session!.state
+        self.session!.state = nil
+
+        let text = String(self.state!.buffer.map { c in
+            c.character
+        })
+        self.speedTypeView!.string = text
+
+        self.render()
+    }
+
     func beginSession(session: Session) {
         self.session = session
 
@@ -108,7 +124,11 @@ class SpeedTypeController: NSViewController {
     @objc
     private func persistSession() {
         do {
+            assert(self.session!.state == nil) // no double-free
             try self.session!.delete()
+
+            self.session!.state = self.state
+            self.state = nil
 
             do {
                 try self.session!.create()
@@ -118,6 +138,9 @@ class SpeedTypeController: NSViewController {
                 alert.messageText = "Failed saving session with \(error).  The old session has been deleted."
                 alert.beginSheetModal(for: self.view.window!)
             }
+
+            self.state = self.session!.state
+            self.session!.state = nil
         } catch {
             let alert = NSAlert()
             alert.alertStyle = .critical

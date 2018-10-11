@@ -185,7 +185,7 @@ pub struct Session {
     pub strategy: u8,
 
     pub has_state: libc::boolean_t,
-    pub state: speedtype::compat::State,
+    pub state: *mut speedtype::compat::State,
 }
 
 impl From<strong::Session> for Session {
@@ -207,9 +207,10 @@ impl From<strong::Session> for Session {
 
         if let Some(from_state) = from.state {
             session.has_state = 1;
-            session.state = from_state.into();
+            session.state = Box::into_raw(Box::new(from_state.into()));
         } else {
             session.has_state = 0;
+            session.state = ::std::ptr::null_mut();
         }
 
         session

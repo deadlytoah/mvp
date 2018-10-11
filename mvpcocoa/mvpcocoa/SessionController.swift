@@ -74,15 +74,22 @@ class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectio
         let indexPaths = sessionView!.selectionIndexPaths
         assert(indexPaths.count == 1)
         let session = self.sessions[indexPaths.first!.item]
-        let speedTypeController = self.presenting as! SpeedTypeController
-        speedTypeController.beginSession(session: session)
 
-        self.dismiss(self)
+        self.sessionSelected(session: session)
     }
 
     func sessionSelected(session: Session) {
         let speedTypeController = self.presenting as! SpeedTypeController
-        speedTypeController.beginSession(session: session)
+        if session.state == nil {
+            speedTypeController.beginSession(session: session)
+        } else {
+            speedTypeController.continueSession(session: session)
+        }
+
+        // Free the resources that are no longer needed i.e. the sessions
+        // in the collection view that have not been selected.
+        self.sessions.removeAll()
+
         self.dismiss(self)
     }
 
