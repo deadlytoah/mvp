@@ -43,15 +43,13 @@ class SpeedTypeController: NSViewController {
     // the slider and the hidden words in the text.
     var difficultyLevel: Level = Level.Easiest {
         didSet {
-            if oldValue != difficultyLevel {
-                self.difficultySlider.integerValue = Int(difficultyLevel.rawValue)
-                if let state = self.state {
-                    let caret = caret_position
-                    state.applyLevel(difficultyLevel)
-                    self.session!.level = difficultyLevel
-                    if caret != caret_position {
-                        caret_position = caret
-                    }
+            self.difficultySlider.integerValue = Int(difficultyLevel.rawValue)
+            if let state = self.state {
+                let caret = caret_position
+                state.applyLevel(difficultyLevel)
+                self.session!.level = difficultyLevel
+                if caret != caret_position {
+                    caret_position = caret
                 }
             }
         }
