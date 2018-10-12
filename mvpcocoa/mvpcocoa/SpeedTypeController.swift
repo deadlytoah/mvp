@@ -49,7 +49,6 @@ class SpeedTypeController: NSViewController {
                     let caret = caret_position
                     state.applyLevel(difficultyLevel)
                     self.session!.level = difficultyLevel
-                    self.render()
                     if caret != caret_position {
                         caret_position = caret
                     }
@@ -92,14 +91,19 @@ class SpeedTypeController: NSViewController {
     func continueSession(session: Session) {
         self.session = session
 
+        let text = String(self.session!.state!.buffer.map { c in
+            c.character
+        })
+        self.speedTypeView!.string = text
+
         // Move the state out of the session object to prevent double-free.
         self.state = self.session!.stateMove
         self.session!.stateMove = nil
 
-        let text = String(self.state!.buffer.map { c in
-            c.character
-        })
-        self.speedTypeView!.string = text
+        // Force rendering.
+        for c in self.state!.buffer {
+            c.rendered = false
+        }
 
         self.render()
     }
@@ -216,6 +220,7 @@ class SpeedTypeController: NSViewController {
     @IBAction
     func sliderMoved(_ sender: Any?) {
         self.difficultyLevel = Level(rawValue: UInt8(self.difficultySlider.integerValue))!
+        self.render()
     }
 
     private func render() {
