@@ -23,7 +23,7 @@ optional = true
 version = "0.24.0"
 
 [features]
-default = ["cache_uses_sdb"]
+default = ["cache_uses_sqlite"]
 cache_uses_sdb = ["sdb"]
 cache_uses_sqlite = ["sqlite3"]
 
