@@ -4,9 +4,11 @@ extern crate petgraph;
 extern crate rand;
 extern crate regex;
 extern crate reqwest;
-//extern crate sqlite3;
+#[cfg(feature = "cache_uses_sdb")]
 extern crate sdb;
 extern crate serde;
+#[cfg(feature = "cache_uses_sqlite")]
+extern crate sqlite3;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;

@@ -97,34 +97,74 @@ enum Strategy {
 }
 
 class Session {
-    var raw: SessionRaw?
+    // Always owns the contents of the raw object.
+    var raw: SessionRaw
 
     var name: String {
         get {
-            return String(cString: &raw!.name.0)
+            return String(cString: &raw.name.0)
         }
     }
 
     var range: (Location, Location) {
         get {
-            let start = Location(raw: raw!.range.0)
-            let end = Location(raw: raw!.range.1)
+            let start = Location(raw: raw.range.0)
+            let end = Location(raw: raw.range.1)
             return (start, end)
         }
     }
 
     var level: Level {
         get {
-            return Level(rawValue: raw!.level)!
+            return Level(rawValue: raw.level)!
         }
         set {
-            self.raw!.level = newValue.rawValue
+            self.raw.level = newValue.rawValue
         }
     }
 
     var strategy: Strategy {
         get {
-            return Strategy(raw: raw!.strategy)
+            return Strategy(raw: raw.strategy)
+        }
+    }
+
+    var state: SpeedTypeState? {
+        get {
+            if raw.has_state != 0 {
+                return SpeedTypeState(ref: raw.state)
+            } else {
+                return nil
+            }
+        }
+    }
+
+    var stateMove: SpeedTypeState? {
+        get {
+            if raw.has_state != 0 {
+                let newState = raw.state!
+                raw.has_state = 0
+                raw.state = nil
+                return SpeedTypeState(owned: newState)
+            } else {
+                return nil
+            }
+        }
+        set {
+            if self.raw.has_state != 0 {
+                // keep it simple and don't allow self-assignment
+                assert(self.raw.state != newValue?.raw)
+                speedtype_delete(self.raw.state)
+            }
+
+            if let newState = newValue {
+                self.raw.has_state = 1
+                self.raw.state = newState.raw
+                newState.owned = false
+            } else {
+                self.raw.has_state = 0
+                self.raw.state = nil
+            }
         }
     }
 
@@ -134,18 +174,25 @@ class Session {
 
     init(name: String, range: (Location, Location), level: Level, strategy: Strategy) {
         self.raw = SessionRaw()
-        withUnsafeMutableBytes(of: &self.raw!.name) { ptr in
+        withUnsafeMutableBytes(of: &self.raw.name) { ptr in
             name.utf8CString.withUnsafeBytes { cstr in
                 ptr.copyMemory(from: cstr)
             }
         }
-        self.raw!.range = (range.0.raw, range.1.raw)
-        self.raw!.level = level.rawValue
-        self.raw!.strategy = strategy.toByte()
+        self.raw.range = (range.0.raw, range.1.raw)
+        self.raw.level = level.rawValue
+        self.raw.strategy = strategy.toByte()
+        self.raw.has_state = 0
+    }
+
+    deinit {
+        if self.raw.has_state != 0 {
+            speedtype_delete(self.raw.state)
+        }
     }
 
     func create() throws {
-        let ret = session_create(&self.raw!)
+        let ret = session_create(&self.raw)
         switch ret {
         case 0: break // success
         default:
@@ -154,8 +201,7 @@ class Session {
     }
 
     func delete() throws {
-        let ret = session_delete(&self.raw!)
-        self.raw = nil
+        let ret = session_delete(&self.raw)
         switch ret {
         case 0: break // success
         default:

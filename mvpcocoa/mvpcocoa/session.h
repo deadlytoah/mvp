@@ -24,6 +24,8 @@ typedef struct {
     LocationRaw range[2];
     unsigned char level;
     unsigned char strategy;
+    uint32_t has_state;
+    SpeedTypeStateRaw *state;
 } SessionRaw;
 
 typedef struct {

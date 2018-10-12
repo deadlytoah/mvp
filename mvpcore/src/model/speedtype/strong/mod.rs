@@ -10,7 +10,7 @@ pub use self::word::*;
 
 use model::speedtype::compat;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct Sentence(pub Vec<WordId>);
 
 impl From<compat::Sentence> for Sentence {
@@ -31,7 +31,7 @@ impl From<compat::Sentence> for Sentence {
 ///
 /// It is a comprehensive data structure useful for saving and
 /// restoring session.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct State {
     /// sequential storage of characters to display and their
     /// states. This includes correct or incorrect entries and which

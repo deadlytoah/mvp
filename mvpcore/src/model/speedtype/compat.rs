@@ -1,5 +1,6 @@
 use libc;
 use model::compat;
+use model::speedtype;
 use model::speedtype::strong;
 use std::ffi::CString;
 use std::mem;
@@ -176,11 +177,42 @@ impl From<strong::State> for State {
     }
 }
 
-#[derive(Deserialize, Serialize)]
 #[repr(C)]
 pub struct Session {
     pub name: [u8; 32],
     pub range: [compat::Location; 2],
     pub level: u8,
     pub strategy: u8,
+
+    pub has_state: libc::boolean_t,
+    pub state: *mut speedtype::compat::State,
+}
+
+impl From<strong::Session> for Session {
+    fn from(from: strong::Session) -> Self {
+        let mut session: Session = unsafe { mem::zeroed() };
+        let name = CString::new(from.name).expect("string contains nul");
+        let name = name.as_bytes_with_nul();
+        session.name[..name.len()].copy_from_slice(name);
+
+        session.range[0]
+            .copy_from_strong_typed(&from.range.start)
+            .expect("string contains nul");
+        session.range[1]
+            .copy_from_strong_typed(&from.range.end)
+            .expect("string contains nul");
+
+        session.level = from.level as u8;
+        session.strategy = from.strategy as u8;
+
+        if let Some(from_state) = from.state {
+            session.has_state = 1;
+            session.state = Box::into_raw(Box::new(from_state.into()));
+        } else {
+            session.has_state = 0;
+            session.state = ::std::ptr::null_mut();
+        }
+
+        session
+    }
 }

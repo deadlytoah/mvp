@@ -1,8 +1,6 @@
 use libc::*;
 use model::speedtype::{compat, strong};
 use model::strong::BookError;
-use model::strong::Range;
-use sdb;
 use std::ffi;
 use std::fmt::{self, Display, Formatter};
 use std::slice;
@@ -16,7 +14,10 @@ pub enum CapiError {
     Session(strong::SessionError),
     Utf8(str::Utf8Error),
     Nul(ffi::NulError),
-    Sdb(sdb::Error),
+    #[cfg(feature = "cache_uses_sdb")]
+    Database(::sdb::Error),
+    #[cfg(feature = "cache_uses_sqlite")]
+    Database(::sqlite3::Error),
     Io(::std::io::Error),
     HttpRequest(::reqwest::Error),
     Regex(::regex::Error),
@@ -31,7 +32,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Session(ref e) => e.description(),
             CapiError::Utf8(ref e) => e.description(),
             CapiError::Nul(ref e) => e.description(),
-            CapiError::Sdb(ref e) => e.description(),
+            CapiError::Database(ref e) => e.description(),
             CapiError::Io(ref e) => e.description(),
             CapiError::HttpRequest(ref e) => e.description(),
             CapiError::Regex(ref e) => e.description(),
@@ -46,7 +47,7 @@ impl ::std::error::Error for CapiError {
             CapiError::Session(ref e) => Some(e),
             CapiError::Utf8(ref e) => Some(e),
             CapiError::Nul(ref e) => Some(e),
-            CapiError::Sdb(ref e) => Some(e),
+            CapiError::Database(ref e) => Some(e),
             CapiError::Io(ref e) => Some(e),
             CapiError::HttpRequest(ref e) => Some(e),
             CapiError::Regex(ref e) => Some(e),
@@ -63,7 +64,7 @@ impl Display for CapiError {
             CapiError::Session(ref e) => write!(f, "session error: {}", e),
             CapiError::Utf8(ref e) => write!(f, "utf8 error: {}", e),
             CapiError::Nul(ref e) => write!(f, "nul character found in string: {}", e),
-            CapiError::Sdb(ref e) => write!(f, "error in database: {}", e),
+            CapiError::Database(ref e) => write!(f, "database error: {}", e),
             CapiError::Io(ref e) => write!(f, "IO error: {}", e),
             CapiError::HttpRequest(ref e) => write!(f, "error making an HTTP request: {}", e),
             CapiError::Regex(ref e) => write!(f, "Regex error: {}", e),
@@ -97,9 +98,17 @@ impl From<ffi::NulError> for CapiError {
     }
 }
 
-impl From<sdb::Error> for CapiError {
-    fn from(err: sdb::Error) -> CapiError {
-        CapiError::Sdb(err)
+#[cfg(feature = "cache_uses_sdb")]
+impl From<::sdb::Error> for CapiError {
+    fn from(err: ::sdb::Error) -> CapiError {
+        CapiError::Database(err)
+    }
+}
+
+#[cfg(feature = "cache_uses_sqlite")]
+impl From<::sqlite3::Error> for CapiError {
+    fn from(err: ::sqlite3::Error) -> CapiError {
+        CapiError::Database(err)
     }
 }
 
@@ -141,7 +150,7 @@ pub enum SessionError {
     Utf8Error,
     BookUnknown,
     NulError,
-    SdbError,
+    DatabaseError,
     HttpRequestError,
     RegexError,
     FetchError,
@@ -161,7 +170,7 @@ pub fn map_error_to_code(error: &CapiError) -> SessionError {
         CapiError::Utf8(_) => SessionError::Utf8Error,
         CapiError::Nul(_) => SessionError::NulError,
         CapiError::BufferTooSmall => SessionError::SessionBufferTooSmall,
-        CapiError::Sdb(_) => SessionError::SdbError,
+        CapiError::Database(_) => SessionError::DatabaseError,
         CapiError::Io(_) => SessionError::IOError,
         CapiError::HttpRequest(_) => SessionError::HttpRequestError,
         CapiError::Regex(_) => SessionError::RegexError,
@@ -182,15 +191,15 @@ static ERROR_MESSAGES: &'static [&'static str] = &[
     "utf-8 encoding error\0",
     "unknown book\0",
     "unexpected null character found in string\0",
-    "error in database\0",
+    "database error\0",
     "error making an HTTP request\0",
     "regex error\0",
     "error fetching verses\0",
 ];
 
 #[no_mangle]
-pub unsafe fn session_create(sess: *const compat::Session) -> c_int {
-    match imp::session_create(&*sess) {
+pub unsafe fn session_create(sess: *mut compat::Session) -> c_int {
+    match imp::session_create(&mut *sess) {
         Ok(()) => SessionError::OK as c_int,
         Err(ref e) => map_error_to_code(e) as c_int,
     }
@@ -229,7 +238,7 @@ pub unsafe fn session_list_sessions(buf: *mut compat::Session, len: *mut size_t)
 /// Deletes the session from disk.
 #[no_mangle]
 pub unsafe fn session_delete(session: *mut compat::Session) -> c_int {
-    match imp::session_delete(&*session) {
+    match imp::session_delete(&mut *session) {
         Ok(_) => SessionError::OK as c_int,
         Err(e) => map_error_to_code(&e) as c_int,
     }
@@ -243,18 +252,19 @@ pub fn session_get_message(error_code: c_int) -> *const c_char {
 mod imp {
     use super::*;
     use model::speedtype::compat::Session;
-    use std::ffi::{CStr, CString};
+    use std::mem;
 
-    pub fn session_create(sess: &Session) -> Result<()> {
-        let name = unsafe { CStr::from_ptr(sess.name.as_ptr() as *const i8) };
-        let name = name.to_str()?;
-        let mut s = strong::Session::named(&name);
-        s.range = Range::default();
-        s.range.start = sess.range[0].to_strong_typed()?;
-        s.range.end = sess.range[1].to_strong_typed()?;
-        s.level = sess.level.into();
-        s.strategy = sess.strategy.into();
-        s.write()?;
+    pub fn session_create(sess: &mut Session) -> Result<()> {
+        let session = strong::Session::from_compat(sess)?;
+        let session_name = session.name.clone();
+        session.write()?;
+
+        let sessions = strong::Session::load_all_sessions()?;
+        let session = sessions
+            .into_iter()
+            .find(|ref s| s.name == session_name)
+            .expect("the created session failed to load");
+        let _ = mem::replace(sess, session.into());
         Ok(())
     }
 
@@ -267,17 +277,7 @@ mod imp {
             Err(CapiError::BufferTooSmall)
         } else {
             for (i, session) in sessions.into_iter().enumerate() {
-                let buf = &mut seq[i];
-
-                let name = CString::new(session.name)?;
-                let name = name.as_bytes_with_nul();
-                buf.name[..name.len()].copy_from_slice(name);
-
-                buf.range[0].copy_from_strong_typed(&session.range.start)?;
-                buf.range[1].copy_from_strong_typed(&session.range.end)?;
-
-                buf.level = session.level as u8;
-                buf.strategy = session.strategy as u8;
+                let _ = mem::replace(&mut seq[i], session.into());
             }
 
             Ok(session_count)
@@ -285,10 +285,8 @@ mod imp {
     }
 
     /// Deletes the session with the give name from disk.
-    pub fn session_delete(session: &Session) -> Result<()> {
-        let name = unsafe { CStr::from_ptr(session.name.as_ptr() as *const i8) };
-        let name = name.to_str()?;
-        let session = strong::Session::named(name);
+    pub fn session_delete(session: &mut Session) -> Result<()> {
+        let session = strong::Session::from_compat(session)?;
         session.delete()?;
         Ok(())
     }
@@ -379,11 +377,13 @@ mod test {
             range: [start, end],
             level: 0,
             strategy: 0,
+            has_state: 0,
+            state: ::std::ptr::null_mut(),
         };
 
         session.name[0..4].copy_from_slice(&[b't', b'e', b's', b't']);
 
-        let res = unsafe { session_create(&session) };
+        let res = unsafe { session_create(&mut session) };
         (res, session)
     }
 }

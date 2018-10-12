@@ -4,11 +4,18 @@ use libc::{c_char, c_int};
 use model::compat::Verse;
 use model::strong;
 use regex::Regex;
+#[cfg(feature = "cache_uses_sdb")]
 use sdb::tables::Record;
+#[cfg(feature = "cache_uses_sdb")]
 use sdb::Sdb;
+#[cfg(feature = "cache_uses_sqlite")]
+use sqlite3;
 use std::ffi::{CStr, CString};
 use std::fmt::{self, Display, Formatter};
 
+#[cfg(feature = "cache_uses_sqlite")]
+const DB_EXT: &str = ".db";
+#[cfg(feature = "cache_uses_sdb")]
 const DB_EXT: &str = ".sdb";
 
 static SOURCES: &[SourceDescription] = &[SourceDescription {
@@ -115,6 +122,7 @@ impl From<::std::num::ParseIntError> for FetchError {
     }
 }
 
+#[cfg(feature = "cache_uses_sdb")]
 #[no_mangle]
 pub unsafe fn verse_find_all(translation: *const c_char, view: *mut VerseView) -> c_int {
     let translation = CStr::from_ptr(translation);
@@ -199,6 +207,7 @@ mod imp {
     use reqwest;
     use std::fs;
 
+    #[cfg(feature = "cache_uses_sdb")]
     pub fn verse_find_all(translation: &CStr, view: &mut VerseView) -> Result<()> {
         let mut dbpath = dirs::data_dir().expect("unable to get platform's data directory.");
         dbpath.push("mvp-speedtype");
@@ -231,6 +240,66 @@ mod imp {
         Ok(())
     }
 
+    #[cfg(feature = "cache_uses_sqlite")]
+    pub fn verse_find_by_book_and_chapter(
+        translation: &CStr,
+        view: &mut VerseView,
+        book: &CStr,
+        chapter: u16,
+    ) -> Result<()> {
+        let mut dbpath = dirs::data_dir().expect("unable to get platform's data directory.");
+        dbpath.push("mvp-speedtype");
+        if !dbpath.exists() {
+            fs::create_dir(&dbpath)?;
+        }
+
+        let translation = translation.to_str()?;
+        dbpath.push(&(translation.to_owned() + DB_EXT));
+        let dbpath = dbpath.to_str().expect("failed to convert path to string");
+
+        let connection = sqlite3::open(&dbpath)?;
+
+        let book = book.to_str()?;
+        let chapter = chapter.to_string();
+        let prefix = book.to_owned() + " " + &chapter + ":%";
+
+        let mut cursor = connection
+            .prepare("SELECT key, text FROM verse WHERE key like ? AND deleted = 0")?
+            .cursor();
+        cursor.bind(&[sqlite3::Value::String(prefix)])?;
+
+        let mut records = vec![];
+        while let Some(row) = cursor.next()? {
+            records.push((
+                row[0].as_string().expect("column key expected").to_owned(),
+                row[1].as_string().expect("column text expected").to_owned(),
+            ));
+        }
+        let mut sortable: Vec<_> = records
+            .iter()
+            .map(|(key, text)| {
+                let chapter_verse = key
+                    .split_whitespace()
+                    .nth(1)
+                    .expect("missing chapter and verse number");
+                let verse_num = chapter_verse
+                    .split(':')
+                    .nth(1)
+                    .expect("missing verse number");
+                (verse_num, text)
+            })
+            .collect();
+        sortable
+            .sort_unstable_by_key(|rec| rec.0.parse::<u16>().expect("failed parsing verse number"));
+
+        for (key, text) in sortable.drain(..) {
+            view.push(key, text);
+        }
+
+        Ok(())
+    }
+
+    #[cfg(feature = "cache_uses_sdb")]
     pub fn verse_find_by_book_and_chapter(
         translation: &CStr,
         view: &mut VerseView,
@@ -340,6 +409,54 @@ mod imp {
         Ok(())
     }
 
+    #[cfg(feature = "cache_uses_sqlite")]
+    pub fn verse_insert(
+        translation: &CStr,
+        view: &VerseView,
+        book: &CStr,
+        chapter: u16,
+    ) -> Result<()> {
+        let mut dbpath = dirs::data_dir().expect("unable to get platform's data directory.");
+        dbpath.push("mvp-speedtype");
+        if !dbpath.exists() {
+            fs::create_dir(&dbpath)?;
+        }
+
+        let translation = translation.to_str()?;
+        dbpath.push(&(translation.to_owned() + DB_EXT));
+        let dbpath = dbpath.to_str().expect("failed to convert path to string");
+
+        let connection = sqlite3::open(&dbpath)?;
+
+        let key_prefix = [book.to_str().expect("utf8 error"), &chapter.to_string()].join(" ");
+        let mut statements = String::default();
+
+        for i in 0..view.next {
+            let verse = &view.verses[i];
+
+            let key = unsafe { CStr::from_ptr(verse.key.as_ptr() as *const i8) };
+            let key = key.to_str().expect("utf8 error");
+            let key = [&key_prefix, key].join(":");
+
+            let text = unsafe { CStr::from_ptr(verse.text.as_ptr() as *const i8) };
+            let text = text.to_str().expect("utf8 error");
+
+            statements.push_str(&format!(
+                "INSERT INTO verse (key, text, deleted) VALUES ('{}', '{}', 0);\n",
+                sanitise_argument(&key),
+                sanitise_argument(&text)
+            ));
+        }
+
+        connection.execute(statements)?;
+        Ok(())
+    }
+
+    fn sanitise_argument(argument: &str) -> String {
+        argument.to_owned().replace("'", "''")
+    }
+
+    #[cfg(feature = "cache_uses_sdb")]
     pub fn verse_insert(
         translation: &CStr,
         view: &VerseView,
@@ -391,6 +508,28 @@ mod imp {
         Ok(())
     }
 
+    #[cfg(feature = "cache_uses_sqlite")]
+    pub fn cache_create(translation: &CStr) -> Result<()> {
+        let mut dbpath = dirs::data_dir().expect("unable to get platform's data directory.");
+        dbpath.push("mvp-speedtype");
+        if !dbpath.exists() {
+            fs::create_dir(&dbpath)?;
+        }
+
+        let translation = translation.to_str()?;
+        dbpath.push(&(translation.to_owned() + DB_EXT));
+
+        let connection = sqlite3::open(&dbpath)?;
+        connection.execute(
+            "CREATE TABLE VERSE (KEY TEXT PRIMARY KEY, \
+             TEXT TEXT, \
+             DELETED INTEGER)",
+        )?;
+
+        Ok(())
+    }
+
+    #[cfg(feature = "cache_uses_sdb")]
     pub fn cache_create(translation: &CStr) -> Result<()> {
         let mut dbpath = dirs::data_dir().expect("unable to get platform's data directory.");
         dbpath.push("mvp-speedtype");

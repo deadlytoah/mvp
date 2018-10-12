@@ -22,6 +22,7 @@ class SpeedTypeController: NSViewController {
 
     var session: Session? = nil
 
+    // SpeedTypeController has the ownership of the state object.
     var state: SpeedTypeState? = nil {
         didSet {
             self.difficultyLevel = session!.level
@@ -42,20 +43,27 @@ class SpeedTypeController: NSViewController {
     // the slider and the hidden words in the text.
     var difficultyLevel: Level = Level.Easiest {
         didSet {
-            if oldValue != difficultyLevel {
-                self.difficultySlider.integerValue = Int(difficultyLevel.rawValue)
-                if let state = self.state {
-                    let caret = caret_position
-                    state.applyLevel(difficultyLevel)
-                    self.session!.level = difficultyLevel
-                    self.render()
-                    if caret != caret_position {
-                        caret_position = caret
-                    }
+            self.difficultySlider.integerValue = Int(difficultyLevel.rawValue)
+            if let state = self.state {
+                let caret = caret_position
+                state.applyLevel(difficultyLevel)
+                self.session!.level = difficultyLevel
+                if caret != caret_position {
+                    caret_position = caret
                 }
             }
         }
     }
+
+    // Persist Interval
+    //
+    // Persists the session and the state if the keyboard is idle for the
+    // specified interval in seconds.  This is done by starting a timer with
+    // the time interval.  The timer is started or reset whenever a key is
+    // pressed.
+    static let PersistInterval = TimeInterval(1.0)
+
+    var persistTimer: Timer? = nil
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -76,6 +84,26 @@ class SpeedTypeController: NSViewController {
             let downloadVersesController = segue.destinationController as! DownloadVersesController
             downloadVersesController.representedObject = session
         }
+    }
+
+    func continueSession(session: Session) {
+        self.session = session
+
+        let text = String(self.session!.state!.buffer.map { c in
+            c.character
+        })
+        self.speedTypeView!.string = text
+
+        // Move the state out of the session object to prevent double-free.
+        self.state = self.session!.stateMove
+        self.session!.stateMove = nil
+
+        // Force rendering.
+        for c in self.state!.buffer {
+            c.rendered = false
+        }
+
+        self.render()
     }
 
     func beginSession(session: Session) {
@@ -102,6 +130,40 @@ class SpeedTypeController: NSViewController {
             alert.beginSheetModal(for: self.view.window!)
         }
     }
+
+    @objc
+    private func persistSession() {
+        // Warning this implementation is fickle and horrible.
+        //
+        // 1. If creating the session fails, the session is deleted.
+        // 2. If creating the session fails, the state is lost.
+        //
+        // Clearly, more work needs to be done here.
+        do {
+            assert(self.session!.state == nil) // no double-free
+            try self.session!.delete()
+
+            self.session!.stateMove = self.state
+            self.state = nil
+
+            do {
+                try self.session!.create()
+
+                self.state = self.session!.stateMove
+                self.session!.stateMove = nil
+            } catch {
+                let alert = NSAlert()
+                alert.alertStyle = .critical
+                alert.messageText = "Failed saving session with \(error).  The old session has been deleted."
+                alert.beginSheetModal(for: self.view.window!)
+            }
+        } catch {
+            let alert = NSAlert()
+            alert.alertStyle = .critical
+            alert.messageText = "Failed saving session with \(error)."
+            alert.beginSheetModal(for: self.view.window!)
+        }
+   }
 
     func versesDownloaded(verses: [Verse]) {
         do {
@@ -156,6 +218,7 @@ class SpeedTypeController: NSViewController {
     @IBAction
     func sliderMoved(_ sender: Any?) {
         self.difficultyLevel = Level(rawValue: UInt8(self.difficultySlider.integerValue))!
+        self.render()
     }
 
     private func render() {
@@ -199,6 +262,13 @@ class SpeedTypeController: NSViewController {
     // Override the NSView keydown func to read keycode of pressed key
     override func keyDown(with theEvent: NSEvent) {
         self.interpretKeyEvents([theEvent])
+
+        if let timer = self.persistTimer {
+            timer.invalidate()
+            self.persistTimer = nil
+        }
+
+        self.persistTimer = Timer.scheduledTimer(timeInterval: SpeedTypeController.PersistInterval, target: self, selector: #selector(SpeedTypeController.persistSession), userInfo: nil, repeats: false)
     }
 
     override func insertText(_ string: Any) {
