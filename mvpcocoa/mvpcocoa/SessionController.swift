@@ -86,6 +86,26 @@ class SessionController: NSViewController, NSCollectionViewDelegate, NSCollectio
         self.dismiss(self)
     }
 
+    @IBAction func performDelete(_ sender: Any) {
+        let indexPaths = sessionView!.selectionIndexPaths
+        assert(indexPaths.count == 1)
+        let session = self.sessions.remove(at: indexPaths.first!.item)
+
+        do {
+            try session.delete()
+            sessionView.reloadData()
+        } catch {
+            let alert = NSAlert()
+            alert.alertStyle = .critical
+            alert.messageText = "Error deleting session (\(error) error)"
+            alert.beginSheetModal(for: self.view.window!)
+
+            // Since deleting session failed, show the session in the
+            // collection view.
+            self.sessions.append(session)
+        }
+    }
+
     override var representedObject: Any? {
         didSet {
         // Update the view, if already loaded.
