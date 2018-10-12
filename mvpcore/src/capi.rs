@@ -1,7 +1,6 @@
 use libc::*;
 use model::speedtype::{compat, strong};
 use model::strong::BookError;
-use model::strong::Range;
 use std::ffi;
 use std::fmt::{self, Display, Formatter};
 use std::slice;
@@ -199,8 +198,8 @@ static ERROR_MESSAGES: &'static [&'static str] = &[
 ];
 
 #[no_mangle]
-pub unsafe fn session_create(sess: *const compat::Session) -> c_int {
-    match imp::session_create(&*sess) {
+pub unsafe fn session_create(sess: *mut compat::Session) -> c_int {
+    match imp::session_create(&mut *sess) {
         Ok(()) => SessionError::OK as c_int,
         Err(ref e) => map_error_to_code(e) as c_int,
     }
@@ -239,7 +238,7 @@ pub unsafe fn session_list_sessions(buf: *mut compat::Session, len: *mut size_t)
 /// Deletes the session from disk.
 #[no_mangle]
 pub unsafe fn session_delete(session: *mut compat::Session) -> c_int {
-    match imp::session_delete(&*session) {
+    match imp::session_delete(&mut *session) {
         Ok(_) => SessionError::OK as c_int,
         Err(e) => map_error_to_code(&e) as c_int,
     }
@@ -253,19 +252,19 @@ pub fn session_get_message(error_code: c_int) -> *const c_char {
 mod imp {
     use super::*;
     use model::speedtype::compat::Session;
-    use std::ffi::CStr;
     use std::mem;
 
-    pub fn session_create(sess: &Session) -> Result<()> {
-        let name = unsafe { CStr::from_ptr(sess.name.as_ptr() as *const i8) };
-        let name = name.to_str()?;
-        let mut s = strong::Session::named(&name);
-        s.range = Range::default();
-        s.range.start = sess.range[0].to_strong_typed()?;
-        s.range.end = sess.range[1].to_strong_typed()?;
-        s.level = sess.level.into();
-        s.strategy = sess.strategy.into();
-        s.write()?;
+    pub fn session_create(sess: &mut Session) -> Result<()> {
+        let session = strong::Session::from_compat(sess)?;
+        let session_name = session.name.clone();
+        session.write()?;
+
+        let sessions = strong::Session::load_all_sessions()?;
+        let session = sessions
+            .into_iter()
+            .find(|ref s| s.name == session_name)
+            .expect("the created session failed to load");
+        let _ = mem::replace(sess, session.into());
         Ok(())
     }
 
@@ -286,10 +285,8 @@ mod imp {
     }
 
     /// Deletes the session with the give name from disk.
-    pub fn session_delete(session: &Session) -> Result<()> {
-        let name = unsafe { CStr::from_ptr(session.name.as_ptr() as *const i8) };
-        let name = name.to_str()?;
-        let session = strong::Session::named(name);
+    pub fn session_delete(session: &mut Session) -> Result<()> {
+        let session = strong::Session::from_compat(session)?;
         session.delete()?;
         Ok(())
     }
@@ -386,7 +383,7 @@ mod test {
 
         session.name[0..4].copy_from_slice(&[b't', b'e', b's', b't']);
 
-        let res = unsafe { session_create(&session) };
+        let res = unsafe { session_create(&mut session) };
         (res, session)
     }
 }

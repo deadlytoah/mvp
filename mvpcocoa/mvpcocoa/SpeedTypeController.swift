@@ -123,6 +123,12 @@ class SpeedTypeController: NSViewController {
 
     @objc
     private func persistSession() {
+        // Warning this implementation is fickle and horrible.
+        //
+        // 1. If creating the session fails, the session is deleted.
+        // 2. If creating the session fails, the state is lost.
+        //
+        // Clearly, more work needs to be done here.
         do {
             assert(self.session!.state == nil) // no double-free
             try self.session!.delete()
@@ -132,15 +138,15 @@ class SpeedTypeController: NSViewController {
 
             do {
                 try self.session!.create()
+
+                self.state = self.session!.stateMove
+                self.session!.stateMove = nil
             } catch {
                 let alert = NSAlert()
                 alert.alertStyle = .critical
                 alert.messageText = "Failed saving session with \(error).  The old session has been deleted."
                 alert.beginSheetModal(for: self.view.window!)
             }
-
-            self.state = self.session!.stateMove
-            self.session!.stateMove = nil
         } catch {
             let alert = NSAlert()
             alert.alertStyle = .critical

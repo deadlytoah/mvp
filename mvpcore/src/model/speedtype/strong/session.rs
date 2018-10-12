@@ -1,7 +1,10 @@
+use capi;
 use dirs;
+use model::speedtype::compat;
 use model::speedtype::strong::{Level, State};
 use model::strong::{Range, Strategy};
 use serde_json;
+use std::ffi::CStr;
 use std::fmt::{self, Display, Formatter};
 use std::fs::{self, OpenOptions};
 use std::io::{BufReader, BufWriter, ErrorKind};
@@ -79,6 +82,28 @@ impl Session {
         let mut session = Self::default();
         session.name = name.to_owned();
         session
+    }
+
+    pub fn from_compat(compat: &mut compat::Session) -> capi::Result<Session> {
+        let state = if compat.has_state != 0 {
+            let s = unsafe { *Box::from_raw(compat.state) };
+            compat.has_state = 0;
+            compat.state = ::std::ptr::null_mut();
+            Some(s.into())
+        } else {
+            None
+        };
+
+        let name = unsafe { CStr::from_ptr(compat.name.as_ptr() as *const i8) };
+        let name = name.to_str()?;
+        let mut s = Session::named(&name);
+        s.range = Range::default();
+        s.range.start = compat.range[0].to_strong_typed()?;
+        s.range.end = compat.range[1].to_strong_typed()?;
+        s.level = compat.level.into();
+        s.strategy = compat.strategy.into();
+        s.state = state;
+        Ok(s)
     }
 
     pub fn load_all_sessions() -> Result<Vec<Session>> {
