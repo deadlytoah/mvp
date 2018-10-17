@@ -261,14 +261,16 @@ class SpeedTypeController: NSViewController {
 
     // Override the NSView keydown func to read keycode of pressed key
     override func keyDown(with theEvent: NSEvent) {
-        self.interpretKeyEvents([theEvent])
+        if self.state != nil {
+            self.interpretKeyEvents([theEvent])
 
-        if let timer = self.persistTimer {
-            timer.invalidate()
-            self.persistTimer = nil
+            if let timer = self.persistTimer {
+                timer.invalidate()
+                self.persistTimer = nil
+            }
+
+            self.persistTimer = Timer.scheduledTimer(timeInterval: SpeedTypeController.persistInterval, target: self, selector: #selector(SpeedTypeController.persistSession), userInfo: nil, repeats: false)
         }
-
-        self.persistTimer = Timer.scheduledTimer(timeInterval: SpeedTypeController.persistInterval, target: self, selector: #selector(SpeedTypeController.persistSession), userInfo: nil, repeats: false)
     }
 
     override func insertText(_ string: Any) {
