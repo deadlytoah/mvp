@@ -68,7 +68,7 @@
                                         </menuItem>
                                         <menuItem title="Open…" keyEquivalent="o" id="IAo-SY-fd9">
                                             <connections>
-                                                <action selector="openSession:" target="Ady-hI-5gd" id="vXY-O7-lie"/>
+                                                <action selector="openSessionDialog:" target="Ady-hI-5gd" id="qwe-vi-YgQ"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Open Recent" id="tXI-mr-wws">

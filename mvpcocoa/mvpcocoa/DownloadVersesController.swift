@@ -49,6 +49,11 @@ class DownloadVersesController: NSViewController {
         alert.alertStyle = .informational
         alert.messageText = "Enter verses functionality is not implemented yet"
         alert.beginSheetModal(for: self.view.window!) { response in
+            if let speedTypeController = self.presenting as? SpeedTypeController {
+                DispatchQueue.main.async {
+                    speedTypeController.openSessionDialog(sender)
+                }
+            }
             self.dismiss(sender)
         }
     }

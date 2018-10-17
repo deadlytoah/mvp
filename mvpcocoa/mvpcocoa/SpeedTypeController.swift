@@ -70,12 +70,12 @@ class SpeedTypeController: NSViewController {
 
         self.speedTypeView.font = self.defaultFont
         DispatchQueue.main.async {
-            self.openSession(self)
+            self.openSessionDialog(self)
         }
     }
 
     @IBAction
-    func openSession(_ sender: Any) {
+    func openSessionDialog(_ sender: Any) {
         self.performSegue(withIdentifier: NSStoryboardSegue.Identifier("sessionSegue"), sender: self)
     }
 
