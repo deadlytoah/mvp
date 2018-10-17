@@ -61,7 +61,7 @@ class SpeedTypeController: NSViewController {
     // specified interval in seconds.  This is done by starting a timer with
     // the time interval.  The timer is started or reset whenever a key is
     // pressed.
-    static let PersistInterval = TimeInterval(1.0)
+    static let persistInterval = TimeInterval(1.0)
 
     var persistTimer: Timer? = nil
 
@@ -268,7 +268,7 @@ class SpeedTypeController: NSViewController {
             self.persistTimer = nil
         }
 
-        self.persistTimer = Timer.scheduledTimer(timeInterval: SpeedTypeController.PersistInterval, target: self, selector: #selector(SpeedTypeController.persistSession), userInfo: nil, repeats: false)
+        self.persistTimer = Timer.scheduledTimer(timeInterval: SpeedTypeController.persistInterval, target: self, selector: #selector(SpeedTypeController.persistSession), userInfo: nil, repeats: false)
     }
 
     override func insertText(_ string: Any) {
