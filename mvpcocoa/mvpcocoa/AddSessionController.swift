@@ -28,18 +28,18 @@ class AddSessionController: NSViewController {
 
         do {
             try session.create()
+
+            let sessionController = self.presenting as! SessionController
+            sessionController.sessionSelected(session: session)
+
+            self.dismiss(self)
         } catch {
             let alert = NSAlert()
             alert.alertStyle = .critical
             alert.messageText = "Failed to create a new session (\(error) error)"
             alert.beginSheetModal(for: self.view.window!)
         }
-
-        let sessionController = self.presenting as! SessionController
-        sessionController.sessionSelected(session: session)
-
-        self.dismiss(self)
-    }
+   }
 
     @IBAction func performCancel(_ sender: Any) {
         self.dismiss(self)
